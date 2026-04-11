@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BritSync Chatbot Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #020617; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
+    <div class="max-w-3xl w-full text-center space-y-8">
+        <div class="space-y-4">
+            <h1 class="text-5xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                BritSync AI Chatbot
+            </h1>
+            <p class="text-slate-400 text-lg">
+                Your website's intelligent concierge, powered by local Ollama or high-speed Groq Cloud.
+            </p>
+        </div>
+
+        <div class="glass p-8 rounded-3xl text-left space-y-6">
+            <div>
+                <h2 class="text-xl font-bold mb-2">How to Embed</h2>
+                <p class="text-sm text-slate-400 mb-4">Copy and paste this script before the closing &lt;/body&gt; tag of your website.</p>
+                <div class="bg-black/50 p-4 rounded-xl font-mono text-xs text-indigo-300 border border-indigo-500/20">
+                    &lt;script src="https://britsync-assistant.netlify.app/widget.js"&gt;&lt;/script&gt;<br>
+                    &lt;script&gt;<br>
+                    &nbsp;&nbsp;BritSyncChat.init({<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;provider: 'ollama',<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;model: 'llama3'<br>
+                    &nbsp;&nbsp;});<br>
+                    &lt;/script&gt;
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <h3 class="font-bold text-emerald-400 mb-1">Local & Private</h3>
+                    <p class="text-slate-500">Run entirely on your machine using Ollama. No API costs.</p>
+                </div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <h3 class="font-bold text-indigo-400 mb-1">Lead Capture</h3>
+                    <p class="text-slate-500">Automatically syncs conversations to your CRM board.</p>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-slate-600 text-[10px] uppercase font-bold tracking-widest">
+            Look at the bottom right corner to interact with ARIA
+        </p>
+    </div>
+
+    <!-- This is a placeholder for the actual widget in this local test context -->
+    <!-- In production, the widget would be injected by the script above -->
+    <div id="britsync-widget-root"></div>
+</body>
+</html>
