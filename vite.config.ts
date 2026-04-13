@@ -58,6 +58,18 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Proxy Team Session Management
+      '/api/team': {
+        target: 'http://localhost:5010',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy Authentication
+      '/api/auth': {
+        target: 'http://localhost:5010',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

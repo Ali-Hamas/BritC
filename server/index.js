@@ -12,12 +12,74 @@ const {
   shouldStartAppointment, 
   startAppointmentFlow 
 } = require('./appointmentBooking');
+const jwt = require('jsonwebtoken');
+const User = require('./models/User');
+
 
 const app = express();
 const PORT = process.env.PORT || 5010;
 
 // GROQ Setup
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+// ─── Authentication Routes ──────────────────────────────────────────────────
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, businessName } = req.body;
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Account already exists with this email.' });
+    }
+
+    const user = new User({ email, password, businessName });
+    await user.save();
+
+    // Generate JWT
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
+
+    res.status(201).json({ 
+      token, 
+      user: { 
+        email: user.email, 
+        businessName: user.businessName,
+        plan: 'pro' // Defaulting to pro as requested in original mock
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Registration failed', details: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'Account does not exist.' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Incorrect password.' });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
+
+    res.json({ 
+      token, 
+      user: { 
+        email: user.email, 
+        businessName: user.businessName,
+        plan: 'pro'
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Login failed', details: err.message });
+  }
+});
 
 // ─── Groq Proxy Route (Production) ─────────────────────────────────────────
 // This replaces the Vite dev proxy for production deployments

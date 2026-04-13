@@ -15,21 +15,34 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
   // Login/Register States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [businessName, setBusinessName] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     
-    // Mock Login: Check if a local profile exists
-    const profile = await ProfileService.getLatestProfile();
-    if (profile) {
-      setTimeout(() => {
-        onAuthenticated(profile);
-        setIsLoading(false);
-      }, 1000);
-    } else {
-      setError('No profile found. Please register a new workspace.');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Store token and profile
+      localStorage.setItem('britsync_token', data.token);
+      localStorage.setItem('britsync_profile', JSON.stringify(data.user));
+
+      onAuthenticated(data.user);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -39,21 +52,29 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
     setIsLoading(true);
     setError('');
     
-    // Create a Pro profile for new workspace
-    const newProfile = {
-      businessName: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-      email: email,
-      industry: 'Technology',
-      plan: 'pro'
-    };
-    
-    localStorage.setItem('britsync_profile', JSON.stringify(newProfile));
-    
-    // Mock Registration: Just proceed to onboarding for now
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, businessName }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      // Store token and profile
+      localStorage.setItem('britsync_token', data.token);
+      localStorage.setItem('britsync_profile', JSON.stringify(data.user));
+
       onStartOnboarding();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -166,6 +187,23 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
                     />
                   </div>
                 </div>
+
+                {activeMode === 'register' && (
+                  <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Business Name</label>
+                    <div className="relative">
+                      <Zap className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
+                      <input 
+                        type="text" 
+                        required
+                        value={businessName}
+                        onChange={e => setBusinessName(e.target.value)}
+                        placeholder="e.g. Acme Agency"
+                        className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-slate-200 outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700 font-medium"
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{activeMode === 'register' ? 'Set Password' : 'Password'}</label>
                   <div className="relative">
