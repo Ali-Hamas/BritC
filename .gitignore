@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -27,3 +28,35 @@ dist-ssr
 server/.env
 server/service-account.json
 uploads/
+=======
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+server/.env
+server/service-account.json
+uploads/
+config.bat
+temp_auto_push.bat
+temp_interactive_push.bat
+>>>>>>> 7de6b300f9a9d0c1ba5aab975697e2a53e67fe9c

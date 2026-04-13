@@ -14,11 +14,16 @@ const {
 } = require('./appointmentBooking');
 
 const app = express();
+<<<<<<< HEAD
 const PORT = process.env.PORT || 5010;
+=======
+const PORT = process.env.PORT || 5003;
+>>>>>>> 7de6b300f9a9d0c1ba5aab975697e2a53e67fe9c
 
 // GROQ Setup
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+<<<<<<< HEAD
 // ─── Groq Proxy Route (Production) ─────────────────────────────────────────
 // This replaces the Vite dev proxy for production deployments
 app.post('/api/groq', async (req, res) => {
@@ -44,6 +49,8 @@ app.post('/api/groq', async (req, res) => {
   }
 });
 
+=======
+>>>>>>> 7de6b300f9a9d0c1ba5aab975697e2a53e67fe9c
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -498,7 +505,11 @@ if (!process.env.VERCEL) {
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
+<<<<<<< HEAD
       console.error(`\n❌ ERROR: Port ${PORT} (5010) is already in use.`);
+=======
+      console.error(`\n❌ ERROR: Port ${PORT} is already in use.`);
+>>>>>>> 7de6b300f9a9d0c1ba5aab975697e2a53e67fe9c
       console.error(`Please run the following command to kill the existing process:`);
       console.error(`Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force\n`);
       process.exit(1);

@@ -11,7 +11,11 @@ export interface StoredMessage {
 }
 
 const SESSION_KEY = 'britsee_active_session';
+<<<<<<< HEAD
 const LOCAL_API_URL = '/api/team';
+=======
+const LOCAL_API_URL = 'http://localhost:5003/api/team';
+>>>>>>> 7de6b300f9a9d0c1ba5aab975697e2a53e67fe9c
 
 export const ChatHistoryService = {
   // Get or create a stable session ID for this browser
@@ -80,7 +84,11 @@ export const ChatHistoryService = {
 
     // 2. Fallback to Local Server Memory bank (Crucial for Team collaboration without DB)
     try {
+<<<<<<< HEAD
       const resp = await fetch(`/api/team/messages/${sessionId}`);
+=======
+      const resp = await fetch(`http://localhost:5003/api/team/messages/${sessionId}`);
+>>>>>>> 7de6b300f9a9d0c1ba5aab975697e2a53e67fe9c
       if (resp.ok) {
         const data = await resp.json();
         if (data.success && data.messages) {
