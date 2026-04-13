@@ -4,7 +4,7 @@
  */
 
 // Proxied via Vite to the optional britsync-server backend
-const SERVER_URL = '/api/browser';
+import { getApiUrl } from './api-config';
 
 export interface BrowserResult {
   success: boolean;
@@ -22,7 +22,7 @@ export const BrowserAgentService = {
    * Search Google and return top results + screenshot
    */
   async searchGoogle(query: string): Promise<BrowserResult> {
-    const res = await fetch(`${SERVER_URL}/api/browser/search`, {
+    const res = await fetch(getApiUrl('/browser/search'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query }),
@@ -38,7 +38,7 @@ export const BrowserAgentService = {
    * Search YouTube and return top video results + screenshot
    */
   async searchYouTube(query: string): Promise<BrowserResult> {
-    const res = await fetch(`${SERVER_URL}/api/browser/youtube`, {
+    const res = await fetch(getApiUrl('/browser/youtube'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query }),
@@ -54,7 +54,7 @@ export const BrowserAgentService = {
    * Search LinkedIn jobs and return listings + screenshot
    */
   async searchLinkedInJobs(query: string, location = 'United Kingdom'): Promise<BrowserResult> {
-    const res = await fetch(`${SERVER_URL}/api/browser/linkedin`, {
+    const res = await fetch(getApiUrl('/browser/linkedin'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, location }),
@@ -72,7 +72,7 @@ export const BrowserAgentService = {
   async openUrl(url: string): Promise<BrowserResult> {
     // Ensure URL has protocol
     const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-    const res = await fetch(`${SERVER_URL}/api/browser/open`, {
+    const res = await fetch(getApiUrl('/browser/open'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: fullUrl }),
@@ -88,6 +88,6 @@ export const BrowserAgentService = {
    * Close the browser session on the server
    */
   async close(): Promise<void> {
-    await fetch(`${SERVER_URL}/api/browser/close`, { method: 'POST' }).catch(() => {});
+    await fetch(getApiUrl('/browser/close'), { method: 'POST' }).catch(() => {});
   },
 };

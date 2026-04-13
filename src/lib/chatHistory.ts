@@ -11,7 +11,7 @@ export interface StoredMessage {
 }
 
 const SESSION_KEY = 'britsee_active_session';
-const LOCAL_API_URL = '/api/team';
+import { getApiUrl } from './api-config';
 
 export const ChatHistoryService = {
   // Get or create a stable session ID for this browser
@@ -44,7 +44,7 @@ export const ChatHistoryService = {
     // 2. If it's a team session, sync to local server's memory bank
     if (sessionId.startsWith('team_')) {
       try {
-        await fetch(`${LOCAL_API_URL}/messages/save`, {
+        await fetch(getApiUrl(`/team/messages/save`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -80,7 +80,7 @@ export const ChatHistoryService = {
 
     // 2. Fallback to Local Server Memory bank (Crucial for Team collaboration without DB)
     try {
-      const resp = await fetch(`/api/team/messages/${sessionId}`);
+      const resp = await fetch(getApiUrl(`/team/messages/${sessionId}`));
       if (resp.ok) {
         const data = await resp.json();
         if (data.success && data.messages) {
@@ -133,7 +133,7 @@ export const ChatHistoryService = {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      const resp = await fetch(`${LOCAL_API_URL}/register`, {
+      const resp = await fetch(getApiUrl('/team/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, pin, title }),
@@ -174,7 +174,7 @@ export const ChatHistoryService = {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      const resp = await fetch(`${LOCAL_API_URL}/resolve/${pin}`, {
+      const resp = await fetch(getApiUrl(`/team/resolve/${pin}`), {
         signal: controller.signal
       });
       clearTimeout(timeoutId);

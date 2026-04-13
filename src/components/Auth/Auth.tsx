@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Lock, ArrowRight, Mail, Zap, CheckCircle, Globe, Users } from 'lucide-react';
+import { getApiUrl } from '../../lib/api-config';
 
 interface AuthProps {
   onAuthenticated: (profile: any) => void;
@@ -22,7 +23,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
     setError('');
     
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(getApiUrl('/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -52,7 +53,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
     setError('');
     
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(getApiUrl('/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, businessName }),

@@ -1,4 +1,5 @@
 import { SettingsService } from './settings';
+import { getApiUrl } from './api-config';
 
 /**
  * LeadHunter Service — Aligned with official API documentation
@@ -27,21 +28,18 @@ import { SettingsService } from './settings';
  * britsee-server:  /api/lh/* → https://leadhunter.uk/api/external/*
  */
 function getExternalBase(): string {
-  // Points to: /api/lh/external/... → https://leadhunter.uk/api/external/...
-  return '/api/lh/external';
+  return getApiUrl('/lh/external');
 }
 
 function getStandardBase(): string {
-  // Points to: /api/lh/standard/... → https://leadhunter.uk/api/...
-  return '/api/lh/standard';
+  return getApiUrl('/lh/standard');
 }
 
 /**
  * Returns the SSE events URL for a job (uses dedicated SSE proxy route).
  */
 function getEventsUrl(jobId: string): string {
-  // Points to: /api/lh-events/:id → https://leadhunter.uk/api/jobs/:id/events
-  return `/api/lh-events/${jobId}`;
+  return getApiUrl(`/lh-events/${jobId}`);
 }
 
 export interface ScraperJob {

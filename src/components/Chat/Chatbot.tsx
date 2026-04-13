@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TeamService } from '../../lib/team';
 import { ActivityService } from '../../lib/activity';
 import { PinEntryModal } from './PinEntryModal';
+import { getApiUrl } from '../../lib/api-config';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -638,7 +639,7 @@ export const Chatbot = ({ profile }: { profile?: any }) => {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const res = await fetch('/api/health');
+        const res = await fetch(getApiUrl('/health'));
         if (res.ok) setBackendStatus('online');
         else setBackendStatus('offline');
       } catch {
@@ -784,7 +785,7 @@ export const Chatbot = ({ profile }: { profile?: any }) => {
         
       alert(`Team Chat Created!\n\nPIN: ${pin}\n\nShare this PIN with your team to let them join this session.${modeMsg}`);
     } else {
-      alert('Failed to create team chat.\n\nYour server might be down or port 5010 is blocked. Please ensure "npm run server" is running without errors.');
+      alert('Unable to establish a connection with the collaboration server.\n\nPlease verify that the BritSync backend service is active and accessible. Contact support if this issue persists.');
     }
   };
 
