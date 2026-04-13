@@ -30,11 +30,7 @@ From the root directory, run:
 ```bash
 npm run dev
 ```
-<<<<<<< HEAD
 This will start both the Vite frontend (port 5173) and the Express backend (port 5010).
-=======
-This will start both the Vite frontend (port 5173) and the Express backend (port 5003).
->>>>>>> 7de6b300f9a9d0c1ba5aab975697e2a53e67fe9c
 
 ---
 
@@ -74,10 +70,6 @@ You can adjust BritC's personality by editing the `WIDGET_SYSTEM_PROMPT` in `ser
 ---
 
 ## 🐛 Troubleshooting
-<<<<<<< HEAD
 - **Backend Offline**: If the status indicator in the Chat says "Local Brain (Backend Offline)", ensure the server is running on port 5010.
-=======
-- **Backend Offline**: If the status indicator in the Chat says "Local Brain (Backend Offline)", ensure the server is running on port 5003.
->>>>>>> 7de6b300f9a9d0c1ba5aab975697e2a53e67fe9c
 - **Groq API Errors**: Double-check your API key in the Dashboard Settings.
 - **Puppeteer Issues**: If lead scraping or web research fails, ensure all Puppeteer dependencies are installed on your OS (especially on Linux). You can toggle `PUPPETEER_HEADLESS=false` in `server/.env` to debug visually.
