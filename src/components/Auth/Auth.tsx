@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Shield, Lock, ArrowRight, Mail, Zap, CheckCircle, Globe, Users } from 'lucide-react';
-import { ProfileService } from '../../lib/profiles';
 
 interface AuthProps {
   onAuthenticated: (profile: any) => void;
