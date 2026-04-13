@@ -53,8 +53,8 @@ const Settings: React.FC = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
             >
               <tab.icon size={16} />

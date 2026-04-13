@@ -48,13 +48,13 @@ export default defineConfig({
       },
       // Proxy Browser Agent (/api/browser/...) to local britsync-server
       '/api/browser': {
-        target: 'http://localhost:5003',
+        target: 'http://localhost:5010',
         changeOrigin: true,
         secure: false, // Local server
       },
       // Proxy Chatbot API to local britsync-server
       '/api/bot': {
-        target: 'http://localhost:5003',
+        target: 'http://localhost:5010',
         changeOrigin: true,
         secure: false,
       },

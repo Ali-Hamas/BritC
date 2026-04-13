@@ -21,7 +21,7 @@ import { SettingsService } from './settings';
 
 /**
  * Returns the External API base URL.
- * Always routes through britsee-server (port 5003) which handles
+ * Always routes through britsee-server (port 5010) which handles
  * authentication and proxying server-side.
  *
  * britsee-server:  /api/lh/* → https://leadhunter.uk/api/external/*

@@ -784,7 +784,7 @@ export const Chatbot = ({ profile }: { profile?: any }) => {
         
       alert(`Team Chat Created!\n\nPIN: ${pin}\n\nShare this PIN with your team to let them join this session.${modeMsg}`);
     } else {
-      alert('Failed to create team chat.\n\nYour server might be down or port 5003 is blocked. Please ensure "npm run server" is running without errors.');
+      alert('Failed to create team chat.\n\nYour server might be down or port 5010 is blocked. Please ensure "npm run server" is running without errors.');
     }
   };
 

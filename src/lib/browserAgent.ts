@@ -1,6 +1,6 @@
 /**
  * Browser Agent Service — Frontend client for the Puppeteer backend
- * Calls britsync-server at port 5003 to control the browser
+ * Calls britsync-server at port 5010 to control the browser
  */
 
 // Proxied via Vite to the optional britsync-server backend
