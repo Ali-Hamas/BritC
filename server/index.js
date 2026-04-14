@@ -6,11 +6,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Groq = require('groq-sdk');
-const { 
-  isInAppointmentFlow, 
-  processAppointmentStep, 
-  shouldStartAppointment, 
-  startAppointmentFlow 
+const {
+  isInAppointmentFlow,
+  processAppointmentStep,
+  shouldStartAppointment,
+  startAppointmentFlow
 } = require('./appointmentBooking');
 const jwt = require('jsonwebtoken');
 // const User = require('./models/User'); // Removed Mongoose model
@@ -28,7 +28,7 @@ const bcrypt = require('bcryptjs');
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, businessName } = req.body;
-    
+
     // Check if user already exists
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
@@ -52,13 +52,13 @@ app.post('/api/auth/register', async (req, res) => {
     // Generate JWT
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
 
-    res.status(201).json({ 
-      token, 
-      user: { 
-        email: user.email, 
+    res.status(201).json({
+      token,
+      user: {
+        email: user.email,
         businessName: user.business_name,
         plan: 'pro'
-      } 
+      }
     });
   } catch (err) {
     res.status(500).json({ error: 'Registration failed', details: err.message });
@@ -68,7 +68,7 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('*')
@@ -86,13 +86,13 @@ app.post('/api/auth/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
 
-    res.json({ 
-      token, 
-      user: { 
-        email: user.email, 
+    res.json({
+      token,
+      user: {
+        email: user.email,
         businessName: user.business_name,
         plan: 'pro'
-      } 
+      }
     });
   } catch (err) {
     res.status(500).json({ error: 'Login failed', details: err.message });
@@ -105,7 +105,7 @@ app.post('/api/groq', async (req, res) => {
   try {
     const { model, messages, temperature, max_tokens } = req.body;
     let modelToUse = model || 'llama-3.3-70b-versatile';
-    
+
     const hasImages = messages.some(m => {
       const content = m.content;
       if (Array.isArray(content)) {
@@ -113,14 +113,14 @@ app.post('/api/groq', async (req, res) => {
       }
       return false;
     });
-    
+
     if (hasImages) {
       const visionModels = ['llama-3.2-90b-vision-preview', 'llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision'];
       if (!visionModels.includes(modelToUse)) {
         modelToUse = 'llama-3.2-90b-vision-preview';
       }
     }
-    
+
     const response = await groq.chat.completions.create({
       model: modelToUse,
       messages: messages,
@@ -131,7 +131,7 @@ app.post('/api/groq', async (req, res) => {
     res.json(response);
   } catch (err) {
     console.error('Groq Proxy Error:', err);
-    
+
     const errorMessage = err.message || 'Groq API Error';
     if (errorMessage.includes('does not support image input') || errorMessage.includes('clipboard')) {
       return res.status(400).json({
@@ -141,7 +141,7 @@ app.post('/api/groq', async (req, res) => {
         }
       });
     }
-    
+
     res.status(err.status || 500).json({
       error: {
         message: errorMessage,
@@ -163,8 +163,8 @@ if (!fs.existsSync('./uploads')) {
 
 // ─── Health Check ─────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'Britsee Strategic Engine'
   });
@@ -225,7 +225,7 @@ async function generateChatResponse(chatInput, sessionId) {
     // 2. Check if the user wants to start a booking
     if (shouldStartAppointment(chatInput)) {
       const startResult = await startAppointmentFlow(sessionId);
-      
+
       const completion = await groq.chat.completions.create({
         messages: [
           { role: 'system', content: WIDGET_SYSTEM_PROMPT },
@@ -311,7 +311,7 @@ app.post('/api/team/register', async (req, res) => {
         const { data, error } = await supabase
           .from('team_sessions')
           .insert([{ session_id: sessionId, pin, title }]);
-          
+
         if (error) throw error;
         return res.json({ success: true, mode: 'database' });
       } catch (dbErr) {
@@ -349,7 +349,7 @@ app.get('/api/team/resolve/:pin', async (req, res) => {
         .select('*')
         .eq('pin', pin)
         .single();
-        
+
       if (session) {
         return res.json({ success: true, sessionId: session.session_id, title: session.title, mode: 'database' });
       }
@@ -380,7 +380,7 @@ app.post('/api/team/messages/save', async (req, res) => {
             content: message.content || message.text,
             attachments: message.attachments || null
           }]);
-          
+
         if (error) throw error;
       } catch (dbErr) {
         console.warn('Failed to save message to Supabase, falling back to memory:', dbErr.message);
@@ -397,7 +397,7 @@ app.post('/api/team/messages/save', async (req, res) => {
       id: message.id || `msg_${Date.now()}`,
       created_at: new Date()
     });
-    
+
     if (sessionMsgs.length > 100) sessionMsgs.shift();
 
     res.json({ success: true });
@@ -410,7 +410,7 @@ app.post('/api/team/messages/save', async (req, res) => {
 app.get('/api/team/messages/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
-    
+
     // 1. Try Database First
     if (isDbConnected) {
       const { data: messages, error } = await supabase
@@ -418,7 +418,7 @@ app.get('/api/team/messages/:sessionId', async (req, res) => {
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
-        
+
       if (!error && messages && messages.length > 0) {
         const formattedMessages = messages.map(m => ({
           id: m.id,
@@ -615,19 +615,8 @@ app.post('/api/browser/close', async (req, res) => {
 
 // Start Server - Only if not on Vercel
 if (!process.env.VERCEL) {
-  const server = app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.error(`\n❌ ERROR: Port ${PORT} (5010) is already in use.`);
-      console.error(`Please run the following command to kill the existing process:`);
-      console.error(`Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force\n`);
-      process.exit(1);
-    } else {
-      console.error('Server error:', err);
-    }
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server successfully running on port ${PORT}`);
   });
 }
 
