@@ -3,12 +3,19 @@
  * Allows BritC to control Chrome: search Google, YouTube, LinkedIn, open URLs
  */
 
-const puppeteer = require('puppeteer');
+const IS_VERCEL = process.env.VERCEL === 'true' || process.env.NOW === 'true';
+const puppeteer = IS_VERCEL ? null : require('puppeteer');
 
 let browser = null;
 let lastScreenshot = null;
 
 async function getBrowser() {
+  if (IS_VERCEL) {
+    throw new Error('Browser automation is not available in serverless deployment. Please deploy to a VPS with Puppeteer installed.');
+  }
+  if (!puppeteer) {
+    throw new Error('Puppeteer is not installed. Please run npm install in the server directory.');
+  }
   if (!browser || !browser.connected) {
     const isHeadless = process.env.PUPPETEER_HEADLESS !== 'false';
     browser = await puppeteer.launch({

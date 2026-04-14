@@ -28,10 +28,16 @@ export const GroqService = {
 
     if (!response.ok) {
       let errorMessage = response.statusText;
+      let errorCode = '';
       try {
         const err = await response.json();
         errorMessage = err.error?.message || err.message || errorMessage;
+        errorCode = err.error?.code || '';
       } catch (_) {}
+      
+      if (errorMessage.includes('does not support image input') || errorCode === 'MODEL_DOES_NOT_SUPPORT_VISION') {
+        throw new Error('MODEL_DOES_NOT_SUPPORT_VISION');
+      }
       throw new Error(`Groq API Error (${response.status}): ${errorMessage}`);
     }
 

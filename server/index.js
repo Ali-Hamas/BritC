@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
+const supabase = require('./supabaseClient');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
@@ -13,7 +13,7 @@ const {
   startAppointmentFlow 
 } = require('./appointmentBooking');
 const jwt = require('jsonwebtoken');
-const User = require('./models/User');
+// const User = require('./models/User'); // Removed Mongoose model
 
 
 const app = express();
@@ -23,28 +23,41 @@ const PORT = process.env.PORT || 5010;
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ─── Authentication Routes ──────────────────────────────────────────────────
+const bcrypt = require('bcryptjs');
+
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, businessName } = req.body;
     
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .single();
+
     if (existingUser) {
       return res.status(400).json({ error: 'Account already exists with this email.' });
     }
 
-    const user = new User({ email, password, businessName });
-    await user.save();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const { data: user, error: insertError } = await supabase
+      .from('users')
+      .insert([{ email: email.toLowerCase(), password: hashedPassword, business_name: businessName }])
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
 
     // Generate JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
 
     res.status(201).json({ 
       token, 
       user: { 
         email: user.email, 
-        businessName: user.businessName,
-        plan: 'pro' // Defaulting to pro as requested in original mock
+        businessName: user.business_name,
+        plan: 'pro'
       } 
     });
   } catch (err) {
@@ -56,23 +69,28 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    const user = await User.findOne({ email });
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .single();
+
     if (!user) {
       return res.status(404).json({ error: 'Account does not exist.' });
     }
 
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Incorrect password.' });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
 
     res.json({ 
       token, 
       user: { 
         email: user.email, 
-        businessName: user.businessName,
+        businessName: user.business_name,
         plan: 'pro'
       } 
     });
@@ -86,9 +104,25 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/groq', async (req, res) => {
   try {
     const { model, messages, temperature, max_tokens } = req.body;
+    let modelToUse = model || 'llama-3.3-70b-versatile';
+    
+    const hasImages = messages.some(m => {
+      const content = m.content;
+      if (Array.isArray(content)) {
+        return content.some(c => c.type === 'image_url');
+      }
+      return false;
+    });
+    
+    if (hasImages) {
+      const visionModels = ['llama-3.2-90b-vision-preview', 'llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision'];
+      if (!visionModels.includes(modelToUse)) {
+        modelToUse = 'llama-3.2-90b-vision-preview';
+      }
+    }
     
     const response = await groq.chat.completions.create({
-      model: model || 'llama-3.3-70b-versatile',
+      model: modelToUse,
       messages: messages,
       temperature: temperature ?? 0.7,
       max_tokens: max_tokens,
@@ -97,9 +131,20 @@ app.post('/api/groq', async (req, res) => {
     res.json(response);
   } catch (err) {
     console.error('Groq Proxy Error:', err);
+    
+    const errorMessage = err.message || 'Groq API Error';
+    if (errorMessage.includes('does not support image input') || errorMessage.includes('clipboard')) {
+      return res.status(400).json({
+        error: {
+          message: 'Model does not support image input. Please select a vision model (llama-3.2-90b-vision-preview) in Settings.',
+          code: 'MODEL_DOES_NOT_SUPPORT_VISION'
+        }
+      });
+    }
+    
     res.status(err.status || 500).json({
       error: {
-        message: err.message || 'Groq API Error',
+        message: errorMessage,
         status: err.status
       }
     });
@@ -126,14 +171,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // ─── Database Connection ──────────────────────────────────────────────────
-const teamSessionSchema = new mongoose.Schema({
-  session_id: { type: String, unique: true, required: true },
-  pin: { type: String, unique: true, required: true },
-  title: { type: String },
-  created_at: { type: Date, default: Date.now }
-});
-
-const TeamSession = mongoose.model('TeamSession', teamSessionSchema);
+// TeamSession model removed (using Supabase)
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/britsee';
 let isDbConnected = false;
@@ -143,39 +181,15 @@ const memoryMessages = new Map(); // sessionId -> Message[]
 let cachedConnection = null;
 
 const connectDB = async () => {
-  if (isDbConnected && mongoose.connection.readyState === 1) return;
-  
   try {
-    const opts = {
-      serverSelectionTimeoutMS: 5000,
-      bufferCommands: false,
-    };
-    
-    await mongoose.connect(MONGODB_URI, opts);
+    const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+    if (error) throw error;
     isDbConnected = true;
-    console.log('Connected to MongoDB (Britsee Business Data)');
+    console.log('Connected to Supabase (Britsee Business Data)');
   } catch (err) {
-    console.error('MongoDB Atlas unavailable:', err.message);
-    
-    // Fallback to local MongoDB ONLY if not on Vercel
-    if (!process.env.VERCEL && MONGODB_URI.includes('mongodb.net')) {
-      console.log('Attempting local MongoDB fallback...');
-      try {
-        await mongoose.connect('mongodb://127.0.0.1:27017/britsee', {
-          serverSelectionTimeoutMS: 2000,
-          bufferCommands: false,
-        });
-        isDbConnected = true;
-        console.log('Connected to Local MongoDB');
-      } catch (localErr) {
-        isDbConnected = false;
-        console.error('Local MongoDB also unavailable:', localErr.message);
-        console.warn('⚠️  Running in ZERO-CONFIG MEMORY MODE for Team Sessions. Data will not persist across restarts.');
-      }
-    } else {
-      isDbConnected = false;
-      console.warn('⚠️  Running in ZERO-CONFIG MEMORY MODE for Team Sessions. Data will not persist across restarts.');
-    }
+    isDbConnected = false;
+    console.error('Supabase connection error:', err.message);
+    console.warn('⚠️  Running in ZERO-CONFIG MEMORY MODE. Data will not persist across restarts.');
   }
 };
 
@@ -184,9 +198,9 @@ if (!process.env.VERCEL) {
   connectDB();
 }
 
-// Middleware to ensure DB connection for every request in serverless
+// Middleware to ensure DB connection
 app.use(async (req, res, next) => {
-  if (process.env.VERCEL) {
+  if (!isDbConnected) {
     await connectDB();
   }
   next();
@@ -294,11 +308,14 @@ app.post('/api/team/register', async (req, res) => {
 
     if (isDbConnected) {
       try {
-        const newSession = new TeamSession({ session_id: sessionId, pin, title });
-        await newSession.save();
+        const { data, error } = await supabase
+          .from('team_sessions')
+          .insert([{ session_id: sessionId, pin, title }]);
+          
+        if (error) throw error;
         return res.json({ success: true, mode: 'database' });
       } catch (dbErr) {
-        console.warn('Failed to save to DB, falling back to memory:', dbErr.message);
+        console.warn('Failed to save to Supabase, falling back to memory:', dbErr.message);
       }
     }
 
@@ -327,7 +344,12 @@ app.get('/api/team/resolve/:pin', async (req, res) => {
 
     // 2. Check Database if connected
     if (isDbConnected) {
-      const session = await TeamSession.findOne({ pin });
+      const { data: session, error } = await supabase
+        .from('team_sessions')
+        .select('*')
+        .eq('pin', pin)
+        .single();
+        
       if (session) {
         return res.json({ success: true, sessionId: session.session_id, title: session.title, mode: 'database' });
       }
@@ -347,7 +369,25 @@ app.post('/api/team/messages/save', async (req, res) => {
     const { sessionId, message } = req.body;
     if (!sessionId || !message) return res.status(400).json({ error: 'sessionId and message are required' });
 
-    // 1. Save to Memory store for immediate collaboration
+    // 1. Save to Supabase if connected
+    if (isDbConnected) {
+      try {
+        const { error } = await supabase
+          .from('chat_history')
+          .insert([{
+            session_id: sessionId,
+            role: message.role,
+            content: message.content || message.text,
+            attachments: message.attachments || null
+          }]);
+          
+        if (error) throw error;
+      } catch (dbErr) {
+        console.warn('Failed to save message to Supabase, falling back to memory:', dbErr.message);
+      }
+    }
+
+    // 2. Save to Memory store for fallback/collaborative speed
     if (!memoryMessages.has(sessionId)) {
       memoryMessages.set(sessionId, []);
     }
@@ -358,10 +398,8 @@ app.post('/api/team/messages/save', async (req, res) => {
       created_at: new Date()
     });
     
-    // Keep only last 100 messages in memory to prevent leaks
     if (sessionMsgs.length > 100) sessionMsgs.shift();
 
-    console.log(`Saved message to shared memory for session ${sessionId}`);
     res.json({ success: true });
   } catch (err) {
     console.error('Message Save Error:', err);
@@ -372,6 +410,29 @@ app.post('/api/team/messages/save', async (req, res) => {
 app.get('/api/team/messages/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
+    
+    // 1. Try Database First
+    if (isDbConnected) {
+      const { data: messages, error } = await supabase
+        .from('chat_history')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
+        
+      if (!error && messages && messages.length > 0) {
+        const formattedMessages = messages.map(m => ({
+          id: m.id,
+          role: m.role,
+          text: m.content,
+          content: m.content,
+          attachments: m.attachments,
+          created_at: m.created_at
+        }));
+        return res.json({ success: true, messages: formattedMessages });
+      }
+    }
+
+    // 2. Fallback to Memory
     const messages = memoryMessages.get(sessionId) || [];
     res.json({ success: true, messages });
   } catch (err) {

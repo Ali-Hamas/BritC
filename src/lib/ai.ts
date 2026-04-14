@@ -92,7 +92,11 @@ export class AIService {
         // 2. Multimodal Processing
         const allMessagesHasImages = messages.some(m => m.attachments?.some(a => a.type?.startsWith('image/')));
         if (allMessagesHasImages) {
-            model = VISION_MODEL;
+            // Force vision model for image handling with fallback
+            const visionModels = ['llama-3.2-90b-vision-preview', 'llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision'];
+            if (!visionModels.includes(model)) {
+                model = VISION_MODEL;
+            }
         }
 
         try {
@@ -124,8 +128,11 @@ export class AIService {
             return await GroqService.chat(groqMessages, model, apiKey);
         } catch (error: any) {
             console.error('BritC Engine Error:', error);
-            // Temporarily returning raw error to debug specific failure cause
-            return `⚠️ AI Error: ${error.message || "Failed to connect to context engine."}`;
+            const errMsg = error.message || '';
+            if (errMsg.includes('does not support image input') || errMsg.includes('clipboard') || errMsg.includes('MODEL_DOES_NOT_SUPPORT_VISION')) {
+                return 'Error: Your selected model does not support image processing. Please switch to a vision model in Settings (e.g., llama-3.2-90b-vision-preview).';
+            }
+            return `⚠️ AI Error: ${errMsg || "Failed to connect to context engine."}`;
         }
     }
 
