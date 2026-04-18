@@ -37,7 +37,7 @@ export default defineConfig({
         target: 'https://leadhunter.uk/api/jobs',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api\/lh-events\/([^\/]+)/, '/$1/events'),
+        rewrite: (path) => path.replace(/^\/api\/lh-events\/([^/]+)/, '/$1/events'),
       },
       // Proxy Sender API (/api/sender/...)
       '/api/sender': {

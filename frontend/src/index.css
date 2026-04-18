@@ -1,52 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #020617;
+  --color-background: #030712;
   --color-foreground: #f8fafc;
-  --color-primary: #38bdf8;
-  --color-primary-foreground: #0c4a6e;
-  --color-accent: #818cf8;
-  --color-accent-foreground: #1e1b4b;
+  --color-primary: #6366f1; /* Indigo 500 */
+  --color-primary-foreground: #ffffff;
+  --color-accent: #10b981; /* Emerald 500 */
+  --color-accent-foreground: #ffffff;
 
-  --background-image-glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+  --background-image-glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01));
 }
 
 @utility glass {
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
   background: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.03) 0%,
       rgba(255, 255, 255, 0.01) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 @utility glass-card {
-  @apply glass rounded-2xl p-6 transition-all duration-500 overflow-hidden relative;
+  @apply glass rounded-[24px] p-6 transition-all duration-500 overflow-hidden relative border border-white/5;
 
   &::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none;
+    @apply absolute inset-0 bg-gradient-to-br from-indigo-500/[0.05] to-transparent pointer-events-none;
   }
 
   &:hover {
-    @apply border-primary/30 shadow-primary/10 -translate-y-1;
-    background: rgba(255, 255, 255, 0.08);
+    @apply border-indigo-500/30 shadow-indigo-500/10 -translate-y-1;
+    background: rgba(255, 255, 255, 0.05);
   }
 }
 
 @utility grad-text {
   background-clip: text;
   color: transparent;
-  background-image: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  background-image: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
   font-weight: 800;
   letter-spacing: -0.025em;
 }
 
 body {
-  background-color: #020617;
-  color: #f8fafc;
+  background-color: #030712;
+  color: #f1f5f9;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
+  min-height: 100vh;
 }
 
 @keyframes shake {
@@ -61,8 +65,8 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.5; filter: blur(20px); }
-  50% { opacity: 0.8; filter: blur(30px); }
+  0%, 100% { opacity: 0.3; filter: blur(40px); }
+  50% { opacity: 0.6; filter: blur(60px); }
 }
 
 @utility animate-shake {
@@ -74,22 +78,24 @@ body {
 }
 
 @utility animate-pulse-glow {
-  animation: pulse-glow 4s ease-in-out infinite;
+  animation: pulse-glow 6s ease-in-out infinite;
 }
 
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  border: 2px solid transparent;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.15);
 }

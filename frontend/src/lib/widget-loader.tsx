@@ -20,7 +20,7 @@ const initBritCWidget = () => {
   }
 
   // 2. Get configuration from window object if provided
-  const config = (window as any).BritCConfig || {
+  const config = (window as Window & { BritCConfig?: { businessName: string } }).BritCConfig || {
     businessName: 'BritSync Partner'
   };
 

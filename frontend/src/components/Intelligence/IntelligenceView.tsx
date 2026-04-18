@@ -43,33 +43,34 @@ export const IntelligenceView = ({ profile }: { profile: any }) => {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <Zap className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl lg:text-3xl font-bold text-white flex items-center gap-3">
+            <Zap className="w-6 h-6 lg:w-8 lg:h-8 text-primary" />
             Intelligence Hub
           </h1>
-          <p className="text-slate-400 mt-1">Unified performance insights for {profile?.business_name || 'your business'}.</p>
+          <p className="text-slate-400 mt-1 text-sm lg:text-base">Unified performance insights for {profile?.business_name || 'your business'}.</p>
         </div>
-        <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl">
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl w-fit">
           <ShieldCheck className="w-5 h-5 text-emerald-400" />
-          <span className="text-xs font-bold text-white uppercase tracking-tighter">AI Pulse: Optimal</span>
+          <span className="text-[10px] lg:text-xs font-bold text-white uppercase tracking-tighter">AI Pulse: Optimal</span>
         </div>
       </header>
 
       {/* BritC Proactive Alerts */}
-      <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 animate-pulse">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-            <Zap className="w-5 h-5 text-indigo-400" />
+      <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4 lg:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-all" />
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+            <Zap className="w-5 h-5 lg:w-6 lg:h-6 text-indigo-400 animate-pulse" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-white">BritC Intelligence: High Conversion Window Detected</h4>
-            <p className="text-xs text-indigo-200/70">Local service demand in your region is up 18%. Suggest launching a targeted campaign.</p>
+            <h4 className="text-sm lg:text-base font-bold text-white">BritC Intelligence: High Conversion Window Detected</h4>
+            <p className="text-xs lg:text-sm text-indigo-200/70">Local service demand in your region is up 18%. Suggest launching a targeted campaign.</p>
           </div>
         </div>
-        <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-indigo-500/20">
+        <button className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 relative z-10 whitespace-nowrap">
           Launch Now
         </button>
       </div>
@@ -110,35 +111,35 @@ export const IntelligenceView = ({ profile }: { profile: any }) => {
         {/* Main Chart Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="glass-card p-6">
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white mb-8 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
               Growth Funnel
             </h3>
-            <div className="h-64 flex items-end justify-around px-4">
+            <div className="h-64 flex items-end justify-around px-2 lg:px-4">
               {[
                 { label: 'Leads', value: stats?.totalLeads || 10, color: 'bg-blue-500' },
                 { label: 'Outreach', value: (stats?.activeCampaigns || 1) * 10, color: 'bg-purple-500' },
                 { label: 'Converted', value: (stats?.documentsCreated || 5) * 5, color: 'bg-amber-500' },
                 { label: 'Forecast', value: 80, color: 'bg-primary' },
               ].map((bar) => (
-                <div key={bar.label} className="flex flex-col items-center gap-3 w-16 group">
+                <div key={bar.label} className="flex flex-col items-center gap-3 w-12 lg:w-16 group">
                   <div className="w-full relative">
                     <div 
-                      className={`w-full ${bar.color} rounded-t-xl opacity-20 transition-all group-hover:opacity-30`}
+                      className={`w-full ${bar.color} rounded-t-xl opacity-10 transition-all group-hover:opacity-20`}
                       style={{ height: '200px' }}
                     />
                     <div 
-                      className={`absolute bottom-0 w-full ${bar.color} rounded-t-xl shadow-lg transition-all group-hover:scale-105`}
-                      style={{ height: `${bar.value}%` }}
+                      className={`absolute bottom-0 w-full ${bar.color} rounded-t-xl shadow-lg transition-all duration-500 group-hover:scale-x-110`}
+                      style={{ height: `${Math.min(bar.value, 100)}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">{bar.label}</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{bar.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="glass-card p-5 bg-emerald-500/5 border-emerald-500/10">
               <h4 className="text-sm font-bold text-emerald-400 mb-2">Lead Quality Score</h4>
               <div className="flex items-end gap-2">
@@ -162,7 +163,7 @@ export const IntelligenceView = ({ profile }: { profile: any }) => {
               <Target className="w-5 h-5 text-emerald-400" />
               BritC Growth Recommendations
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {opportunities.map((opp, idx) => (
                 <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-500/30 transition-all cursor-pointer group">
                   <div className="flex justify-between items-start mb-2">
@@ -177,41 +178,43 @@ export const IntelligenceView = ({ profile }: { profile: any }) => {
         </div>
 
         {/* Sidebar: Recent Activity */}
-        <div className="glass-card p-6 flex flex-col h-full">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-slate-400" />
-            Recent Activity
-          </h3>
-          <div className="space-y-6 flex-1">
-            {activity.length > 0 ? activity.map((event) => (
-              <div key={event.id} className="relative pl-6 pb-6 last:pb-0 border-l border-white/10 group">
-                <div className="absolute left-[-5px] top-1 w-[9px] h-[9px] rounded-full bg-primary border border-slate-900 group-hover:scale-125 transition-all" />
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{event.type}</span>
-                    <span className="text-[10px] text-slate-500">{new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <div className="space-y-6">
+           <div className="glass-card p-6 flex flex-col h-full">
+            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-slate-400" />
+              Recent Activity
+            </h3>
+            <div className="space-y-6 flex-1">
+              {activity.length > 0 ? activity.map((event) => (
+                <div key={event.id} className="relative pl-6 pb-6 last:pb-0 border-l border-white/10 group">
+                  <div className="absolute left-[-5px] top-1 w-[9px] h-[9px] rounded-full bg-primary border border-slate-900 group-hover:scale-125 transition-all" />
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{event.type}</span>
+                      <span className="text-[10px] text-slate-500">{new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <h4 className="text-sm font-bold text-white group-hover:text-primary transition-colors">{event.title}</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">{event.description}</p>
                   </div>
-                  <h4 className="text-sm font-bold text-white group-hover:text-primary transition-colors">{event.title}</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">{event.description}</p>
                 </div>
-              </div>
-            )) : (
-              <div className="flex flex-col items-center justify-center p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
-                <Target className="w-8 h-8 text-slate-500 mb-3 opacity-20" />
-                <p className="text-xs text-slate-500 font-medium italic">No recent activity detected. Launch a campaign or scrape some leads to see data!</p>
-              </div>
-            )}
+              )) : (
+                <div className="flex flex-col items-center justify-center p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
+                  <Target className="w-8 h-8 text-slate-500 mb-3 opacity-20" />
+                  <p className="text-xs text-slate-500 font-medium italic">No recent activity detected.</p>
+                </div>
+              )}
+            </div>
+            <button 
+              onClick={async () => {
+                const report = await MetricsService.generateWeeklyReport(profile, stats, activity);
+                alert("AI Business Pulse Report:\n\n" + report);
+              }}
+              className="mt-8 w-full py-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs font-bold text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2 group shadow-lg shadow-indigo-500/5"
+            >
+              <Zap className="w-3 h-3 group-hover:animate-pulse" />
+              Generate Weekly AI Report
+            </button>
           </div>
-          <button 
-            onClick={async () => {
-              const report = await MetricsService.generateWeeklyReport(profile, stats, activity);
-              alert("AI Business Pulse Report:\n\n" + report);
-            }}
-            className="mt-6 w-full py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs font-bold text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all flex items-center justify-center gap-2 group"
-          >
-            <Zap className="w-3 h-3 group-hover:animate-pulse" />
-            Generate Weekly AI Report
-          </button>
         </div>
       </div>
     </div>
@@ -229,7 +232,7 @@ const StatCard = ({ title, value, icon, trend, positive }: { title: string, valu
         {trend}
       </div>
     </div>
-    <p className="text-slate-400 text-xs font-medium">{title}</p>
+    <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">{title}</p>
     <h4 className="text-2xl font-bold text-white mt-1">{value}</h4>
   </div>
 );

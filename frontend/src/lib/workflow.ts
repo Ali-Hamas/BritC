@@ -16,7 +16,7 @@ export interface WorkflowRule {
   name: string;
   trigger: 'lead_found' | 'campaign_sent' | 'campaign_reply' | 'document_created' | 'manual';
   action: 'create_task' | 'send_email' | 'generate_proposal' | 'notify_owner' | 'update_status';
-  actionConfig?: Record<string, any>;
+  actionConfig?: Record<string, unknown>;
   enabled: boolean;
   runCount: number;
   lastRun?: string;
@@ -95,7 +95,7 @@ export const WorkflowService = {
   },
 
   // Simulate firing a rule trigger
-  fireEvent(trigger: WorkflowRule['trigger'], context?: any): string[] {
+  fireEvent(trigger: WorkflowRule['trigger'], context?: Record<string, any>): string[] {
     const rules = this.getRules().filter(r => r.enabled && r.trigger === trigger);
     const results: string[] = [];
     

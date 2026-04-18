@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { Auth } from './components/Auth/Auth';
 import { Layout } from './components/Layout/Layout';
 import { useSession, signOut } from './lib/auth-client';
+import { ProfileService } from './lib/profiles';
+
 
 // Lazy-load components
 const Chatbot = React.lazy(() => import('./components/Chat/Chatbot').then(m => ({ default: m.Chatbot })));
@@ -36,9 +38,18 @@ const Spinner = () => (
 
 function App() {
   const { data: session, isPending: loading } = useSession();
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [onboarded, setOnboarded] = useState(false);
   const [activeTab, setActiveTab] = useState('assistant');
+  const [timedOut, setTimedOut] = useState(false);
+  const isAuthenticated = !!session;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) setTimedOut(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   useEffect(() => {
     if (session?.user) {
@@ -48,7 +59,10 @@ function App() {
           setProfile(existingProfile);
           setOnboarded(true);
         } else {
-          setProfile(session.user);
+          setProfile(new BusinessProfile({ 
+            businessName: session.user.name || '', 
+            userId: session.user.id 
+          }));
           setOnboarded(false);
         }
       });
@@ -59,6 +73,15 @@ function App() {
     await signOut();
     setProfile(null);
     setOnboarded(false);
+    // Clear chat persistence from localStorage
+    localStorage.removeItem('britsee_active_session');
+    localStorage.removeItem('britc_chat_sessions');
+    localStorage.removeItem('britc_active_session');
+  };
+
+  const handleOnboardingComplete = (newProfile: BusinessProfile) => {
+    setProfile(newProfile);
+    setOnboarded(true);
   };
 
   const renderView = () => {
@@ -73,10 +96,25 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-          <p className="text-slate-500 text-sm">Loading Britsee...</p>
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6">
+        <div className="text-center max-w-sm">
+          {!timedOut ? (
+            <>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+              <p className="text-slate-500 text-sm">Loading Britsee Assistant...</p>
+            </>
+          ) : (
+            <div className="glass-card border-rose-500/30">
+              <p className="text-rose-400 font-medium mb-4">Taking longer than expected...</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl text-sm transition-all"
+              >
+                Retry Connection
+              </button>
+              <p className="text-slate-600 text-xs mt-4 italic">Check if your backend is running on port 5010</p>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -105,11 +105,9 @@ function AddTaskModal({ onAdd, onClose }: { onAdd: (task: Omit<AutomationTask, '
 }
 
 function KanbanBoard() {
-  const [tasks, setTasks] = useState<AutomationTask[]>([]);
+  const [tasks, setTasks] = useState<AutomationTask[]>(() => WorkflowService.getTasks());
   const [showAddModal, setShowAddModal] = useState(false);
   const [dragTask, setDragTask] = useState<string | null>(null);
-
-  useEffect(() => { setTasks(WorkflowService.getTasks()); }, []);
 
   const refresh = () => setTasks(WorkflowService.getTasks());
 
@@ -239,13 +237,11 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 function DocumentCenter({ profile }: { profile: any }) {
-  const [docs, setDocs] = useState<BusinessDocument[]>([]);
+  const [docs, setDocs] = useState<BusinessDocument[]>(() => DocumentService.getAllDocuments());
   const [selectedDoc, setSelectedDoc] = useState<BusinessDocument | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateType, setGenerateType] = useState<string | null>(null);
   const [form, setForm] = useState({ client: '', amount: '', project: '', duration: '3 months' });
-
-  useEffect(() => { setDocs(DocumentService.getAllDocuments()); }, []);
 
   const handleGenerate = async (type: string) => {
     setIsGenerating(true);

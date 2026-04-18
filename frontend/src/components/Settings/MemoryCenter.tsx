@@ -5,15 +5,11 @@ import type { MemoryBlock, MemoryType } from '../../lib/memory';
 import { motion } from 'framer-motion';
 
 const MemoryCenter: React.FC = () => {
-  const [blocks, setBlocks] = useState<MemoryBlock[]>([]);
+  const [blocks, setBlocks] = useState<MemoryBlock[]>(() => MemoryService.getMemory());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-
-  useEffect(() => {
-    setBlocks(MemoryService.getMemory());
-  }, []);
 
   const handleEdit = (block: MemoryBlock) => {
     setEditingId(block.id);

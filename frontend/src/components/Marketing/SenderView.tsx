@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { 
   Mail, 
   Send, 
@@ -30,19 +30,22 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [isOffline, setIsOffline] = useState(false);
 
-  React.useEffect(() => {
-    loadCampaigns();
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      try {
+        const data = await SenderService.getCampaigns();
+        if (mounted) {
+          setCampaigns(data);
+          setIsOffline(false);
+        }
+      } catch {
+        if (mounted) setIsOffline(true);
+      }
+    };
+    init();
+    return () => { mounted = false; };
   }, []);
-
-  const loadCampaigns = async () => {
-    try {
-      const data = await SenderService.getCampaigns();
-      setCampaigns(data);
-      setIsOffline(false);
-    } catch (e) {
-      setIsOffline(true);
-    }
-  };
 
   const handleGenerateTemplate = async () => {
     setIsGenerating(true);
@@ -56,11 +59,11 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
       Include a subject line and body.`;
       
       const response = await AIService.chat([{ role: 'user', content: prompt }]);
-      setCampaign({
-        ...campaign,
+      setCampaign(prev => ({
+        ...prev,
         htmlContent: response,
         subject: `Partnership Inquiry from ${profile?.businessName}`
-      });
+      }));
     } finally {
       setIsGenerating(false);
     }
@@ -71,6 +74,7 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
     try {
       await SenderService.launchCampaign(campaign);
       alert('Campaign launched successfully!');
+      loadCampaigns();
     } finally {
       setIsLaunching(false);
     }
@@ -119,7 +123,7 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
                 <input 
                   type="text" 
                   value={campaign.campaignName}
-                  onChange={(e) => setCampaign({...campaign, campaignName: e.target.value})}
+                  onChange={(e) => setCampaign(prev => ({...prev, campaignName: e.target.value}))}
                   placeholder="e.g. Q1 Partnership Outreach"
                   className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-300 outline-none focus:border-indigo-500/50"
                 />
@@ -130,7 +134,7 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
                 <input 
                   type="text" 
                   value={campaign.subject}
-                  onChange={(e) => setCampaign({...campaign, subject: e.target.value})}
+                  onChange={(e) => setCampaign(prev => ({...prev, subject: e.target.value}))}
                   className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-300 outline-none focus:border-indigo-500/50"
                 />
               </div>
@@ -140,7 +144,7 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
                 <textarea 
                   rows={8}
                   value={campaign.htmlContent}
-                  onChange={(e) => setCampaign({...campaign, htmlContent: e.target.value})}
+                  onChange={(e) => setCampaign(prev => ({...prev, htmlContent: e.target.value}))}
                   className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-300 outline-none focus:border-indigo-500/50 font-mono text-sm leading-relaxed"
                 />
               </div>
@@ -150,7 +154,7 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
                 <input 
                   type="text" 
                   value={campaign.recipients.join(', ')}
-                  onChange={(e) => setCampaign({...campaign, recipients: e.target.value.split(',').map(s => s.trim())})}
+                  onChange={(e) => setCampaign(prev => ({...prev, recipients: e.target.value.split(',').map(s => s.trim())}))}
                   placeholder="e.g. hello@company.com, info@agency.co.uk"
                   className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-300 outline-none focus:border-indigo-500/50"
                 />

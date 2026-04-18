@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Send, Bot, Loader2, User, Copy,
   TrendingUp, FileText, Mail, CheckSquare, BarChart2,
@@ -17,6 +17,7 @@ import { TeamService } from '../../lib/team';
 import { ActivityService } from '../../lib/activity';
 import { PinEntryModal } from './PinEntryModal';
 import { getApiUrl } from '../../lib/api-config';
+import type { BusinessProfile } from '../../lib/profiles';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -369,7 +370,7 @@ const HistorySidebar = ({
 
 // ─── Browser Result Renderer ──────────────────────────────────────────────────
 
-const BrowserResultCard = ({ data }: { data: any; type?: string }) => {
+const BrowserResultCard = ({ data }: { data: Record<string, any>; type?: string }) => {
   const [showScreenshot, setShowScreenshot] = useState(false);
   const results: any[] = data?.results || [];
   const screenshot: string | undefined = data?.screenshot;
@@ -589,7 +590,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 
 // ─── Main Chatbot ─────────────────────────────────────────────────────────────
 
-export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () => void }) => {
+export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | null; onSignOut?: () => void }) => {
   const [sessions, setSessions] = useState<ChatSession[]>(loadSessions);
   const [activeSessionId, setActiveSessionId] = useState<string>(() => {
     return localStorage.getItem(ACTIVE_SESSION_KEY) || '';
@@ -649,6 +650,20 @@ export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () 
     return () => clearInterval(interval);
   }, []);
 
+  const createNewSession = useCallback(() => {
+    const id = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const newSession: ChatSession = {
+      id,
+      title: 'New Chat',
+      preview: '',
+      createdAt: new Date(),
+      messages: [],
+    };
+    setSessions(prev => [newSession, ...prev]);
+    setActiveSessionId(id);
+    ChatHistoryService.startNewSession(id);
+  }, []);
+
   // Create initial session if none
   useEffect(() => {
     if (sessions.length === 0) {
@@ -656,8 +671,7 @@ export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () 
     } else if (!activeSessionId || !sessions.find(s => s.id === activeSessionId)) {
       setActiveSessionId(sessions[0].id);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeSessionId, createNewSession, sessions]);
 
   // Show welcome message for empty active session
   useEffect(() => {
@@ -732,20 +746,6 @@ export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () 
     
     return () => clearInterval(activityInterval);
   }, [activeSession?.isTeam]);
-
-  const createNewSession = () => {
-    const id = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const newSession: ChatSession = {
-      id,
-      title: 'New Chat',
-      preview: '',
-      createdAt: new Date(),
-      messages: [],
-    };
-    setSessions(prev => [newSession, ...prev]);
-    setActiveSessionId(id);
-    ChatHistoryService.startNewSession(id);
-  };
 
   const createTeamChat = async () => {
     const userPin = window.prompt("Enter a 6-digit PIN for your team session (or leave default):", 
@@ -998,7 +998,7 @@ export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () 
   };
 
   return (
-    <div className="flex h-full bg-[#0d0d14] overflow-hidden rounded-2xl border border-white/5">
+    <div className="flex h-full bg-[#030712] overflow-hidden lg:rounded-2xl lg:border lg:border-white/5">
       {/* ─── History Sidebar (Left) ─── */}
         <HistorySidebar
           sessions={sessions}
@@ -1014,93 +1014,63 @@ export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () 
         />
 
       {/* ─── Main Chat Area ─── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#030712]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-black/20 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 border-b border-white/5 bg-white/[0.02] backdrop-blur-md flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center">
-              <Bot size={16} className="text-white" />
+            <div className="w-8 h-8 lg:w-9 lg:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Bot size={18} className="text-white" />
             </div>
-            <div>
-              <h2 className="font-semibold text-white text-sm">{activeSession?.title || 'Britsee'}</h2>
-              <p className="text-[11px] text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                Qwen Cloud · Active
+            <div className="min-w-0">
+              <h2 className="font-bold text-white text-xs lg:text-sm truncate max-w-[120px] lg:max-w-none">{activeSession?.title || 'Britsee'}</h2>
+              <p className="text-[10px] lg:text-[11px] text-emerald-400 flex items-center gap-1">
+                <span className="w-1 h-1 lg:w-1.5 lg:h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                <span className="truncate">AI Engine Active</span>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 lg:gap-2">
             <button
               onClick={handleShareChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all text-xs font-medium"
-              title="Share this chat"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-bold"
             >
               <Share2 size={12} /> Share
             </button>
             <button
               onClick={createNewSession}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-xs font-medium"
+              className="p-2 lg:px-3 lg:py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-xs font-bold"
+              title="New Chat"
             >
-              <Plus size={12} /> New Chat
+              <Plus size={14} className="lg:mr-1.5 inline" />
+              <span className="hidden lg:inline">New Chat</span>
             </button>
             <button
-              onClick={() => {
-                if (confirm('Clear this conversation?')) {
-                  setMessages([]);
-                  ChatHistoryService.clearMessages();
-                }
-              }}
-              className="p-2 rounded-xl hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all"
-              title="Clear chat"
+              onClick={() => { if (confirm('Clear conversation?')) { setMessages([]); ChatHistoryService.clearMessages(); } }}
+              className="p-2 rounded-xl hover:bg-rose-500/10 text-white/20 hover:text-rose-400 transition-all"
             >
               <Trash2 size={14} />
             </button>
           </div>
         </div>
-        {/* Team Activity Toast */}
-        <div className="relative">
-          <AnimatePresence>
-            {teamToast && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                className="absolute top-4 right-8 z-[100] bg-indigo-500/90 backdrop-blur-md border border-indigo-400/50 rounded-2xl p-4 shadow-2xl shadow-indigo-500/20 max-w-xs pointer-events-none"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <Zap size={18} className="text-white fill-white animate-pulse" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest leading-none mb-1">Live Activity</p>
-                    <p className="text-sm font-semibold text-white leading-tight">
-                      {teamToast.name} is <span className="text-indigo-200">{teamToast.action.toLowerCase()}</span>...
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 scrollbar-thin">
-          <AnimatePresence>
+        <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-6 lg:py-8 space-y-6 scrollbar-thin">
+          <AnimatePresence initial={false}>
             {messages.map(msg => (
               <MessageBubble key={msg.id} msg={msg} />
             ))}
           </AnimatePresence>
 
           {isLoading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/10">
                 <Bot size={14} className="text-white" />
               </div>
-              <div className="bg-white/8 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
+              <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-sm">
                 <div className="flex items-center gap-1.5">
                   {[0, 1, 2].map(i => (
-                    <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-                      className="w-2 h-2 bg-indigo-400 rounded-full" />
+                    <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3], scale: [0.9, 1.1, 0.9] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                      className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
                   ))}
                 </div>
               </div>
@@ -1113,10 +1083,10 @@ export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () 
         <AnimatePresence>
           {showQuickActions && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-              className="px-5 pb-3 flex flex-wrap gap-2">
+              className="px-4 lg:px-6 pb-4 flex flex-wrap gap-2 overflow-x-auto scrollbar-hide">
               {QUICK_ACTIONS.map((qa) => (
                 <button key={qa.label} onClick={() => handleSend(qa.prompt)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all hover:scale-105 ${qa.color}`}>
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] lg:text-xs font-bold transition-all hover:scale-105 active:scale-95 whitespace-nowrap shadow-lg shadow-black/20 ${qa.color}`}>
                   <qa.icon size={12} />{qa.label}
                 </button>
               ))}
@@ -1126,13 +1096,13 @@ export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () 
 
         {/* Attachment Preview */}
         {attachments.length > 0 && (
-          <div className="px-5 pb-2 flex flex-wrap gap-2">
+          <div className="px-4 lg:px-6 pb-3 flex flex-wrap gap-2">
             {attachments.map(a => (
-              <div key={a.id} className="flex items-center gap-2 bg-white/8 border border-white/10 rounded-xl px-3 py-1.5 text-xs">
-                {a.type.startsWith('image/') ? <Image size={12} className="text-blue-400" /> : <File size={12} className="text-orange-400" />}
-                <span className="text-white/70 truncate max-w-[120px]">{a.name}</span>
-                <button onClick={() => removeAttachment(a.id)} className="text-white/30 hover:text-red-400 transition-colors">
-                  <X size={11} />
+              <div key={a.id} className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl px-3 py-2 text-[11px] text-indigo-200">
+                {a.type.startsWith('image/') ? <Image size={12} /> : <File size={12} />}
+                <span className="truncate max-w-[100px] lg:max-w-[150px] font-medium">{a.name}</span>
+                <button onClick={() => removeAttachment(a.id)} className="ml-1 hover:text-white transition-colors">
+                  <X size={12} />
                 </button>
               </div>
             ))}
@@ -1140,32 +1110,28 @@ export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () 
         )}
 
         {/* Input Area */}
-        <div className="px-5 pb-5 flex-shrink-0">
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-indigo-500/50 transition-all">
-            <button onClick={handleFileClick} className="text-white/30 hover:text-indigo-400 transition-colors flex-shrink-0" title="Attach file">
-              <Paperclip size={16} />
-            </button>
-            <button onClick={handleImageClick} className="text-white/30 hover:text-blue-400 transition-colors flex-shrink-0" title="Attach image">
-              <Image size={16} />
+        <div className="px-4 lg:px-6 pb-6 lg:pb-8 flex-shrink-0">
+          <div className="max-w-4xl mx-auto flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 lg:py-4 focus-within:border-indigo-500/40 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all backdrop-blur-md shadow-2xl">
+            <button onClick={handleFileClick} className="text-white/20 hover:text-indigo-400 transition-colors p-1" title="Attach file">
+              <Paperclip size={18} />
             </button>
             <input
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Britsee anything..."
-              className="flex-1 bg-transparent text-sm text-white placeholder-white/25 outline-none"
+              placeholder="Ask Britsee for growth insights..."
+              className="flex-1 bg-transparent text-sm lg:text-base text-white placeholder-white/20 outline-none px-2 min-w-0"
             />
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
-              className="w-8 h-8 rounded-xl bg-indigo-500 disabled:bg-white/10 flex items-center justify-center text-white disabled:text-white/30 transition-all hover:bg-indigo-400 disabled:cursor-not-allowed flex-shrink-0"
+              className="w-10 h-10 rounded-xl bg-indigo-600 disabled:bg-white/5 flex items-center justify-center text-white disabled:text-white/10 transition-all hover:bg-indigo-500 active:scale-95 shadow-lg shadow-indigo-600/20 disabled:shadow-none flex-shrink-0"
             >
-              {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </button>
           </div>
-          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} accept=".pdf,.doc,.docx,.txt,.csv,.xlsx" />
-          <input ref={imageInputRef} type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*" />
+          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,image/*" />
         </div>
       </div>
 

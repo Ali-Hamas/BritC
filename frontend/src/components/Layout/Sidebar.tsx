@@ -37,8 +37,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
   }, []);
 
   return (
-    <aside className="w-64 bg-[#020617] border-r border-white/5 flex flex-col h-full z-50">
-      <div className="p-8">
+    <aside className="w-64 bg-[#030712] border-r border-white/5 flex flex-col h-full z-50">
+      <div className="p-6 lg:p-8">
         <div className="flex items-center gap-3 group cursor-pointer">
           <div className="h-10 w-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
             <Zap className="text-white fill-white" size={24} />

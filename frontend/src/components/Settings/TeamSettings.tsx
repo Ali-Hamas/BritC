@@ -13,7 +13,10 @@ const TeamSettings: React.FC = () => {
   const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member');
   const [isInviting, setIsInviting] = useState(false);
   const [invited, setInvited] = useState(false);
-  const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'join'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'join'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('invite') === 'true' ? 'members' : 'members';
+  });
   
   // State
   const [joinName, setJoinName] = useState('');
@@ -34,13 +37,6 @@ const TeamSettings: React.FC = () => {
   const plan = TeamService.getOwnerPlan();
 
   useEffect(() => {
-    // Check for invite link parameters
-    const params = new URLSearchParams(window.location.search);
-    const invite = params.get('invite');
-    if (invite === 'true') {
-      setActiveTab('members');
-    }
-
     const interval = setInterval(() => {
       setActivities(ActivityService.getActivities());
       setMembers(TeamService.getMembers());
