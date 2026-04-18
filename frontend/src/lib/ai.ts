@@ -92,13 +92,13 @@ export class AIService {
         // 2. Multimodal Processing
         const allMessagesHasImages = messages.some(m => m.attachments?.some(a => a.type?.startsWith('image/')));
         if (allMessagesHasImages) {
-            // Force vision model for image handling with fallback
             const visionModels = ['llama-3.2-90b-vision-preview', 'llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision'];
             if (!visionModels.includes(model)) {
                 model = VISION_MODEL;
             }
         }
 
+        // 3. Build messages for Groq
         try {
             const groqMessages: GroqMessage[] = [{ role: 'system', content: systemPrompt }];
 
@@ -109,7 +109,6 @@ export class AIService {
                     const contentParts: any[] = [{ type: 'text', text: m.content || "Analyze this image." }];
                     
                     for (const img of imageAttachments) {
-                        // Ensure we have a valid URL (Base64 data URL or public link)
                         const url = img.previewUrl || img.url;
                         if (url) {
                             contentParts.push({
@@ -130,7 +129,10 @@ export class AIService {
             console.error('BritC Engine Error:', error);
             const errMsg = error.message || '';
             if (errMsg.includes('does not support image input') || errMsg.includes('clipboard') || errMsg.includes('MODEL_DOES_NOT_SUPPORT_VISION')) {
-                return 'Error: Your selected model does not support image processing. Please switch to a vision model in Settings (e.g., llama-3.2-90b-vision-preview).';
+                return 'Error: Your selected model does not support image processing. To analyze images, please switch to a vision model in Settings (e.g., llama-3.2-90b-vision-preview).';
+            }
+            if (errMsg.includes('Failed to fetch') || errMsg.includes('NetworkError')) {
+                return 'Error: Cannot connect to AI service. Please ensure your Groq API key is valid and you have an internet connection.';
             }
             return `⚠️ AI Error: ${errMsg || "Failed to connect to context engine."}`;
         }

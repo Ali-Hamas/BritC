@@ -9,7 +9,8 @@
 // In DEV mode, we default to empty string so that relative paths work with the Vite proxy
 // In PROD mode, we default to the live secure domain
 const isDev = (import.meta as any).env.DEV;
-const API_BASE_URL = (import.meta as any).env.VITE_API_URL || (isDev ? '' : 'https://britsyncai.com/api');
+const API_BASE_URL = (import.meta as any).env.VITE_API_URL || 
+  (isDev ? '' : (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'https://britsyncai.com/api'));
 
 /**
  * Normalizes and returns a full API URL for a given endpoint path.

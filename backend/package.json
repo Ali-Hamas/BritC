@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
+    "dev": "node index.js",
     "seed": "node seed.js"
   },
   "dependencies": {
@@ -20,6 +20,8 @@
     "groq-sdk": "^0.37.0",
     "jsonwebtoken": "^9.0.3",
     "@supabase/supabase-js": "^2.39.0",
+    "better-auth": "latest",
+    "pg": "^8.11.3",
     "multer": "^2.0.2",
     "nodemailer": "^8.0.1",
     "puppeteer": "^24.40.0"

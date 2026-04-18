@@ -12,92 +12,41 @@ const {
   shouldStartAppointment,
   startAppointmentFlow
 } = require('./appointmentBooking');
-const jwt = require('jsonwebtoken');
-// const User = require('./models/User'); // Removed Mongoose model
+const jwt = require('jsonwebtoken'); 
+const { auth } = require('./auth');
+const { toNodeHandler } = require("better-auth/node");
 
 
 const app = express();
 const PORT = process.env.PORT || 5010;
 
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Ensure Uploads Directory Exists
+if (!fs.existsSync('./uploads')) {
+  fs.mkdirSync('./uploads');
+}
+
 // GROQ Setup
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ─── Authentication Routes ──────────────────────────────────────────────────
-const bcrypt = require('bcryptjs');
-
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { email, password, businessName } = req.body;
-
-    // Check if user already exists
-    const { data: existingUser, error: fetchError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email.toLowerCase())
-      .single();
-
-    if (existingUser) {
-      return res.status(400).json({ error: 'Account already exists with this email.' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const { data: user, error: insertError } = await supabase
-      .from('users')
-      .insert([{ email: email.toLowerCase(), password: hashedPassword, business_name: businessName }])
-      .select()
-      .single();
-
-    if (insertError) throw insertError;
-
-    // Generate JWT
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
-
-    res.status(201).json({
-      token,
-      user: {
-        email: user.email,
-        businessName: user.business_name,
-        plan: 'pro'
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Registration failed', details: err.message });
+// ─── Better Auth Integration ─────────────────────────────────────────────
+app.all("/api/auth/*", (req, res, next) => {
+  if (req.path.startsWith("/api/auth")) {
+    return toNodeHandler(auth)(req, res);
   }
+  next();
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email.toLowerCase())
-      .single();
-
-    if (!user) {
-      return res.status(404).json({ error: 'Account does not exist.' });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Incorrect password.' });
-    }
-
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '24h' });
-
-    res.json({
-      token,
-      user: {
-        email: user.email,
-        businessName: user.business_name,
-        plan: 'pro'
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Login failed', details: err.message });
-  }
-});
+// Helper to get session in routes
+async function getSession(req) {
+  return await auth.api.getSession({
+    headers: req.headers
+  });
+}
 
 // ─── Groq Proxy Route (Production) ─────────────────────────────────────────
 // This replaces the Vite dev proxy for production deployments
@@ -151,16 +100,6 @@ app.post('/api/groq', async (req, res) => {
   }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Ensure Uploads Directory Exists
-if (!fs.existsSync('./uploads')) {
-  fs.mkdirSync('./uploads');
-}
-
 // ─── Health Check ─────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({
@@ -185,11 +124,17 @@ const connectDB = async () => {
     const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
     if (error) throw error;
     isDbConnected = true;
-    console.log('Connected to Supabase (Britsee Business Data)');
+    console.log('\n--- Supabase Connection Status ---');
+    console.log('✅ Status: CONNECTED');
+    console.log(`🔗 URL: ${process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL}`);
+    console.log('----------------------------------\n');
   } catch (err) {
     isDbConnected = false;
-    console.error('Supabase connection error:', err.message);
-    console.warn('⚠️  Running in ZERO-CONFIG MEMORY MODE. Data will not persist across restarts.');
+    console.error('\n--- Supabase Connection Status ---');
+    console.log('❌ Status: FAILED');
+    console.log(`⚠️  Error: ${err.message}`);
+    console.log('💡 Tip: Check your .env file or Supabase project status.');
+    console.log('----------------------------------\n');
   }
 };
 
@@ -615,8 +560,20 @@ app.post('/api/browser/close', async (req, res) => {
 
 // Start Server - Only if not on Vercel
 if (!process.env.VERCEL) {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server successfully running on port ${PORT}`);
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Backend successfully running on port ${PORT}`);
+    console.log(`Connected to Supabase (Britsee Business Data)`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ ERROR: Port ${PORT} is already in use.`);
+      console.log(`💡 To fix this, stop any existing Britsee backend or use:`);
+      console.log(`   Windows: "netstat -ano | findstr :${PORT}" then "taskkill /F /PID <PID>"`);
+      console.log(`   macOS/Linux: "lsof -i :${PORT}" then "kill -9 <PID>"\n`);
+      process.exit(1);
+    } else {
+      console.error('❌ Server startup error:', err);
+      process.exit(1);
+    }
   });
 }
 

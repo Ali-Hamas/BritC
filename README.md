@@ -29,14 +29,15 @@
 1.  **Install dependencies**:
     ```bash
     npm install
-    cd server && npm install
+    cd backend && npm install
+    cd ../frontend && npm install
     ```
 2.  **Configure Environment**:
-    - Copy `.env.example` to `.env`.
-    - Copy `server/.env.example` to `server/.env`.
+    - Copy `frontend/.env.example` to `frontend/.env`.
+    - Copy `backend/.env.example` to `backend/.env`.
     - Fill in your API keys (Groq, LeadHunter, Supabase).
 3.  **Google Calendar**:
-    - Place your `service-account.json` in the `server/` directory.
+    - Place your `service-account.json` in the `backend/` directory.
 4.  **Launch**:
     ```bash
     npm run dev

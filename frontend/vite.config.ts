@@ -46,13 +46,13 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/sender/, ''),
       },
-      // Proxy Browser Agent (/api/browser/...) to local britsync-server
+      // Proxy Browser Agent (/api/browser/...) to local britsync-backend
       '/api/browser': {
         target: 'http://localhost:5010',
         changeOrigin: true,
-        secure: false, // Local server
+        secure: false, // Local backend
       },
-      // Proxy Chatbot API to local britsync-server
+      // Proxy Chatbot API to local britsync-backend
       '/api/bot': {
         target: 'http://localhost:5010',
         changeOrigin: true,

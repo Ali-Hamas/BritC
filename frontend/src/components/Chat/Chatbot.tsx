@@ -44,11 +44,9 @@ interface ChatSession {
 
 const QUICK_ACTIONS = [
   { icon: Search,       label: 'Web Research',    prompt: 'Research current trends in UK small business automation', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
-  { icon: TrendingUp,   label: 'Find Leads',      prompt: 'Find dentists in London for a cold outreach campaign', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
-  { icon: FileText,     label: 'Draft Invoice',   prompt: 'Create a professional invoice for web design services — £1,500', color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
-  { icon: Mail,         label: 'Email Campaign',  prompt: 'Write a cold email campaign for a digital marketing agency', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
-  { icon: CheckSquare,  label: 'Create Task',     prompt: 'Add a follow-up task to call all new leads tomorrow morning', color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
-  { icon: BarChart2,    label: 'Sales Report',    prompt: 'Generate a quick sales summary report for this quarter', color: 'text-pink-400 bg-pink-400/10 border-pink-400/20' },
+  { icon: Users,        label: 'Team Collab',     prompt: 'How can our team use AI to automate cold email outreach?', color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20' },
+  { icon: FileText,     label: 'Draft Content',   prompt: 'Draft a 300-word blog post about the benefits of AI for small agencies', color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
+  { icon: Mail,         label: 'Email Draft',     prompt: 'Write a professional email welcoming a new team member to Britsee', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -591,7 +589,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 
 // ─── Main Chatbot ─────────────────────────────────────────────────────────────
 
-export const Chatbot = ({ profile }: { profile?: any }) => {
+export const Chatbot = ({ profile, onSignOut }: { profile?: any; onSignOut?: () => void }) => {
   const [sessions, setSessions] = useState<ChatSession[]>(loadSessions);
   const [activeSessionId, setActiveSessionId] = useState<string>(() => {
     return localStorage.getItem(ACTIVE_SESSION_KEY) || '';
@@ -667,7 +665,9 @@ export const Chatbot = ({ profile }: { profile?: any }) => {
       setMessages([{
         id: 'init_' + activeSessionId,
         role: 'assistant',
-        content: `Hello! I'm **Britsee**, your Strategic Growth Partner powered by the **Britsee Strategic Engine**. 🚀\n\nI am functioning at peak optimal capacity. How shall we expand your business revenue or optimize your team's alignment today?`,
+        content: activeSession?.isTeam 
+          ? `Welcome to your **Team Collaboration Hub**! 👥\n\nThis is a shared session (PIN: **${activeSession.pin}**). Every message you send here is synchronized with your team. How can we work together today?`
+          : `Hello! I'm **Britsee**, your AI Assistant. 🚀\n\nI'm here to help you with research, marketing, and business automation. How can I assist you today?`,
         timestamp: new Date(),
       }]);
     }
@@ -705,7 +705,7 @@ export const Chatbot = ({ profile }: { profile?: any }) => {
       } catch (err) {
         console.warn('Sync Polling Error:', err);
       }
-    }, 4000);
+    }, 2000); // Increased polling frequency to 2s for "real-time" feel
 
     return () => clearInterval(pollInterval);
   }, [activeSessionId, activeSession?.isTeam, messages.length]);

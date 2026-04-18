@@ -16,14 +16,14 @@ export class BusinessProfile {
 }
 
 export const ProfileService = {
-    async saveProfile(profile: BusinessProfile) {
+    async saveProfile(profile: BusinessProfile, userId: string) {
         try {
             const profileData = {
                 business_name: profile.businessName,
                 industry: profile.industry,
                 summary: profile.audience,
                 goals: [profile.revenueGoal],
-                user_id: '00000000-0000-0000-0000-000000000000'
+                user_id: userId
             };
 
             const { data, error } = await supabase
@@ -41,6 +41,7 @@ export const ProfileService = {
             console.warn('Supabase save failed, using local storage fallback:', error);
             const localData = new BusinessProfile({
                 ...profile,
+                userId: userId,
                 id: 'local-session',
                 createdAt: new Date().toISOString()
             });
@@ -49,11 +50,13 @@ export const ProfileService = {
         }
     },
 
-    async getLatestProfile() {
+    async getLatestProfile(userId: string) {
+        if (!userId) return null;
         try {
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
+                .eq('user_id', userId)
                 .order('created_at', { ascending: false })
                 .maybeSingle();
 
@@ -68,7 +71,11 @@ export const ProfileService = {
         }
 
         const local = localStorage.getItem('britsync_profile');
-        return local ? JSON.parse(local) : null;
+        if (local) {
+            const parsed = JSON.parse(local);
+            if (parsed.userId === userId) return parsed;
+        }
+        return null;
     },
 
     mapToFrontend(dbProfile: any): BusinessProfile {

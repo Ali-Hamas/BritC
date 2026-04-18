@@ -21,13 +21,8 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSignOut }) => {
   const menuItems = [
-    { id: 'dashboard',   label: 'Dashboard',    icon: LayoutDashboard },
-    { id: 'assistant',   label: 'AI Assistant', icon: Bot },
-    { id: 'finance',     label: 'Finance Hub',  icon: BarChart3 },
-    { id: 'leadhunter',  label: 'Lead Hunter',  icon: Search },
-    { id: 'sender',      label: 'Email Sender', icon: Mail },
-    { id: 'operations',  label: 'Operations',   icon: Zap },
-    { id: 'settings',    label: 'Settings',     icon: Settings },
+    { id: 'assistant',   label: 'Chat & Team',  icon: Bot },
+    { id: 'profile',     label: 'Profile',      icon: Settings },
   ];
 
   const [activeMembers, setActiveMembers] = React.useState<{name: string, lastAction: string}[]>([]);
@@ -102,25 +97,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
         </div>
       )}
 
-      <div className="p-6">
-        <div className="bg-slate-900/40 rounded-2xl border border-white/5 p-4 space-y-4">
-           <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Growth Plan</span>
-              <span className="text-[10px] font-bold text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded">Pro</span>
-           </div>
-           <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-indigo-500 w-[75%]" />
-           </div>
-           <p className="text-[10px] text-slate-500 leading-tight">75% of monthly lead quota used. Upgrade for unlimited.</p>
-        </div>
-        
-        <button 
+      <div className="p-6 border-t border-white/5 space-y-4">
+        <button
           onClick={onSignOut}
-          className="w-full mt-6 flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-rose-400 transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200 group font-medium text-sm"
         >
-          <LogOut size={18} />
-          <span className="font-medium text-sm">Sign Out</span>
+          <LogOut size={18} className="text-slate-500 group-hover:text-rose-400" />
+          <span>Sign Out</span>
         </button>
+        <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest opacity-50 font-bold">Britsee Assistant v1.0</p>
       </div>
     </aside>
   );

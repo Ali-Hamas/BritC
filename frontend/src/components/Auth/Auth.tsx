@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Lock, ArrowRight, Mail, Zap, CheckCircle, Globe, Users } from 'lucide-react';
-import { getApiUrl } from '../../lib/api-config';
+import { signIn, signUp } from '../../lib/auth-client';
 
 interface AuthProps {
   onAuthenticated: (profile: any) => void;
@@ -15,7 +15,6 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
   // Login/Register States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [businessName, setBusinessName] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,23 +22,17 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
     setError('');
     
     try {
-      const response = await fetch(getApiUrl('/auth/login'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const { error: authError } = await signIn.email({
+        email,
+        password,
+        callbackURL: "/"
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+      if (authError) {
+        throw new Error(authError.message || 'Login failed');
       }
-
-      // Store token and profile
-      localStorage.setItem('britsync_token', data.token);
-      localStorage.setItem('britsync_profile', JSON.stringify(data.user));
-
-      onAuthenticated(data.user);
+      
+      onAuthenticated({});
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -53,21 +46,16 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
     setError('');
     
     try {
-      const response = await fetch(getApiUrl('/auth/register'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, businessName }),
+      const { error: authError } = await signUp.email({
+        email,
+        password,
+        name: email.split('@')[0], // Default name from email
+        callbackURL: "/"
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+      if (authError) {
+        throw new Error(authError.message || 'Registration failed');
       }
-
-      // Store token and profile
-      localStorage.setItem('britsync_token', data.token);
-      localStorage.setItem('britsync_profile', JSON.stringify(data.user));
 
       onStartOnboarding();
     } catch (err: any) {
@@ -188,22 +176,6 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
                   </div>
                 </div>
 
-                {activeMode === 'register' && (
-                  <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Business Name</label>
-                    <div className="relative">
-                      <Zap className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                      <input 
-                        type="text" 
-                        required
-                        value={businessName}
-                        onChange={e => setBusinessName(e.target.value)}
-                        placeholder="e.g. Acme Agency"
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-slate-200 outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700 font-medium"
-                      />
-                    </div>
-                  </div>
-                )}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{activeMode === 'register' ? 'Set Password' : 'Password'}</label>
                   <div className="relative">
