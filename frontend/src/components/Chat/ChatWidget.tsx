@@ -201,7 +201,7 @@ I'm currently auditing our strategic posture. To help me provide the most value,
             <div className="p-3 sm:p-4 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
-                  <Bot size={18} sm:size={22} className="text-white" />
+                  <Bot size={22} className="text-white" />
                 </div>
                 <div>
                   <h3 className="text-white font-bold text-xs sm:text-sm">BritC Growth Partner</h3>
@@ -217,13 +217,13 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                   title="Clear Chat History"
                   className="p-1.5 sm:p-2 hover:bg-white/10 rounded-lg transition-colors text-white/50 hover:text-white"
                 >
-                  <MessageSquare size={14} sm:size={16} />
+                  <MessageSquare size={16} />
                 </button>
                 <button 
                   onClick={() => setIsOpen(false)}
                   className="p-1.5 sm:p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white"
                 >
-                  <X size={18} sm:size={20} />
+                  <X size={20} />
                 </button>
               </div>
             </div>
@@ -235,7 +235,7 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                   <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex-shrink-0 flex items-center justify-center ${
                     msg.role === 'user' ? 'bg-indigo-600' : 'bg-white/5 border border-white/10'
                   }`}>
-                    {msg.role === 'user' ? <User size={12} sm:size={14} className="text-white" /> : <Bot size={12} sm:size={14} className="text-indigo-400" />}
+                    {msg.role === 'user' ? <User size={14} className="text-white" /> : <Bot size={14} className="text-indigo-400" />}
                   </div>
                   <div className={`max-w-[85%] px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm leading-relaxed ${
                     msg.role === 'user' 
@@ -254,7 +254,7 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                             {att.previewUrl ? (
                               <img src={att.previewUrl} alt={att.name} className="w-5 h-5 sm:w-6 sm:h-6 rounded object-cover" />
                             ) : (
-                              <FileIcon size={10} sm:size={12} className="text-indigo-300" />
+                              <FileIcon size={12} className="text-indigo-300" />
                             )}
                             <span className="truncate max-w-[60px] sm:max-w-[80px]">{att.name}</span>
                           </div>
@@ -267,7 +267,7 @@ I'm currently auditing our strategic posture. To help me provide the most value,
               {isLoading && (
                 <div className="flex gap-2 sm:gap-3">
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center animate-pulse">
-                    <Bot size={12} sm:size={14} className="text-indigo-400" />
+                    <Bot size={14} className="text-indigo-400" />
                   </div>
                   <div className="bg-[#0d1526] px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl rounded-tl-none border border-white/5 flex gap-1">
                     {[0, 1, 2].map(i => (
@@ -296,14 +296,14 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                         {att.previewUrl ? (
                           <img src={att.previewUrl} alt={att.name} className="w-5 h-5 sm:w-6 sm:h-6 rounded object-cover" />
                         ) : (
-                          <FileIcon size={10} sm:size={12} className="text-indigo-400" />
+                          <FileIcon size={12} className="text-indigo-400" />
                         )}
                         <span className="text-[9px] sm:text-[10px] text-white truncate max-w-[60px] sm:max-w-[80px]">{att.name}</span>
                         <button 
                           onClick={() => removeAttachment(att.id)}
                           className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white p-0.5"
                         >
-                          <X size={10} sm:size={12} />
+                          <X size={12} />
                         </button>
                       </div>
                     ))}
@@ -326,13 +326,13 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                       onClick={handleFileClick}
                       className="p-1 sm:p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
                     >
-                      <Paperclip size={14} sm:size={16} />
+                      <Paperclip size={16} />
                     </button>
                     <button 
                       onClick={handleImageClick}
                       className="p-1 sm:p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
                     >
-                      <ImageIcon size={14} sm:size={16} />
+                      <ImageIcon size={16} />
                     </button>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                   disabled={(!input.trim() && attachments.length === 0) || isLoading}
                   className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg sm:rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-500/20"
                 >
-                  <Send size={14} sm:size={18} className="text-white" />
+                  <Send size={18} className="text-white" />
                 </button>
               </div>
 
@@ -366,11 +366,11 @@ I'm currently auditing our strategic posture. To help me provide the most value,
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div key="close" initial={{ opacity: 0, rotate: -90 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 90 }}>
-              <X size={20} sm:size={24} className="text-white" />
+              <X size={24} className="text-white" />
             </motion.div>
           ) : (
             <motion.div key="open" initial={{ opacity: 0, rotate: 90 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: -90 }}>
-              <MessageSquare size={20} sm:size={24} className="text-white" />
+              <MessageSquare size={24} className="text-white" />
             </motion.div>
           )}
         </AnimatePresence>

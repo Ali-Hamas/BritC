@@ -45,8 +45,8 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
         if (currentCtx.role === 'owner') {
           const [mems, pulse, bns] = await Promise.all([
             TeamService.getTeamMembers(currentCtx.team.id),
-            GrowthService.getBusinessPulse(profile, userId),
-            GrowthService.detectBottlenecks(profile, userId)
+            GrowthService.getBusinessPulse(profile, uid),
+            GrowthService.detectBottlenecks(profile, uid)
           ]);
           setMembers(mems);
           setPulseText(pulse);

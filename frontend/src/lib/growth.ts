@@ -1,6 +1,5 @@
 import { FinanceService } from './finance';
 import { MetricsService } from './metrics';
-import { TeamService } from './team';
 import type { BusinessProfile } from './profiles';
 
 export interface GrowthInsight {
@@ -57,7 +56,7 @@ export const GrowthService = {
   /**
    * Detects bottlenecks proactively.
    */
-  async detectBottlenecks(profile: BusinessProfile | null, userId: string): Promise<GrowthInsight[]> {
+  async detectBottlenecks(profile: BusinessProfile | null, _userId: string): Promise<GrowthInsight[]> {
     const stats = await MetricsService.getStats(profile);
     const insights: GrowthInsight[] = [];
 
