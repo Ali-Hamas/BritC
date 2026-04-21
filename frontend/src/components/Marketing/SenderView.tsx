@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Mail, 
   Send, 
@@ -30,21 +30,18 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [isOffline, setIsOffline] = useState(false);
 
+  const loadCampaigns = async () => {
+    try {
+      const data = await SenderService.getCampaigns();
+      setCampaigns(data);
+      setIsOffline(false);
+    } catch {
+      setIsOffline(true);
+    }
+  };
+
   useEffect(() => {
-    let mounted = true;
-    const init = async () => {
-      try {
-        const data = await SenderService.getCampaigns();
-        if (mounted) {
-          setCampaigns(data);
-          setIsOffline(false);
-        }
-      } catch {
-        if (mounted) setIsOffline(true);
-      }
-    };
-    init();
-    return () => { mounted = false; };
+    loadCampaigns();
   }, []);
 
   const handleGenerateTemplate = async () => {

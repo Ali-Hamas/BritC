@@ -56,8 +56,8 @@ export const PinEntryModal: React.FC<PinEntryModalProps> = ({
                 <Lock size={32} />
               </div>
               
-              <h2 className="text-2xl font-bold text-white">Join Team Chat</h2>
-              <p className="text-gray-400 text-sm">Enter the 6-digit PIN shared by your team member to access this conversation.</p>
+              <h2 className="text-2xl font-bold text-white">Join Team</h2>
+              <p className="text-gray-400 text-sm">Enter team PIN to join. Your chats stay private, guided by the owner's strategy.</p>
 
               <form onSubmit={handleSubmit} className="w-full space-y-6 mt-4">
                 <div className="space-y-2">

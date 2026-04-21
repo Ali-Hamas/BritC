@@ -113,18 +113,18 @@ app.get('/api/health', (req, res) => {
 });
 
 // ─── Database Connection ──────────────────────────────────────────────────
-// TeamSession model removed (using Supabase)
+// Team Chat is now fully Supabase-based (tables: teams, team_members,
+// team_memory). The backend only needs a health probe.
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/britsee';
 let isDbConnected = false;
-const memorySessions = new Map();
-const memoryMessages = new Map(); // sessionId -> Message[]
-
-let cachedConnection = null;
 
 const connectDB = async () => {
   try {
-    const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+    // Probe the `teams` table — present in every current deployment.
+    // Any auth/config problem surfaces here before routes start failing.
+    const { error } = await supabase
+      .from('teams')
+      .select('id', { count: 'exact', head: true });
     if (error) throw error;
     isDbConnected = true;
     console.log('\n--- Supabase Connection Status ---');
@@ -136,7 +136,7 @@ const connectDB = async () => {
     console.error('\n--- Supabase Connection Status ---');
     console.log('❌ Status: FAILED');
     console.log(`⚠️  Error: ${err.message}`);
-    console.log('💡 Tip: Check your .env file or Supabase project status.');
+    console.log('💡 Tip: Verify SUPABASE_URL/SUPABASE_KEY and run backend/sql/fix_all_schema.sql.');
     console.log('----------------------------------\n');
   }
 };
@@ -247,147 +247,11 @@ app.post('/api/bot/chat', async (req, res) => {
   }
 });
 
-// ─── Team Session Management ───────────────────────────────────────────────
-
-app.post('/api/team/register', async (req, res) => {
-  try {
-    const { sessionId, pin, title } = req.body;
-    if (!sessionId || !pin) return res.status(400).json({ error: 'sessionId and pin are required' });
-
-    if (isDbConnected) {
-      try {
-        const { data, error } = await supabase
-          .from('team_sessions')
-          .insert([{ session_id: sessionId, pin, title }]);
-
-        if (error) throw error;
-        return res.json({ success: true, mode: 'database' });
-      } catch (dbErr) {
-        console.warn('Failed to save to Supabase, falling back to memory:', dbErr.message);
-      }
-    }
-
-    // Fallback to Memory Store
-    memorySessions.set(pin, { sessionId, title, created_at: new Date() });
-    if (!memoryMessages.has(sessionId)) {
-      memoryMessages.set(sessionId, []);
-    }
-    console.log(`Registered team session ${pin} in memory mode.`);
-    res.json({ success: true, mode: 'memory' });
-  } catch (err) {
-    console.error('Team Register Error:', err);
-    res.status(500).json({ error: 'Failed to register team session' });
-  }
-});
-
-app.get('/api/team/resolve/:pin', async (req, res) => {
-  try {
-    const { pin } = req.params;
-
-    // 1. Check Memory Mode First
-    if (memorySessions.has(pin)) {
-      const session = memorySessions.get(pin);
-      return res.json({ success: true, sessionId: session.sessionId, title: session.title, mode: 'memory' });
-    }
-
-    // 2. Check Database if connected
-    if (isDbConnected) {
-      const { data: session, error } = await supabase
-        .from('team_sessions')
-        .select('*')
-        .eq('pin', pin)
-        .single();
-
-      if (session) {
-        return res.json({ success: true, sessionId: session.session_id, title: session.title, mode: 'database' });
-      }
-    }
-
-    res.status(404).json({ error: 'Session not found' });
-  } catch (err) {
-    console.error('Team Resolve Error:', err);
-    res.status(500).json({ error: 'Failed to resolve team session' });
-  }
-});
-
-// ─── Team Message Shared Bank ──────────────────────────────────────────────
-
-app.post('/api/team/messages/save', async (req, res) => {
-  try {
-    const { sessionId, message } = req.body;
-    if (!sessionId || !message) return res.status(400).json({ error: 'sessionId and message are required' });
-
-    // 1. Save to Supabase if connected
-    if (isDbConnected) {
-      try {
-        const { error } = await supabase
-          .from('chat_history')
-          .insert([{
-            session_id: sessionId,
-            role: message.role,
-            content: message.content || message.text,
-            attachments: message.attachments || null
-          }]);
-
-        if (error) throw error;
-      } catch (dbErr) {
-        console.warn('Failed to save message to Supabase, falling back to memory:', dbErr.message);
-      }
-    }
-
-    // 2. Save to Memory store for fallback/collaborative speed
-    if (!memoryMessages.has(sessionId)) {
-      memoryMessages.set(sessionId, []);
-    }
-    const sessionMsgs = memoryMessages.get(sessionId);
-    sessionMsgs.push({
-      ...message,
-      id: message.id || `msg_${Date.now()}`,
-      created_at: new Date()
-    });
-
-    if (sessionMsgs.length > 100) sessionMsgs.shift();
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Message Save Error:', err);
-    res.status(500).json({ error: 'Failed to save message to shared bank' });
-  }
-});
-
-app.get('/api/team/messages/:sessionId', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-
-    // 1. Try Database First
-    if (isDbConnected) {
-      const { data: messages, error } = await supabase
-        .from('chat_history')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: true });
-
-      if (!error && messages && messages.length > 0) {
-        const formattedMessages = messages.map(m => ({
-          id: m.id,
-          role: m.role,
-          text: m.content,
-          content: m.content,
-          attachments: m.attachments,
-          created_at: m.created_at
-        }));
-        return res.json({ success: true, messages: formattedMessages });
-      }
-    }
-
-    // 2. Fallback to Memory
-    const messages = memoryMessages.get(sessionId) || [];
-    res.json({ success: true, messages });
-  } catch (err) {
-    console.error('Message Load Error:', err);
-    res.status(500).json({ error: 'Failed to load messages from shared bank' });
-  }
-});
+// ─── Legacy Team Session Routes REMOVED ─────────────────────────────────
+// Team Chat is now fully client-side via Supabase (teams / team_members /
+// team_memory tables). The old PIN-based shared-room flow was replaced by
+// the "chatbot inside a chatbot" model — each member has a private chat
+// guided silently by the moderator's strategic memory.
 
 // ─── LeadHunter + Sender API Proxy ──────────────────────────────────────────
 const LEADHUNTER_BASE = 'https://leadhunter.uk';
@@ -445,7 +309,7 @@ app.all('/api/lh/standard/*', async (req, res) => {
 
 app.get('/api/lh-events/:jobId', async (req, res) => {
   const { jobId } = req.params;
-  const apiKey = req.headers['x-api-key'] || LEADHUNTER_API_KEY;
+  const apiKey = req.headers['x-api-key'] || process.env.LEADHUNTER_API_KEY || DEFAULT_LH_KEY;
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Shield, Mail, Clock, CheckCircle, Activity, UserCheck, Lock, Copy, Zap, Crown, Search, Send, FileText, BarChart3, Globe, MoreVertical } from 'lucide-react';
 import { TeamService } from '../../lib/team';
-import type { TeamMember } from '../../lib/team';
 import { ActivityService } from '../../lib/activity';
 import type { TeamActivity } from '../../lib/activity';
 import { SettingsService } from '../../lib/settings';
 
 const TeamSettings: React.FC = () => {
-  const [members, setMembers] = useState<TeamMember[]>(TeamService.getMembers());
+  const [members, setMembers] = useState<any[]>(TeamService.getMembers() as any);
   const [activities, setActivities] = useState<TeamActivity[]>(ActivityService.getActivities());
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member');
@@ -32,14 +31,14 @@ const TeamSettings: React.FC = () => {
   const [directiveSuccess, setDirectiveSuccess] = useState(false);
   
   // Role Persistence
-  const [currentUser, setCurrentUser] = useState(TeamService.getCurrentMember());
+  const [currentUser, setCurrentUser] = useState<any>(TeamService.getCurrentMember());
 
   const plan = TeamService.getOwnerPlan();
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActivities(ActivityService.getActivities());
-      setMembers(TeamService.getMembers());
+      setMembers(TeamService.getMembers() as any);
     }, 5000);
     return () => clearInterval(interval);
   }, []);

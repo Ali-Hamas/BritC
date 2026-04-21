@@ -1,4 +1,7 @@
 import { supabase } from './supabase';
+import { getApiUrl } from './api-config';
+import { TeamService } from './team';
+import { authClient } from './auth-client';
 
 export interface StoredMessage {
   id?: string;
@@ -7,28 +10,45 @@ export interface StoredMessage {
   content: string;
   attachments?: any[];
   action_result?: any;
+  sender_id?: string;
+  sender_name?: string;
   created_at?: string;
 }
 
 const SESSION_KEY = 'britsee_active_session';
-import { getApiUrl } from './api-config';
+
+function getCurrentUserId(): string | null {
+  const session: any = (authClient as any)?.getSession?.();
+  return session?.user?.id || null;
+}
 
 export const ChatHistoryService = {
   // Get or create a stable session ID for this browser
   getSessionId(): string {
     let sessionId = localStorage.getItem(SESSION_KEY);
     if (!sessionId) {
-      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
       localStorage.setItem(SESSION_KEY, sessionId);
     }
     return sessionId;
   },
 
-  // Save a single message to Supabase (and local memory for team sessions)
+  // Save a single message.
+  // All new chats are personal. The team_id is stamped for aggregate metrics only,
+  // but messages remain entirely private via RLS.
   async saveMessage(msg: Omit<StoredMessage, 'session_id'>): Promise<void> {
     const sessionId = this.getSessionId();
-    
-    // 1. Save to Supabase
+    const isLegacyTeamSession = sessionId.startsWith('team_');
+    const userId = getCurrentUserId();
+
+    if (isLegacyTeamSession) {
+      console.warn('ChatHistoryService: Refusing to save to legacy shared team session. Start a new chat.');
+      return;
+    }
+
+    const teamCtx = TeamService.getCachedContext();
+    const teamId = teamCtx?.team?.id || null;
+
     try {
       await supabase.from('chat_history').insert({
         session_id: sessionId,
@@ -36,65 +56,51 @@ export const ChatHistoryService = {
         content: msg.content,
         attachments: msg.attachments || null,
         action_result: msg.action_result || null,
+        user_id: userId,
+        team_id: teamId, // For owner insights/metrics (no raw read access)
       });
     } catch (err) {
       console.warn('ChatHistoryService: Failed to save message to Supabase', err);
     }
-
-    // 2. If it's a team session, sync to local server's memory bank
-    if (sessionId.startsWith('team_')) {
-      try {
-        await fetch(getApiUrl(`/team/messages/save`), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId,
-            message: msg
-          })
-        });
-      } catch (err) {
-        console.warn('ChatHistoryService: Local memory sync failed', err);
-      }
-    }
   },
 
-  // Load all messages for the current session
+  // Load all messages for the current session.
   async loadMessages(): Promise<StoredMessage[]> {
     const sessionId = this.getSessionId();
-    let messages: StoredMessage[] = [];
+    const isLegacyTeamSession = sessionId.startsWith('team_');
 
-    // 1. Try Supabase
+    if (isLegacyTeamSession) {
+      // Legacy read-only fallback for old shared rooms
+      try {
+        const resp = await fetch(getApiUrl(`/team/messages/${sessionId}`));
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.success && Array.isArray(data.messages)) {
+            return data.messages.map((m: any) => ({
+              ...m,
+              content: m.content ?? m.text ?? '',
+              created_at: m.created_at || new Date().toISOString(),
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn('ChatHistoryService: Legacy team load failed', err);
+      }
+      return [];
+    }
+
+    // Personal session — Supabase direct
     try {
       const { data, error } = await supabase
         .from('chat_history')
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
-      
-      if (!error && data && data.length > 0) {
-        return data;
-      }
+      if (!error && data) return data;
     } catch (err) {
-      console.warn('ChatHistoryService: Supabase history load failed, trying local fallback...', err);
+      console.warn('ChatHistoryService: Supabase history load failed', err);
     }
-
-    // 2. Fallback to Local Server Memory bank (Crucial for Team collaboration without DB)
-    try {
-      const resp = await fetch(getApiUrl(`/team/messages/${sessionId}`));
-      if (resp.ok) {
-        const data = await resp.json();
-        if (data.success && data.messages) {
-          return data.messages.map((m: any) => ({
-            ...m,
-            created_at: m.created_at || new Date().toISOString()
-          }));
-        }
-      }
-    } catch (err) {
-      console.warn('ChatHistoryService: Local history load failed', err);
-    }
-
-    return messages;
+    return [];
   },
 
   // Clear all messages for the current session
@@ -109,88 +115,20 @@ export const ChatHistoryService = {
 
   // Start a new session
   startNewSession(sessionId?: string): string {
-    const id = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const id = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     localStorage.setItem(SESSION_KEY, id);
     return id;
   },
 
-  // Register a new team session
-  async registerTeamSession(sessionId: string, pin: string, title: string): Promise<{ success: boolean; mode?: 'database' | 'memory' }> {
-    // 1. Try Supabase first
-    try {
-      const { error } = await supabase
-        .from('team_sessions')
-        .insert([{ session_id: sessionId, pin, title }]);
-      
-      if (!error) return { success: true, mode: 'database' };
-      console.warn('ChatHistoryService: Supabase registry failed, trying local fallback...', error);
-    } catch (err) {
-      console.warn('ChatHistoryService: Supabase unavailable, trying local fallback...', err);
-    }
-
-    // 2. Fallback to Local Server
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-      const resp = await fetch(getApiUrl('/team/register'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, pin, title }),
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      
-      if (resp.ok) {
-        return await resp.json();
-      }
-      return { success: false };
-    } catch (err) {
-      console.error('ChatHistoryService: Local fallback also failed', err);
-      return { success: false };
-    }
+  // @deprecated - Legacy functionality
+  async registerTeamSession(_sessionId: string, _pin: string, _title: string): Promise<{ success: boolean; mode?: 'database' | 'memory' }> {
+    console.warn('registerTeamSession is deprecated in the new team model.');
+    return { success: false };
   },
 
-  // Find a session ID by its PIN
-  async findSessionByPin(pin: string): Promise<{ sessionId: string; title: string; mode?: 'database' | 'memory' } | null> {
-    // 1. Try Supabase (Main)
-    try {
-      const { data, error } = await supabase
-        .from('team_sessions')
-        .select('session_id, title')
-        .eq('pin', pin)
-        .single();
-      
-      if (!error && data) {
-        return { sessionId: data.session_id, title: data.title, mode: 'database' };
-      }
-      console.warn('ChatHistoryService: PIN not found in Supabase, trying local fallback...');
-    } catch (err) {
-      console.warn('ChatHistoryService: Supabase lookup failed, trying local fallback...', err);
-    }
-
-    // 2. Fallback to Local Server
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-      const resp = await fetch(getApiUrl(`/team/resolve/${pin}`), {
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-
-      if (resp.ok) {
-        const data = await resp.json();
-        return { 
-          sessionId: data.sessionId, 
-          title: data.title, 
-          mode: data.mode 
-        };
-      }
-      return null;
-    } catch (err) {
-      console.error('ChatHistoryService: Local resolve failed', err);
-      return null;
-    }
+  // @deprecated - Legacy functionality
+  async findSessionByPin(_pin: string): Promise<{ sessionId: string; title: string; mode?: 'database' | 'memory' } | null> {
+    console.warn('findSessionByPin is deprecated in the new team model.');
+    return null;
   },
 };

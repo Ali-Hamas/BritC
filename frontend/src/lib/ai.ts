@@ -16,44 +16,35 @@ const BASE_SYSTEM_PROMPT = `You are Britsee (Business Revenue Intel & Growth Com
 You are not a simple chatbot; you are a reasoning partner. You are proactive, decisive, and dedicated to business growth. You speak refined British English.
 
 ## CORE CAPABILITIES:
-1. **STRATEGIC ANALYSIS**: You can look at business data, screenshots, and strategies to provide deep insights.
+1. **STRATEGIC ANALYSIS**: You analyze live business pulse (finance, ops) to provide deep, data-driven insights.
 2. **AUTONOMOUS TOOLING**: You have access to a Browser Agent, Lead Hunter, and Communication tools. 
-3. **VISUAL PERCEPTION**: You can see and analyze images/screenshots provided by the user. Use this to explain UI, data, or documents.
+3. **OPERATIONAL EXCELLENCE**: You detect bottlenecks and suggest immediate "what-if" scenarios for growth.
 
 ## TONE & VOICE:
-- **Proactive & Concise**: Suggest paths forward before being asked.
+- **Proactive & Concise**: Suggest paths forward before being asked. If you see underperforming KPIs in the context, mention them.
 - **Sophisticated & Professional**: Use terms like "optimise", "strategise", "orchestrate".
 - **High-Agency**: Instead of "I can help with...", say "I recommend we start with...".
 
 ## OPERATING PROTOCOLS:
-1. **GREETINGS**: Be warm but professional. Mention a growth-related topic to spark action, but NEVER use an [[ACTION]] tag for a simple greeting.
-2. **TOOL USAGE**: Only use [[ACTION]] tags when a specific business operation (leads, research, email, task) is CLEARLY requested by the user. Do NOT assume or hallucinate a need for a tool if the user is just chatting.
-3. **VISUAL ANALYSIS**: If an image is provided, focus your reasoning on the visual content first.
-4. **NO HALLUCINATIONS**: If you don't know something or a tool isn't requested, do NOT use action tags. Accuracy and context are paramount.
+1. **PROACTIVE GROWTH**: Always relate the conversation back to the business's current goals and financial health.
+2. **TOOL USAGE**: Only use [[ACTION]] tags when a specific business operation (leads, research, email, task) is CLEARLY requested or required to fix a bottleneck.
+3. **DATA AWARENESS**: Use the provided [BUSINESS PULSE] and [BOTTLENECKS] to ground your advice in reality.
 
 ## ACTION SPECIFICATIONS:
 - scrape_leads: {"country":"UK", "niches":["..."], "cities":["..."]}
 - research_web: {"query":"..."}
 - send_campaign: {"name":"...", "subject":"...", "context":"..."}
-- generate_document: {"docType":"proposal|invoice", "client":"...", "amount":0}
+- generate_document: {"docType":"proposal|invoice|pitch_deck", "client":"...", "amount":0}
 - add_task: {"title":"...", "priority":"high|medium|low"}
 - analyze_finance: {}
 - generate_email_template: {"audience":"...", "goal":"..."}
-
-EXAMPLE 1 (GREETING): 
-User: "How are you?"
-Assistant: "I am functioning at peak efficiency, thank you. I've been reviewing our latest market data. Shall we look into some new lead generation or perhaps update your strategic tasks for the day?" (NO ACTION)
-
-EXAMPLE 2 (ACTION):
-User: "Find me some leads for coffee shops in London"
-Assistant: "Understood. I will initiate the LeadHunter protocol for coffee shops across London. [[ACTION:scrape_leads:{"country":"UK", "niches":["Coffee Shops"], "cities":["London"]}]]"
 `;
 
 const MODERATOR_PROMPT = `MODE: MODERATOR (OWNER)
-You are the Strategic Architect for the CEO. Challenge messy reasoning and enforce strictly aligned memory.`;
+You are the Strategic Architect for the CEO. Challenge messy reasoning and enforce strictly aligned growth protocols.`;
 
 const TEAM_ALIGNMENT_PROMPT = `MODE: TEAM ALIGNMENT
-Guide team members strictly based on approved strategy. Do not reveal internal reasoning or report behavior to the owner.`;
+Guide team members strictly based on approved strategy and live business pulse. Do not reveal internal owner reasoning.`;
 
 // Primary Vision Model for Groq
 const VISION_MODEL = "llama-3.2-90b-vision-preview";
@@ -65,19 +56,42 @@ export class AIService {
             isWidget?: boolean; 
             isOwner?: boolean; 
             isTeamMode?: boolean; 
-            extraPrompt?: string 
+            extraPrompt?: string;
+            businessPulse?: string;
+            bottlenecks?: string;
         } = {}
     ): Promise<string> {
-        const { isWidget = false, isOwner = false, isTeamMode = false, extraPrompt } = options;
+        const { 
+            isWidget = false, 
+            isOwner = false, 
+            isTeamMode = false, 
+            extraPrompt,
+            businessPulse,
+            bottlenecks
+        } = options;
         
         // 1. Build the System Prompt
         let systemPrompt = isWidget ? "You are Britsee, a concise business assistant." : BASE_SYSTEM_PROMPT;
-        
+
         if (SettingsService.getSystemPrompt()) {
             systemPrompt += `\n\nUSER-DEFINED SYSTEM CORE:\n${SettingsService.getSystemPrompt()}`;
         }
-        
+
+        // Pull fresh moderator/team memory from Supabase before each response so
+        // members always respond under the latest directives set by the moderator.
+        // Non-blocking if it fails — we still have the local cache as fallback.
+        try { await MemoryService.autoRefresh(); } catch {}
+
+        // Inject Strategic Memory (moderator directives injected here for team members)
         systemPrompt += `\n\n${MemoryService.getFormattedContext()}`;
+
+        // Inject Live Business Data
+        if (businessPulse) {
+            systemPrompt += `\n\n${businessPulse}`;
+        }
+        if (bottlenecks) {
+            systemPrompt += `\n\n### DETECTED BOTTLENECKS\n${bottlenecks}`;
+        }
 
         if (isOwner && !isTeamMode) systemPrompt += `\n\n${MODERATOR_PROMPT}`;
         else if (isTeamMode) systemPrompt += `\n\n${TEAM_ALIGNMENT_PROMPT}`;

@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Send, Bot, Loader2, User, Copy,
-  TrendingUp, FileText, Mail, CheckSquare, BarChart2,
+  FileText, Mail,
   Search, ExternalLink, ChevronRight,
   Paperclip, Image, File, X, Plus, MessageSquare,
-  Clock, ChevronLeft, Trash2, Share2, Users, Lock, ChevronDown, Zap
+  Clock, ChevronLeft, Trash2, Share2, Users, Lock, ChevronDown, Zap, Menu
 } from 'lucide-react';
 import { AIService } from '../../lib/ai';
 import { parseAction, executeAction } from '../../lib/agent';
@@ -18,6 +18,7 @@ import { ActivityService } from '../../lib/activity';
 import { PinEntryModal } from './PinEntryModal';
 import { getApiUrl } from '../../lib/api-config';
 import type { BusinessProfile } from '../../lib/profiles';
+import { GrowthService } from '../../lib/growth';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -170,8 +171,9 @@ const HistorySidebar = ({
   collapsed,
   onToggle,
   backendStatus,
-  onCreateTeamChat,
   onJoinTeamChat,
+  isMobile,
+  onCloseMobile,
 }: {
   sessions: ChatSession[];
   activeSessionId: string;
@@ -181,8 +183,9 @@ const HistorySidebar = ({
   collapsed: boolean;
   onToggle: () => void;
   backendStatus: 'online' | 'offline' | 'checking';
-  onCreateTeamChat: () => void;
   onJoinTeamChat: () => void;
+  isMobile?: boolean;
+  onCloseMobile?: () => void;
 }) => {
   const [showTeamOptions, setShowTeamOptions] = useState(false);
   const groupedSessions = () => {
@@ -248,20 +251,71 @@ const HistorySidebar = ({
     );
   };
 
+  // Mobile view when sidebar is opened from hamburger menu
+  if (isMobile) {
+    return (
+      <div className="fixed inset-y-0 left-0 w-72 md:w-80 bg-[#030712] border-r border-white/5 flex flex-col z-50 transform transition-transform duration-300 shadow-2xl">
+        <div className="flex items-center justify-between px-3 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <Bot size={20} className="text-indigo-400" />
+            <span className="text-base font-semibold text-white">History</span>
+          </div>
+          <button onClick={onCloseMobile} className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all">
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="px-3 py-3 space-y-2">
+          <button
+            onClick={onNewChat}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-sm font-medium"
+          >
+            <Plus size={16} />
+            New Chat
+          </button>
+          
+          <button
+            onClick={onJoinTeamChat}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all text-sm font-medium"
+          >
+            <Users size={16} />
+            Join Team
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin">
+          {sessions.length === 0 ? (
+            <div className="text-center text-white/20 text-xs px-4 py-8">
+              <Clock size={24} className="mx-auto mb-2 opacity-40" />
+              No chats yet
+            </div>
+          ) : (
+            <>
+              <SessionGroup label="Today" items={groups.today} />
+              <SessionGroup label="Yesterday" items={groups.yesterday} />
+              <SessionGroup label="Previous" items={groups.older} />
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  // Collapsed view for desktop
   if (collapsed) {
     return (
-      <div className="w-12 flex flex-col items-center py-4 gap-3 border-r border-white/5">
-        <button onClick={onToggle} className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all" title="Expand history">
+      <div className="hidden md:flex w-10 lg:w-12 flex-col items-center py-3 lg:py-4 gap-2 lg:gap-3 border-r border-white/5 bg-black/10">
+        <button onClick={onToggle} className="p-1.5 md:p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all" title="Expand history">
           <ChevronRight size={16} />
         </button>
-        <button onClick={onNewChat} className="p-2 rounded-lg hover:bg-indigo-500/20 text-indigo-400 transition-all" title="New chat">
+        <button onClick={onNewChat} className="p-1.5 md:p-2 rounded-lg hover:bg-indigo-500/20 text-indigo-400 transition-all" title="New chat">
           <Plus size={16} />
         </button>
-        {sessions.slice(0, 6).map(s => (
+        {sessions.slice(0, 4).map(s => (
           <button
             key={s.id}
             onClick={() => onSelectSession(s.id)}
-            className={`p-2 rounded-lg transition-all ${s.id === activeSessionId ? 'bg-white/15 text-white' : 'text-white/30 hover:bg-white/5 hover:text-white'}`}
+            className={`p-1.5 md:p-2 rounded-lg transition-all ${s.id === activeSessionId ? 'bg-white/15 text-white' : 'text-white/30 hover:bg-white/5 hover:text-white'}`}
             title={s.title}
           >
             <MessageSquare size={14} />
@@ -272,20 +326,20 @@ const HistorySidebar = ({
   }
 
   return (
-    <div className="w-60 flex flex-col border-r border-white/5 bg-black/20">
+    <div className="hidden md:flex w-48 lg:w-60 flex-col border-r border-white/5 bg-black/20">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-3 border-b border-white/5">
+      <div className="flex items-center justify-between px-2 md:px-3 py-2 md:py-3 border-b border-white/5">
         <div className="flex items-center gap-2">
           <Bot size={16} className="text-indigo-400" />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-white">Britsee Assistant</span>
+            <span className="text-xs md:text-sm font-semibold text-white">Britsee</span>
             <div className="flex items-center gap-1">
               <div className={`w-1.5 h-1.5 rounded-full ${
                 backendStatus === 'online' ? 'bg-emerald-500 animate-pulse' : 
                 backendStatus === 'offline' ? 'bg-rose-500' : 'bg-amber-500'
               }`} />
-              <span className="text-[10px] text-white/40 font-medium lowercase">
-                {backendStatus === 'online' ? 'Engine Ready' : backendStatus === 'offline' ? 'Local Brain (Backend Offline)' : 'Syncing Engine...'}
+              <span className="text-[9px] md:text-[10px] text-white/40 font-medium lowercase truncate">
+                {backendStatus === 'online' ? 'Ready' : backendStatus === 'offline' ? 'Offline' : 'Syncing...'}
               </span>
             </div>
           </div>
@@ -296,19 +350,20 @@ const HistorySidebar = ({
       </div>
 
       {/* Actions */}
-      <div className="px-3 py-2 space-y-2">
+      <div className="px-2 md:px-3 py-2 space-y-1.5 md:space-y-2">
         <button
           onClick={onNewChat}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-sm font-medium"
+          className="w-full flex items-center gap-2 px-2 md:px-3 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-xs md:text-sm font-medium"
         >
           <Plus size={14} />
-          New Chat
+          <span className="hidden md:inline">New Chat</span>
+          <span className="md:hidden">New</span>
         </button>
 
         <div className="relative">
           <button
             onClick={() => setShowTeamOptions(!showTeamOptions)}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-sm font-medium ${
+            className={`w-full flex items-center justify-between px-2 md:px-3 py-2 rounded-xl transition-all text-xs md:text-sm font-medium ${
               showTeamOptions 
                 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' 
                 : 'bg-white/5 border border-white/5 text-white/60 hover:bg-white/10 hover:text-white'
@@ -330,18 +385,11 @@ const HistorySidebar = ({
                 className="absolute top-full left-0 w-full mt-1 p-1 bg-[#1a1a24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
               >
                 <button
-                  onClick={() => { onCreateTeamChat(); setShowTeamOptions(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/70 hover:bg-white/5 hover:text-white transition-all text-left"
-                >
-                  <Plus size={12} className="text-indigo-400" />
-                  Create Team Chat
-                </button>
-                <button
                   onClick={() => { onJoinTeamChat(); setShowTeamOptions(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/70 hover:bg-white/5 hover:text-white transition-all text-left"
+                  className="w-full flex items-center gap-2 px-2 md:px-3 py-2 rounded-lg text-xs text-white/70 hover:bg-white/5 hover:text-white transition-all text-left"
                 >
                   <Lock size={12} className="text-indigo-400" />
-                  Join Team Chat
+                  Join Team with PIN
                 </button>
               </motion.div>
             )}
@@ -352,9 +400,9 @@ const HistorySidebar = ({
       {/* Sessions */}
       <div className="flex-1 overflow-y-auto px-1 py-1 scrollbar-thin">
         {sessions.length === 0 ? (
-          <div className="text-center text-white/20 text-xs px-4 py-6">
+          <div className="text-center text-white/20 text-[10px] md:text-xs px-2 md:px-4 py-4 md:py-6">
             <Clock size={20} className="mx-auto mb-2 opacity-40" />
-            No conversations yet
+            No chats yet
           </div>
         ) : (
           <>
@@ -517,7 +565,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
     const parts = text.split(/(\*\*.*?\*\*|`[^`]+`|\n)/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
-      if (part.startsWith('`') && part.endsWith('`')) return <code key={i} className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-300 font-mono text-[11px]">{part.slice(1, -1)}</code>;
+      if (part.startsWith('`') && part.endsWith('`')) return <code key={i} className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-300 font-mono text-[10px] md:text-[11px]">{part.slice(1, -1)}</code>;
       if (part === '\n') return <br key={i} />;
       return <span key={i}>{part}</span>;
     });
@@ -528,16 +576,16 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={`flex gap-3 group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+      className={`flex gap-2 md:gap-3 group w-full ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
     >
       {/* Avatar */}
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-indigo-500' : 'bg-gradient-to-br from-violet-500 to-indigo-600'}`}>
+      <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-indigo-500' : 'bg-gradient-to-br from-violet-500 to-indigo-600'}`}>
         {isUser ? <User size={14} className="text-white" /> : <Bot size={14} className="text-white" />}
       </div>
 
       {/* Content */}
-      <div className={`max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-        <div className={`relative px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+      <div className={`max-w-[85%] md:max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-0.5 md:gap-1`}>
+        <div className={`relative px-3 py-2 md:px-4 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm leading-relaxed ${
           isUser
             ? 'bg-indigo-500 text-white rounded-tr-sm'
             : 'bg-white/8 border border-white/10 text-white/90 rounded-tl-sm'
@@ -548,21 +596,21 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
           {msg.attachments && msg.attachments.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
               {msg.attachments.map(a => (
-                <div key={a.id} className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2 py-1 text-xs">
+                <div key={a.id} className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2 py-1 text-[10px] md:text-xs">
                   {a.type.startsWith('image/') ? <Image size={11} className="text-blue-300" /> : <File size={11} className="text-orange-300" />}
-                  <span className="text-white/70 truncate max-w-[120px]">{a.name}</span>
+                  <span className="text-white/70 truncate max-w-[80px] md:max-w-[120px]">{a.name}</span>
                   {a.type.startsWith('image/') && a.previewUrl && (
-                    <img src={a.previewUrl} alt={a.name} className="mt-1.5 w-full max-w-[200px] rounded-lg" />
+                    <img src={a.previewUrl} alt={a.name} className="mt-1.5 w-full max-w-[150px] md:max-w-[200px] rounded-lg" />
                   )}
                 </div>
               ))}
             </div>
           )}
 
-          {/* Copy button */}
+          {/* Copy button - always visible on touch devices, hover on desktop */}
           <button
             onClick={handleCopy}
-            className={`absolute -top-2 ${isUser ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all`}
+            className={`absolute -top-2 ${isUser ? '-left-6 md:-left-8' : '-right-6 md:-right-8'} opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 md:p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all touch-manipulation`}
           >
             <Copy size={11} />
           </button>
@@ -570,19 +618,19 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 
         {/* Action Result */}
         {msg.isActionRunning && (
-          <div className="flex items-center gap-2 text-xs text-white/50 px-2">
+          <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs text-white/50 px-1 md:px-2">
             <Loader2 size={12} className="animate-spin text-indigo-400" />
-            <span>Executing action...</span>
+            <span>Executing...</span>
           </div>
         )}
         {msg.actionResult && <ActionResultCard result={msg.actionResult} />}
 
         {/* Timestamp */}
-        <span className="text-[10px] text-white/20 px-1">
+        <span className="text-[9px] md:text-[10px] text-white/20 px-1">
           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
 
-        {copied && <span className="text-[10px] text-emerald-400 px-1">Copied!</span>}
+        {copied && <span className="text-[9px] md:text-[10px] text-emerald-400 px-1">Copied!</span>}
       </div>
     </motion.div>
   );
@@ -590,7 +638,7 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
 
 // ─── Main Chatbot ─────────────────────────────────────────────────────────────
 
-export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | null; onSignOut?: () => void }) => {
+export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOut?: () => void }) => {
   const [sessions, setSessions] = useState<ChatSession[]>(loadSessions);
   const [activeSessionId, setActiveSessionId] = useState<string>(() => {
     return localStorage.getItem(ACTIVE_SESSION_KEY) || '';
@@ -598,9 +646,9 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinError, setPinError] = useState('');
-  const [teamToast, setTeamToast] = useState<{name: string, action: string} | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages: Message[] = activeSession?.messages || [];
@@ -628,7 +676,6 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Persist sessions
   useEffect(() => { saveSessions(sessions); }, [sessions]);
@@ -699,135 +746,21 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
     setShowQuickActions(userMessages.length === 0);
   }, [activeSessionId, messages.length]);
 
-  // Team Chat Synchronization Polling
-  useEffect(() => {
-    if (!activeSession?.isTeam || !activeSessionId) return;
-
-    const pollInterval = setInterval(async () => {
-      try {
-        const remoteMsgs = await ChatHistoryService.loadMessages();
-        // If we found more messages than we have locally, update the state
-        if (remoteMsgs.length > messages.length) {
-          console.log(`Detected ${remoteMsgs.length - messages.length} new messages. Syncing...`);
-          setMessages(remoteMsgs.map(m => ({
-            id: m.id || `sync_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-            role: m.role,
-            content: m.content,
-            timestamp: new Date(m.created_at || Date.now())
-          })));
-        }
-      } catch (err) {
-        console.warn('Sync Polling Error:', err);
-      }
-    }, 2000); // Increased polling frequency to 2s for "real-time" feel
-
-    return () => clearInterval(pollInterval);
-  }, [activeSessionId, activeSession?.isTeam, messages.length]);
-
-  // Team Action Notification Polling
-  useEffect(() => {
-    if (!activeSession?.isTeam) return;
-    
-    let lastActivityCount = ActivityService.getActivities().length;
-    
-    const activityInterval = setInterval(() => {
-      const currentActivities = ActivityService.getActivities();
-      if (currentActivities.length > lastActivityCount) {
-        const latest = currentActivities[0];
-        // Only show toast if it's someone else's action
-        const currentUser = TeamService.getCurrentMember();
-        if (latest.userName !== currentUser?.name) {
-          setTeamToast({ name: latest.userName, action: latest.action });
-          setTimeout(() => setTeamToast(null), 5000);
-        }
-        lastActivityCount = currentActivities.length;
-      }
-    }, 5000);
-    
-    return () => clearInterval(activityInterval);
-  }, [activeSession?.isTeam]);
-
-  const createTeamChat = async () => {
-    const userPin = window.prompt("Enter a 6-digit PIN for your team session (or leave default):", 
-      Math.floor(100000 + Math.random() * 900000).toString()
-    );
-    
-    if (userPin === null) return; // User cancelled
-    if (userPin.trim().length < 4) {
-      alert("PIN must be at least 4 digits for security.");
-      return;
-    }
-
-    const pin = userPin.trim();
-    const newSessionId = `team_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    const newSession: ChatSession = {
-      id: newSessionId,
-      title: 'New Team Chat',
-      preview: 'PIN: ' + pin,
-      createdAt: new Date(),
-      messages: [],
-      isTeam: true,
-      pin: pin
-    };
-
-    // Register with Supabase / Local Fallback
-    const result = await ChatHistoryService.registerTeamSession(newSessionId, pin, 'New Team Chat');
-    
-    if (result && result.success) {
-      setSessions(prev => [newSession, ...prev]);
-      setActiveSessionId(newSessionId);
-      localStorage.setItem(ACTIVE_SESSION_KEY, newSessionId);
-      
-      const modeMsg = result.mode === 'memory' 
-        ? "\n\n⚠️ NOTE: Running in Local Memory Mode. This session is temporary and will be lost if the server restarts." 
-        : "";
-        
-      alert(`Team Chat Created!\n\nPIN: ${pin}\n\nShare this PIN with your team to let them join this session.${modeMsg}`);
-    } else {
-      alert('Unable to establish a connection with the collaboration server.\n\nPlease verify that the BritSync backend service is active and accessible. Contact support if this issue persists.');
-    }
-  };
-
   const joinTeamChatByPin = async (pin: string) => {
     setIsJoining(true);
     setPinError('');
     try {
-      const sessionData = await ChatHistoryService.findSessionByPin(pin);
-      if (sessionData) {
-        // Check if we already have this session locally
-        const existing = sessions.find(s => s.id === sessionData.sessionId);
-        if (!existing) {
-          // Fetch existing messages for this session
-          // We need to temporarily set the session ID in service to load messages
-          localStorage.setItem(ACTIVE_SESSION_KEY, sessionData.sessionId);
-          const messages = await ChatHistoryService.loadMessages();
-          
-          const newSession: ChatSession = {
-            id: sessionData.sessionId,
-            title: sessionData.title,
-            preview: messages[messages.length - 1]?.content.slice(0, 50) || 'Joined team chat',
-            createdAt: new Date(),
-            messages: messages.map(m => ({
-              id: m.id || Math.random().toString(),
-              role: m.role,
-              content: m.content,
-              timestamp: new Date(m.created_at || Date.now())
-            })),
-            isTeam: true,
-            pin: pin
-          };
-          setSessions(prev => [newSession, ...prev]);
-        }
-        
-        setActiveSessionId(sessionData.sessionId);
-        localStorage.setItem(ACTIVE_SESSION_KEY, sessionData.sessionId);
-        setShowPinModal(false);
-      } else {
-        setPinError('Invalid PIN or session not found.');
-      }
-    } catch (err) {
-      setPinError('An error occurred. Please try again.');
+      const displayName = window.prompt("Enter your display name for the team:", "Member") || 'Member';
+      await TeamService.joinTeamByPin(pin, displayName);
+      
+      const teamCtx = await TeamService.getMyTeam(TeamService._uid()!);
+      const ownerName = teamCtx?.team?.title || 'the owner';
+      
+      alert(`Joined team — your chats are private, guided by ${ownerName}'s strategy.`);
+      setShowPinModal(false);
+      createNewSession();
+    } catch (err: any) {
+      setPinError(err.message || 'Invalid PIN or error joining team.');
     } finally {
       setIsJoining(false);
     }
@@ -846,7 +779,6 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
   };
 
   const handleFileClick = () => fileInputRef.current?.click();
-  const handleImageClick = () => imageInputRef.current?.click();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -858,7 +790,6 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
     }
     setAttachments(prev => [...prev, ...newAttachments]);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
   const removeAttachment = (id: string) => {
@@ -873,7 +804,9 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
     
     // Log sharing activity
     const currentUser = TeamService.getCurrentMember();
-    ActivityService.logActivity(currentUser.name, 'Shared Chat', `Generated a shareable link for: ${activeSession?.title || 'New Chat'}`, 'browser');
+    if (currentUser) {
+      ActivityService.logActivity(currentUser.name, 'Shared Chat', `Generated a shareable link for: ${activeSession?.title || 'New Chat'}`, 'browser');
+    }
   };
 
   const handleSend = async (text?: string) => {
@@ -914,6 +847,17 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
     const britcId = `b_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     try {
+      // SME Growth Partner: Fetch live pulse and bottlenecks
+      const userId = TeamService._uid();
+      let businessPulse = "";
+      let bottlenecksText = "";
+      
+      if (userId) {
+        businessPulse = await GrowthService.getBusinessPulse(profile, userId);
+        const bns = await GrowthService.detectBottlenecks(profile, userId);
+        bottlenecksText = bns.map(b => `- [${b.impact.toUpperCase()}] ${b.title}: ${b.description}`).join('\n');
+      }
+
       let response = "";
       const lower = fullContent.toLowerCase();
       const appointmentTriggers = ['book', 'schedule', 'appointment', 'call', 'meeting', 'discovery', 'talk to someone'];
@@ -930,7 +874,7 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
             body: JSON.stringify({ 
               chatInput: fullContent, 
               sessionId: activeSessionId || 'dashboard-user',
-              metadata: { isOwner, isTeamMode }
+              metadata: { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText }
             })
           });
           
@@ -943,14 +887,14 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
           // Fallback to standard AI if backend is down
           response = await AIService.chat(
             [...messages, userMsg].map((m: any) => ({ role: m.role, content: m.content, attachments: m.attachments })),
-            { isOwner, isTeamMode }
+            { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText }
           );
         }
       } else {
         // Standard AI Service (Groq) with Vision Support
         response = await AIService.chat(
           [...messages, userMsg].map((m: any) => ({ role: m.role, content: m.content, attachments: m.attachments })),
-          { isOwner, isTeamMode }
+          { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText }
         );
       }
 
@@ -998,63 +942,90 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
   };
 
   return (
-    <div className="flex h-full bg-[#030712] overflow-hidden lg:rounded-2xl lg:border lg:border-white/5">
+    <div className="flex h-full w-full bg-[#030712] overflow-hidden relative">
+      {/* Mobile Overlay */}
+      {showMobileSidebar && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setShowMobileSidebar(false)}
+        />
+      )}
+      
       {/* ─── History Sidebar (Left) ─── */}
         <HistorySidebar
           sessions={sessions}
           activeSessionId={activeSessionId}
-          onSelectSession={setActiveSessionId}
-          onNewChat={createNewSession}
+          onSelectSession={(id) => { setActiveSessionId(id); setShowMobileSidebar(false); }}
+          onNewChat={() => { createNewSession(); setShowMobileSidebar(false); }}
           onDeleteSession={deleteSession}
           collapsed={isSidebarCollapsed}
           onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           backendStatus={backendStatus}
-          onCreateTeamChat={createTeamChat}
-          onJoinTeamChat={() => setShowPinModal(true)}
+          onJoinTeamChat={() => { setShowPinModal(true); setShowMobileSidebar(false); }}
+          isMobile={showMobileSidebar}
+          onCloseMobile={() => setShowMobileSidebar(false)}
         />
 
       {/* ─── Main Chat Area ─── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#030712]">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#030712] h-full">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 border-b border-white/5 bg-white/[0.02] backdrop-blur-md flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 lg:w-9 lg:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Bot size={18} className="text-white" />
+        <div className="flex flex-col border-b border-white/5 bg-white/[0.02] backdrop-blur-md flex-shrink-0">
+          {TeamService.getCachedContext()?.team && (
+            <div className="px-3 py-1.5 bg-indigo-500/10 flex items-center justify-center gap-2 border-b border-white/5">
+              <Zap size={10} className="text-indigo-400 animate-pulse" />
+              <span className="text-[9px] md:text-[10px] font-black text-indigo-400 uppercase tracking-widest truncate">
+                Team Mode: {TeamService.getCachedContext()?.team?.title || 'Owner'}
+              </span>
             </div>
-            <div className="min-w-0">
-              <h2 className="font-bold text-white text-xs lg:text-sm truncate max-w-[120px] lg:max-w-none">{activeSession?.title || 'Britsee'}</h2>
-              <p className="text-[10px] lg:text-[11px] text-emerald-400 flex items-center gap-1">
-                <span className="w-1 h-1 lg:w-1.5 lg:h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                <span className="truncate">AI Engine Active</span>
-              </p>
+          )}
+          <div className="flex items-center justify-between px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4">
+            <div className="flex items-center gap-2 md:gap-3">
+              {/* Mobile Menu Button */}
+              <button 
+                onClick={() => setShowMobileSidebar(true)}
+                className="md:hidden p-1.5 rounded-lg hover:bg-white/10 text-white/60 transition-colors"
+              >
+                <Menu size={18} />
+              </button>
+              <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <Bot size={18} className="text-white" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-bold text-white text-xs md:text-sm truncate max-w-[100px] sm:max-w-[140px] md:max-w-[200px] lg:max-w-none">{activeSession?.title || 'Britsee'}</h2>
+                <p className="text-[10px] md:text-[11px] text-emerald-400 flex items-center gap-1">
+                  <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="truncate">AI Active</span>
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-1 lg:gap-2">
-            <button
-              onClick={handleShareChat}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-bold"
-            >
-              <Share2 size={12} /> Share
-            </button>
-            <button
-              onClick={createNewSession}
-              className="p-2 lg:px-3 lg:py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-xs font-bold"
-              title="New Chat"
-            >
-              <Plus size={14} className="lg:mr-1.5 inline" />
-              <span className="hidden lg:inline">New Chat</span>
-            </button>
-            <button
-              onClick={() => { if (confirm('Clear conversation?')) { setMessages([]); ChatHistoryService.clearMessages(); } }}
-              className="p-2 rounded-xl hover:bg-rose-500/10 text-white/20 hover:text-rose-400 transition-all"
-            >
-              <Trash2 size={14} />
-            </button>
+            <div className="flex items-center gap-1 md:gap-2">
+              <button
+                onClick={handleShareChat}
+                className="flex items-center gap-1.5 p-2 sm:px-2 md:px-3 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-bold"
+                title="Share"
+              >
+                <Share2 size={14} /> <span className="hidden sm:inline">Share</span>
+              </button>
+              <button
+                onClick={createNewSession}
+                className="p-2 md:px-3 md:py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-xs font-bold"
+                title="New Chat"
+              >
+                <Plus size={14} className="md:mr-1 inline" />
+                <span className="hidden md:inline">New</span>
+              </button>
+              <button
+                onClick={() => { if (confirm('Clear conversation?')) { setMessages([]); ChatHistoryService.clearMessages(); } }}
+                className="p-2 rounded-xl hover:bg-rose-500/10 text-white/20 hover:text-rose-400 transition-all"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-6 lg:py-8 space-y-6 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8 space-y-4 md:space-y-6 scrollbar-thin">
           <AnimatePresence initial={false}>
             {messages.map(msg => (
               <MessageBubble key={msg.id} msg={msg} />
@@ -1062,12 +1033,12 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
           </AnimatePresence>
 
           {isLoading && (
-            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/10">
+            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2 md:gap-3">
+              <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/10">
                 <Bot size={14} className="text-white" />
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-sm">
-                <div className="flex items-center gap-1.5">
+              <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-3 md:px-4 py-2 md:py-3 backdrop-blur-sm">
+                <div className="flex items-center gap-1 md:gap-1.5">
                   {[0, 1, 2].map(i => (
                     <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3], scale: [0.9, 1.1, 0.9] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
                       className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
@@ -1083,10 +1054,10 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
         <AnimatePresence>
           {showQuickActions && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-              className="px-4 lg:px-6 pb-4 flex flex-wrap gap-2 overflow-x-auto scrollbar-hide">
+              className="px-3 md:px-4 lg:px-6 pb-3 md:pb-4 flex flex-wrap gap-2 overflow-x-auto scrollbar-hide">
               {QUICK_ACTIONS.map((qa) => (
                 <button key={qa.label} onClick={() => handleSend(qa.prompt)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] lg:text-xs font-bold transition-all hover:scale-105 active:scale-95 whitespace-nowrap shadow-lg shadow-black/20 ${qa.color}`}>
+                  className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 rounded-xl border text-[10px] md:text-xs font-bold transition-all hover:scale-105 active:scale-95 whitespace-nowrap shadow-lg shadow-black/20 ${qa.color}`}>
                   <qa.icon size={12} />{qa.label}
                 </button>
               ))}
@@ -1096,11 +1067,11 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
 
         {/* Attachment Preview */}
         {attachments.length > 0 && (
-          <div className="px-4 lg:px-6 pb-3 flex flex-wrap gap-2">
+          <div className="px-3 md:px-4 lg:px-6 pb-2 md:pb-3 flex flex-wrap gap-2">
             {attachments.map(a => (
-              <div key={a.id} className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl px-3 py-2 text-[11px] text-indigo-200">
+              <div key={a.id} className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-[11px] text-indigo-200">
                 {a.type.startsWith('image/') ? <Image size={12} /> : <File size={12} />}
-                <span className="truncate max-w-[100px] lg:max-w-[150px] font-medium">{a.name}</span>
+                <span className="truncate max-w-[80px] md:max-w-[100px] lg:max-w-[150px] font-medium">{a.name}</span>
                 <button onClick={() => removeAttachment(a.id)} className="ml-1 hover:text-white transition-colors">
                   <X size={12} />
                 </button>
@@ -1110,8 +1081,8 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
         )}
 
         {/* Input Area */}
-        <div className="px-4 lg:px-6 pb-6 lg:pb-8 flex-shrink-0">
-          <div className="max-w-4xl mx-auto flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 lg:py-4 focus-within:border-indigo-500/40 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all backdrop-blur-md shadow-2xl">
+        <div className="px-2 md:px-4 lg:px-6 pb-3 md:pb-6 lg:pb-8 flex-shrink-0">
+          <div className="max-w-4xl mx-auto flex items-center gap-1 md:gap-2 bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-2 md:px-4 py-2 md:py-3 lg:py-4 focus-within:border-indigo-500/40 focus-within:ring-2 md:focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all backdrop-blur-md shadow-2xl">
             <button onClick={handleFileClick} className="text-white/20 hover:text-indigo-400 transition-colors p-1" title="Attach file">
               <Paperclip size={18} />
             </button>
@@ -1120,13 +1091,13 @@ export const Chatbot = ({ profile, onSignOut }: { profile: BusinessProfile | nul
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Britsee for growth insights..."
-              className="flex-1 bg-transparent text-sm lg:text-base text-white placeholder-white/20 outline-none px-2 min-w-0"
+              placeholder="Ask Britsee..."
+              className="flex-1 bg-transparent text-xs md:text-sm text-white placeholder-white/20 outline-none px-1 md:px-2 min-w-0"
             />
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
-              className="w-10 h-10 rounded-xl bg-indigo-600 disabled:bg-white/5 flex items-center justify-center text-white disabled:text-white/10 transition-all hover:bg-indigo-500 active:scale-95 shadow-lg shadow-indigo-600/20 disabled:shadow-none flex-shrink-0"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-indigo-600 disabled:bg-white/5 flex items-center justify-center text-white disabled:text-white/10 transition-all hover:bg-indigo-500 active:scale-95 shadow-lg shadow-indigo-600/20 disabled:shadow-none flex-shrink-0"
             >
               {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </button>

@@ -1,27 +1,30 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  BarChart3, 
-  Search, 
-  Mail, 
-  Zap, 
-  Settings,
+import {
   LogOut,
   ChevronRight,
   Bot,
-  Users
+  Users,
+  Zap,
+  PoundSterling,
+  Settings,
+  X
 } from 'lucide-react';
 import { ActivityService } from '../../lib/activity';
+import { BusinessProfile } from '../../lib/profiles';
 
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onSignOut?: () => void;
+  profile: BusinessProfile | null;
+  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSignOut }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSignOut, onClose }) => {
   const menuItems = [
-    { id: 'assistant',   label: 'Chat & Team',  icon: Bot },
+    { id: 'assistant',   label: 'Chat',         icon: Bot },
+    { id: 'finance',     label: 'Finance',      icon: PoundSterling },
+    { id: 'team',        label: 'Team Chat',    icon: Users },
     { id: 'profile',     label: 'Profile',      icon: Settings },
   ];
 
@@ -37,17 +40,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
   }, []);
 
   return (
-    <aside className="w-64 bg-[#030712] border-r border-white/5 flex flex-col h-full z-50">
-      <div className="p-6 lg:p-8">
+    <aside className="w-full md:w-64 lg:w-72 bg-[#030712] border-r border-white/5 flex flex-col h-full z-50 overflow-y-auto">
+      <div className="p-4 md:p-6 flex items-center justify-between">
         <div className="flex items-center gap-3 group cursor-pointer">
           <div className="h-10 w-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
             <Zap className="text-white fill-white" size={24} />
           </div>
           <span className="text-xl font-bold text-white tracking-tight">Britsee</span>
         </div>
+        <button 
+          onClick={onClose} 
+          className="md:hidden p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+        >
+          <X size={20} />
+        </button>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2">
+      <nav className="flex-1 px-3 md:px-4 space-y-1.5 md:space-y-2">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -56,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`w-full flex items-center justify-between px-3 md:px-4 py-3 rounded-xl transition-all duration-200 group ${
                 isActive 
                   ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/10' 
                   : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
@@ -73,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
       </nav>
 
       {activeMembers.length > 0 && (
-        <div className="px-6 py-4 border-t border-white/5">
+        <div className="px-4 md:px-6 py-4 border-t border-white/5">
           <div className="flex items-center gap-2 mb-3">
              <Users size={12} className="text-slate-500" />
              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Team</span>
@@ -97,10 +106,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
         </div>
       )}
 
-      <div className="p-6 border-t border-white/5 space-y-4">
+      <div className="p-4 md:p-6 border-t border-white/5 space-y-3 md:space-y-4">
         <button
           onClick={onSignOut}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200 group font-medium text-sm"
+          className="w-full flex items-center gap-3 px-3 md:px-4 py-3 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200 group font-medium text-sm"
         >
           <LogOut size={18} className="text-slate-500 group-hover:text-rose-400" />
           <span>Sign Out</span>

@@ -108,7 +108,7 @@ I'm currently auditing our strategic posture. To help me provide the most value,
 
   const handleSend = async (text?: string) => {
     const messageText = (text || input).trim();
-    if (!messageText && attachments.length === 0 || isLoading) return;
+    if ((!messageText && attachments.length === 0) || isLoading) return;
 
     // Combine text with file context for the LLM
     let fullContent = messageText;
@@ -188,75 +188,75 @@ I'm currently auditing our strategic posture. To help me provide the most value,
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end pointer-events-none">
+    <div className="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 md:bottom-6 md:right-6 z-[9999] flex flex-col items-end pointer-events-none">
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="w-[380px] h-[550px] mb-4 bg-[#080d1f] rounded-2xl border border-white/10 shadow-2xl flex flex-col overflow-hidden pointer-events-auto"
+            className="w-[92vw] sm:w-[95vw] max-w-[380px] h-[70vh] sm:h-[75vh] max-h-[550px] mb-3 sm:mb-4 bg-[#080d1f] rounded-2xl border border-white/10 shadow-2xl flex flex-col overflow-hidden pointer-events-auto"
           >
             {/* Header */}
-            <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
-                  <Bot size={22} className="text-white" />
+            <div className="p-3 sm:p-4 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
+                  <Bot size={18} sm:size={22} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-sm">BritC Growth Partner</h3>
-                  <div className="flex items-center gap-1.5">
+                  <h3 className="text-white font-bold text-xs sm:text-sm">BritC Growth Partner</h3>
+                  <div className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                    <span className="text-[10px] text-indigo-100 font-medium tracking-wide">Strategic & Results-Driven</span>
+                    <span className="text-[9px] sm:text-[10px] text-indigo-100 font-medium tracking-wide">Strategic</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button 
                   onClick={clearHistory}
                   title="Clear Chat History"
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/50 hover:text-white"
+                  className="p-1.5 sm:p-2 hover:bg-white/10 rounded-lg transition-colors text-white/50 hover:text-white"
                 >
-                  <MessageSquare size={16} />
+                  <MessageSquare size={14} sm:size={16} />
                 </button>
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white"
+                  className="p-1.5 sm:p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white"
                 >
-                  <X size={20} />
+                  <X size={18} sm:size={20} />
                 </button>
               </div>
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#060c1a] scrollbar-thin">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 bg-[#060c1a] scrollbar-thin">
               {messages.map(msg => (
-                <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center ${
+                <div key={msg.id} className={`flex gap-2 sm:gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex-shrink-0 flex items-center justify-center ${
                     msg.role === 'user' ? 'bg-indigo-600' : 'bg-white/5 border border-white/10'
                   }`}>
-                    {msg.role === 'user' ? <User size={14} className="text-white" /> : <Bot size={14} className="text-indigo-400" />}
+                    {msg.role === 'user' ? <User size={12} sm:size={14} className="text-white" /> : <Bot size={12} sm:size={14} className="text-indigo-400" />}
                   </div>
-                  <div className={`max-w-[85%] px-3.5 py-2.5 rounded-xl text-sm leading-relaxed ${
+                  <div className={`max-w-[85%] px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-indigo-600 text-white rounded-tr-none' 
                       : 'bg-[#0d1526] text-slate-300 border border-white/5 rounded-tl-none shadow-lg'
                   }`}>
                     {msg.content.split('\n').filter(l => !l.startsWith('[Attached File:')).map((line, i) => (
-                      <p key={i} className={line.trim() === '' ? 'h-2' : ''}>{line}</p>
+                      <p key={i} className={line.trim() === '' ? 'h-1.5 sm:h-2' : ''}>{line}</p>
                     ))}
                     
                     {/* Render Attachments */}
                     {msg.attachments && msg.attachments.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {msg.attachments.map(att => (
-                          <div key={att.id} className="bg-black/20 rounded-lg p-1.5 flex items-center gap-1.5 border border-white/10 text-[10px]">
+                          <div key={att.id} className="bg-black/20 rounded-lg p-1.5 flex items-center gap-1.5 border border-white/10 text-[9px] sm:text-[10px]">
                             {att.previewUrl ? (
-                              <img src={att.previewUrl} alt={att.name} className="w-6 h-6 rounded object-cover" />
+                              <img src={att.previewUrl} alt={att.name} className="w-5 h-5 sm:w-6 sm:h-6 rounded object-cover" />
                             ) : (
-                              <FileIcon size={12} className="text-indigo-300" />
+                              <FileIcon size={10} sm:size={12} className="text-indigo-300" />
                             )}
-                            <span className="truncate max-w-[80px]">{att.name}</span>
+                            <span className="truncate max-w-[60px] sm:max-w-[80px]">{att.name}</span>
                           </div>
                         ))}
                       </div>
@@ -265,11 +265,11 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                 </div>
               ))}
               {isLoading && (
-                <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center animate-pulse">
-                    <Bot size={14} className="text-indigo-400" />
+                <div className="flex gap-2 sm:gap-3">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center animate-pulse">
+                    <Bot size={12} sm:size={14} className="text-indigo-400" />
                   </div>
-                  <div className="bg-[#0d1526] px-3.5 py-2.5 rounded-xl rounded-tl-none border border-white/5 flex gap-1">
+                  <div className="bg-[#0d1526] px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl rounded-tl-none border border-white/5 flex gap-1">
                     {[0, 1, 2].map(i => (
                       <motion.div key={i} className="w-1.5 h-1.5 bg-indigo-400 rounded-full"
                         animate={{ y: [0, -4, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }} />
@@ -281,7 +281,7 @@ I'm currently auditing our strategic posture. To help me provide the most value,
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-[#080d1f] border-t border-white/5">
+            <div className="p-3 sm:p-4 bg-[#080d1f] border-t border-white/5">
               {/* Attachment Bar */}
               <AnimatePresence>
                 {attachments.length > 0 && (
@@ -289,21 +289,21 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="flex flex-wrap gap-2 mb-3 overflow-hidden"
+                    className="flex flex-wrap gap-2 mb-2 sm:mb-3 overflow-hidden"
                   >
                     {attachments.map(att => (
-                      <div key={att.id} className="relative bg-white/5 border border-white/10 rounded-lg p-1.5 pr-6 flex items-center gap-2">
+                      <div key={att.id} className="relative bg-white/5 border border-white/10 rounded-lg p-1.5 pr-5 sm:pr-6 flex items-center gap-2">
                         {att.previewUrl ? (
-                          <img src={att.previewUrl} alt={att.name} className="w-6 h-6 rounded object-cover" />
+                          <img src={att.previewUrl} alt={att.name} className="w-5 h-5 sm:w-6 sm:h-6 rounded object-cover" />
                         ) : (
-                          <FileIcon size={12} className="text-indigo-400" />
+                          <FileIcon size={10} sm:size={12} className="text-indigo-400" />
                         )}
-                        <span className="text-[10px] text-white truncate max-w-[80px]">{att.name}</span>
+                        <span className="text-[9px] sm:text-[10px] text-white truncate max-w-[60px] sm:max-w-[80px]">{att.name}</span>
                         <button 
                           onClick={() => removeAttachment(att.id)}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white p-0.5"
                         >
-                          <X size={12} />
+                          <X size={10} sm:size={12} />
                         </button>
                       </div>
                     ))}
@@ -311,28 +311,28 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                 )}
               </AnimatePresence>
 
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 sm:gap-2">
                 <div className="flex-1 relative">
                   <input
                     type="text"
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSend()}
-                    placeholder="Analyze growth with BritC..."
-                    className="w-full bg-white/5 border border-white/10 focus:border-indigo-500 rounded-xl pl-4 pr-16 py-2.5 text-sm text-white outline-none transition-all"
+                    placeholder="Ask BritC..."
+                    className="w-full bg-white/5 border border-white/10 focus:border-indigo-500 rounded-lg sm:rounded-xl pl-3 sm:pl-4 pr-12 sm:pr-16 py-2 sm:py-2.5 text-xs sm:text-sm text-white outline-none transition-all"
                   />
                   <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
                     <button 
                       onClick={handleFileClick}
-                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
+                      className="p-1 sm:p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
                     >
-                      <Paperclip size={16} />
+                      <Paperclip size={14} sm:size={16} />
                     </button>
                     <button 
                       onClick={handleImageClick}
-                      className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
+                      className="p-1 sm:p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
                     >
-                      <ImageIcon size={16} />
+                      <ImageIcon size={14} sm:size={16} />
                     </button>
                   </div>
                 </div>
@@ -340,9 +340,9 @@ I'm currently auditing our strategic posture. To help me provide the most value,
                 <button
                   onClick={() => handleSend()}
                   disabled={(!input.trim() && attachments.length === 0) || isLoading}
-                  className="w-10 h-10 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-500/20"
+                  className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg sm:rounded-xl flex items-center justify-center transition-all shadow-lg shadow-indigo-500/20"
                 >
-                  <Send size={18} className="text-white" />
+                  <Send size={14} sm:size={18} className="text-white" />
                 </button>
               </div>
 
@@ -350,7 +350,7 @@ I'm currently auditing our strategic posture. To help me provide the most value,
               <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} multiple accept=".txt,.pdf,.doc,.docx,.csv,.json,.md" />
               <input type="file" ref={imageInputRef} className="hidden" onChange={handleFileChange} multiple accept="image/*" />
               
-              <p className="text-[10px] text-slate-600 mt-2 text-center font-medium">Powering your growth with BritSync BritC</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-600 mt-2 text-center font-medium">BritSync BritC</p>
             </div>
           </motion.div>
         )}
@@ -361,25 +361,25 @@ I'm currently auditing our strategic posture. To help me provide the most value,
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-white/20 pointer-events-auto group relative"
+        className="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-white/20 pointer-events-auto group relative"
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div key="close" initial={{ opacity: 0, rotate: -90 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 90 }}>
-              <X size={24} className="text-white" />
+              <X size={20} sm:size={24} className="text-white" />
             </motion.div>
           ) : (
             <motion.div key="open" initial={{ opacity: 0, rotate: 90 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: -90 }}>
-              <MessageSquare size={24} className="text-white" />
+              <MessageSquare size={20} sm:size={24} className="text-white" />
             </motion.div>
           )}
         </AnimatePresence>
         
         {/* Pulsing Notification */}
         {!isOpen && (
-          <span className="absolute top-0 right-0 flex h-3 w-3">
+          <span className="absolute top-0 right-0 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-indigo-600"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-emerald-500 border border-indigo-600"></span>
           </span>
         )}
       </motion.button>

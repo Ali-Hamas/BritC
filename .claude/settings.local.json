@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(grep -r \"scenario\\\\|simulator\\\\|what.if\\\\|forecast\\\\|anomaly\" /m/britsync_assistant/frontend/src/lib/*.ts --ignore-case)",
+      "Bash(grep -r \"\\\\.from\\(\" /m/britsync_assistant/frontend/src/lib/*.ts)",
+      "Bash(xargs grep:*)",
+      "Bash(grep:*)",
+      "Bash(find /m/britsync_assistant/frontend/src/components -name \"*.tsx\" -exec grep -l \"from 'lucide-react'\" {} \\\\;)",
+      "Bash(find:*)",
+      "Bash(tee /tmp/tsc-errors.txt)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(node -e \"require\\('./index.js'\\)\")",
+      "Bash(node -c index.js)",
+      "Bash(echo \"---EXIT:$?---\")",
+      "Bash(node -c auth.js)",
+      "Bash(node -c supabaseClient.js)"
+    ]
+  }
+}

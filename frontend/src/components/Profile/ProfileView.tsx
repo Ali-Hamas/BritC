@@ -1,5 +1,5 @@
 import React from 'react';
-import { Briefcase, Building2, Shield, LogOut, ChevronRight } from 'lucide-react';
+import { Briefcase, Building2, Shield, LogOut } from 'lucide-react';
 import { BusinessProfile } from '../../lib/profiles';
 
 interface ProfileViewProps {
@@ -11,16 +11,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut }) 
   if (!profile) return null;
 
   return (
-    <div className="max-w-4xl mx-auto p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header className="mb-12">
-        <h1 className="text-3xl font-bold text-white mb-2">Business Profile</h1>
-        <p className="text-slate-400">Manage your organization's identity and preferences.</p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
+      <header className="mb-8 sm:mb-12">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Business Profile</h1>
+        <p className="text-slate-400 text-sm sm:text-base">Manage your organization's identity and preferences.</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         {/* Main Profile Info */}
         <div className="md:col-span-2 space-y-6">
-          <div className="glass-card p-8 relative overflow-hidden group">
+          <div className="glass-card p-4 sm:p-6 md:p-8 relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Building2 size={120} />
              </div>

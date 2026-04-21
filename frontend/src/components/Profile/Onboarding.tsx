@@ -1,14 +1,13 @@
 import React from 'react';
-import { Target, Users, Briefcase, ChevronRight } from 'lucide-react';
+import { Briefcase, ChevronRight } from 'lucide-react';
 import { ProfileService, BusinessProfile } from '../../lib/profiles';
 
-const steps = [
-    { id: 'basics', title: 'The Basics', icon: Briefcase },
-    { id: 'audience', title: 'Target Audience', icon: Users },
-    { id: 'goals', title: 'Growth Goals', icon: Target },
-];
+interface OnboardingProps {
+    userId: string;
+    onComplete: (profile: BusinessProfile) => void;
+}
 
-export const Onboarding = ({ onComplete }: { onComplete: (profile: BusinessProfile) => void }) => {
+export const Onboarding = ({ userId, onComplete }: OnboardingProps) => {
     const [formData, setFormData] = React.useState({
         businessName: '',
         industry: 'Services',
@@ -18,20 +17,22 @@ export const Onboarding = ({ onComplete }: { onComplete: (profile: BusinessProfi
 
     const finish = async () => {
         if (!formData.businessName) return;
-        
+
         try {
             const profile = await ProfileService.saveProfile(new BusinessProfile({
                 businessName: formData.businessName,
                 industry: formData.industry,
                 audience: formData.audience,
                 revenueGoal: formData.revenueGoal,
+                userId,
                 plan: 'pro'
-            }), 'local-user'); // Fallback user ID if not available
+            }), userId);
             onComplete(profile);
         } catch (error) {
             console.warn('Onboarding save failed:', error);
             onComplete(new BusinessProfile({
                 ...formData,
+                userId,
                 plan: 'pro'
             }));
         }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Brain, Save, Trash2, Plus, AlertCircle, CheckCircle, Lightbulb } from 'lucide-react';
 import { MemoryService } from '../../lib/memory';
 import type { MemoryBlock, MemoryType } from '../../lib/memory';
@@ -21,7 +21,7 @@ const MemoryCenter: React.FC = () => {
     if (!editingId) return;
     setIsSaving(true);
     
-    MemoryService.saveMemory({ id: editingId, content: editContent });
+    MemoryService.saveMemory(null, { id: editingId, content: editContent });
     setBlocks(MemoryService.getMemory());
     setEditingId(null);
     setIsSaving(false);
@@ -32,7 +32,7 @@ const MemoryCenter: React.FC = () => {
 
   const handleCreate = (type: MemoryType) => {
     const defaultContent = `New ${type} directive...`;
-    MemoryService.saveMemory({ type, content: defaultContent, title: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Block` });
+    MemoryService.saveMemory(null, { type, content: defaultContent, title: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Block` });
     const updatedBlocks = MemoryService.getMemory();
     setBlocks(updatedBlocks);
     handleEdit(updatedBlocks[0]);
@@ -40,7 +40,7 @@ const MemoryCenter: React.FC = () => {
 
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this directive? It will affect team alignment.')) {
-      MemoryService.deleteMemory(id);
+      MemoryService.deleteMemory(null, id);
       setBlocks(MemoryService.getMemory());
     }
   };
@@ -48,18 +48,18 @@ const MemoryCenter: React.FC = () => {
   const categories: MemoryType[] = ['strategic', 'operational', 'instructional', 'constraint', 'interpretation'];
 
   return (
-    <div className="space-y-6">
-      <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-500/20">
-            <Brain size={24} />
+    <div className="space-y-4 sm:space-y-6 px-4 sm:px-6 py-6 overflow-y-auto">
+      <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="p-3 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-500/20 shrink-0">
+            <Brain size={20} />
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Cognitive Memory Center</h2>
-            <p className="text-slate-400 text-sm">Govern the Strategic Brain that guides your team.</p>
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-white">Cognitive Memory Center</h2>
+            <p className="text-slate-400 text-xs sm:text-sm">Govern the Strategic Brain that guides your team.</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {categories.slice(0, 3).map(cat => (
             <button 
               key={cat}

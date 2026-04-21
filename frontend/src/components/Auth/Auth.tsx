@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, ArrowRight, Mail, Zap, CheckCircle, Globe, Users } from 'lucide-react';
+import { Shield, Lock, ArrowRight, Mail, Zap, Globe, Users, Loader2, Sparkles } from 'lucide-react';
 import { signIn, signUp } from '../../lib/auth-client';
 
 interface AuthProps {
@@ -11,34 +11,27 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
   const [activeMode, setActiveMode] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Login/Register States
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    
+
     try {
       const { error: authError } = await signIn.email({
         email,
         password,
-        callbackURL: "/"
+        callbackURL: '/',
       });
 
-      if (authError) {
-        throw new Error(authError.message || 'Login failed');
-      }
-      
+      if (authError) throw new Error(authError.message || 'Login failed');
       onAuthenticated({});
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unknown error occurred');
-      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unexpected error. Try again.');
     } finally {
       setIsLoading(false);
     }
@@ -48,200 +41,265 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    
+
     try {
       const { error: authError } = await signUp.email({
         email,
         password,
-        name: email.split('@')[0], // Default name from email
-        callbackURL: "/"
+        name: name || email.split('@')[0],
+        callbackURL: '/',
       });
 
-      if (authError) {
-        throw new Error(authError.message || 'Registration failed');
-      }
-
+      if (authError) throw new Error(authError.message || 'Registration failed');
       onStartOnboarding();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unknown error occurred');
-      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unexpected error. Try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const switchMode = () => {
+    setActiveMode(activeMode === 'login' ? 'register' : 'login');
+    setError('');
+  };
+
   return (
-    <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
-      
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute -top-[10%] -left-[10%] w-[60%] sm:w-[40%] h-[40%] bg-indigo-500/10 blur-[100px] sm:blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[70%] sm:w-[50%] h-[50%] bg-purple-500/10 blur-[120px] sm:blur-[150px] rounded-full" />
+    <div className="min-h-screen bg-[#05060d] text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
+      {/* Animated gradient blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-gradient-to-br from-indigo-600/30 via-violet-500/10 to-transparent rounded-full blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
+        <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-gradient-to-tr from-fuchsia-600/20 via-indigo-500/10 to-transparent rounded-full blur-3xl animate-[pulse_10s_ease-in-out_infinite]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-indigo-500/5 rounded-full blur-3xl" />
+        {/* subtle grid */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
       </div>
 
-      <div className="w-full max-w-[1000px] grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10 animate-in fade-in zoom-in-95 duration-1000">
-        
-        {/* Left Side: Branding & Value Prop */}
-        <div className="space-y-6 lg:space-y-8 hidden lg:block pr-8 border-r border-white/5">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/20 rotate-3 transition-transform hover:rotate-0">
-                <Zap className="text-white fill-white" size={24} />
-              </div>
-              <h1 className="text-4xl font-black text-white tracking-tighter">BritSync <span className="text-indigo-500">Assistant</span></h1>
-            </div>
-            <p className="text-slate-400 text-lg leading-relaxed max-w-sm">
-              The premium AI-powered workspace engineered for UK entrepreneurs and creative agencies.
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/20">
-                <Globe size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-200">Global AI Intelligence</h3>
-                <p className="text-sm text-slate-500">Unrestricted access to high-tier AI models with real-time web scraping.</p>
+      <div className="relative z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+        {/* Left: Brand */}
+        <div className="hidden lg:flex flex-col gap-10 pr-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 blur-xl opacity-60" />
+              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center shadow-xl">
+                <Zap className="text-white fill-white" size={22} />
               </div>
             </div>
-            <div className="flex items-start gap-4">
-              <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400 border border-indigo-500/20">
-                <Users size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-200">Unified Team Access</h3>
-                <p className="text-sm text-slate-500">Link your workspace and instantly share your Pro plan benefits with the team.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-400 border border-purple-500/20">
-                <Shield size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-200">Enterprise Security</h3>
-                <p className="text-sm text-slate-500">AES-256 encrypted authentication for every message and document.</p>
-              </div>
+            <div>
+              <h1 className="text-3xl font-black tracking-tight">
+                BritSync <span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">Assistant</span>
+              </h1>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500 font-semibold mt-0.5">
+                AI Workspace for UK Agencies
+              </p>
             </div>
           </div>
 
-          <div className="pt-8">
-            <div className="flex -space-x-3">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="w-10 h-10 rounded-xl border-2 border-[#030712] overflow-hidden bg-slate-800 flex items-center justify-center shadow-lg">
-                  <span className="text-[10px] font-bold text-slate-400">U{i}</span>
+          <p className="text-slate-400 text-lg leading-relaxed max-w-md">
+            Your autonomous team member for lead generation, outreach, research and booking — all in one clean workspace.
+          </p>
+
+          <div className="space-y-5">
+            {[
+              {
+                Icon: Globe,
+                color: 'from-emerald-400 to-teal-400',
+                title: 'Global AI Intelligence',
+                desc: 'High-tier models with real-time web browsing and scraping.',
+              },
+              {
+                Icon: Users,
+                color: 'from-indigo-400 to-violet-400',
+                title: 'Unified Team Workspace',
+                desc: 'Share PIN-based team chats. Everyone sees everything in real time.',
+              },
+              {
+                Icon: Shield,
+                color: 'from-fuchsia-400 to-pink-400',
+                title: 'Secure by Default',
+                desc: 'Encrypted auth with session cookies. Your data stays yours.',
+              },
+            ].map(({ Icon, color, title, desc }) => (
+              <div key={title} className="group flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all">
+                <div className={`shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
+                  <Icon className="text-white" size={20} />
                 </div>
-              ))}
-              <div className="w-10 h-10 rounded-xl border-2 border-[#030712] bg-indigo-600 flex items-center justify-center text-[10px] font-black text-white shadow-lg">
-                +14
+                <div>
+                  <h3 className="font-semibold text-slate-100">{title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+                </div>
               </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <div className="flex -space-x-2.5">
+              {['from-indigo-500 to-violet-500', 'from-fuchsia-500 to-pink-500', 'from-emerald-500 to-teal-500', 'from-amber-500 to-orange-500'].map((g, i) => (
+                <div key={i} className={`w-9 h-9 rounded-xl border-2 border-[#05060d] bg-gradient-to-br ${g} shadow-lg`} />
+              ))}
             </div>
-            <p className="text-[11px] text-slate-500 mt-3 font-bold uppercase tracking-widest">Used by 1,200+ elite agencies</p>
+            <div className="text-xs text-slate-500">
+              <span className="text-slate-300 font-semibold">Trusted</span> by UK agencies and solo operators
+            </div>
           </div>
         </div>
 
-        {/* Right Side: Auth Card */}
-        <div className="w-full flex justify-center">
-          <div className="glass-card rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden relative group w-full max-w-md">
-            
-            {/* Mobile Header (Only visible on small screens) */}
-            <div className="lg:hidden p-8 pb-0 text-center space-y-2">
-               <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-xl">
-                  <Zap className="text-white fill-white" size={24} />
-               </div>
-               <h1 className="text-2xl font-black text-white tracking-tighter">BritSync</h1>
-            </div>
+        {/* Right: Auth card */}
+        <div className="w-full max-w-md mx-auto">
+          <div className="relative">
+            {/* gradient border */}
+            <div className="absolute -inset-px rounded-[2rem] bg-gradient-to-br from-indigo-500/40 via-fuchsia-500/20 to-transparent opacity-60" />
+            <div className="relative rounded-[2rem] bg-[#0a0b14]/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.5)] overflow-hidden">
+              {/* Mobile brand */}
+              <div className="lg:hidden pt-8 pb-2 text-center">
+                <div className="inline-flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center">
+                    <Zap className="text-white fill-white" size={18} />
+                  </div>
+                  <h2 className="text-xl font-black tracking-tight">BritSync</h2>
+                </div>
+              </div>
 
-            {/* Tab Header */}
-            <div className="flex border-b border-white/5 bg-white/[0.01] mt-6 lg:mt-0">
-              <button 
-                onClick={() => setActiveMode('login')}
-                className={`flex-1 py-5 text-[11px] font-black uppercase tracking-widest transition-all relative ${activeMode === 'login' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                Sign In
-                {activeMode === 'login' && <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-indigo-500 rounded-full" />}
-              </button>
-              <button 
-                onClick={() => setActiveMode('register')}
-                className={`flex-1 py-5 text-[11px] font-black uppercase tracking-widest transition-all relative ${activeMode === 'register' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                Register
-                {activeMode === 'register' && <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-indigo-500 rounded-full" />}
-              </button>
-            </div>
+              {/* Tabs */}
+              <div className="relative flex px-6 pt-6">
+                <div className="relative flex w-full bg-white/[0.03] rounded-2xl p-1 border border-white/5">
+                  <button
+                    onClick={() => { setActiveMode('login'); setError(''); }}
+                    className={`relative z-10 flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                      activeMode === 'login' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => { setActiveMode('register'); setError(''); }}
+                    className={`relative z-10 flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                      activeMode === 'register' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    Create Account
+                  </button>
+                  <div
+                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30 transition-all duration-300 ${
+                      activeMode === 'login' ? 'left-1' : 'left-[calc(50%+0px)]'
+                    }`}
+                  />
+                </div>
+              </div>
 
-            <div className="p-6 sm:p-10 space-y-6">
-              {/* Form Switching Logic */}
-              <form onSubmit={activeMode === 'login' ? handleLogin : handleRegister} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* Form */}
+              <form
+                key={activeMode}
+                onSubmit={activeMode === 'login' ? handleLogin : handleRegister}
+                className="p-6 sm:p-8 space-y-4"
+              >
+                <div className="space-y-1">
+                  <h3 className="text-xl font-bold tracking-tight">
+                    {activeMode === 'login' ? 'Welcome back' : 'Create your account'}
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    {activeMode === 'login'
+                      ? 'Sign in to access your workspace.'
+                      : 'Start building with your AI teammate in seconds.'}
+                  </p>
+                </div>
+
+                {activeMode === 'register' && (
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Full name</label>
+                    <div className="relative">
+                      <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your name"
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Work Email</label>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email</label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                    <input 
-                      type="email" 
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                    <input
+                      type="email"
                       required
                       value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="name@company.com"
-                      className="w-full bg-black/40 border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-slate-200 outline-none focus:border-indigo-500/40 transition-all placeholder:text-slate-700 font-medium text-sm"
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.com"
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 text-sm"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{activeMode === 'register' ? 'Choose Password' : 'Password'}</label>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                    <input 
-                      type="password" 
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                    <input
+                      type="password"
                       required
+                      minLength={activeMode === 'register' ? 8 : undefined}
                       value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-black/40 border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-slate-200 outline-none focus:border-indigo-500/40 transition-all placeholder:text-slate-700 font-medium font-mono text-sm"
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={activeMode === 'register' ? 'At least 8 characters' : '••••••••'}
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 font-mono text-sm"
                     />
                   </div>
                 </div>
 
                 {error && (
-                  <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-xs font-bold text-center animate-shake">
+                  <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
                     {error}
                   </div>
                 )}
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isLoading}
-                  className={`w-full py-4 text-white rounded-2xl font-black text-xs tracking-widest uppercase transition-all shadow-xl flex items-center justify-center gap-2 group bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/10 disabled:opacity-50`}
+                  className="w-full relative group inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 shadow-lg shadow-indigo-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                 >
-                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />}
-                  {activeMode === 'login' ? 'Enter Workspace' : 'Launch My Account'}
+                  {isLoading ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <>
+                      {activeMode === 'login' ? 'Sign in' : 'Create account'}
+                      <ArrowRight className="group-hover:translate-x-0.5 transition-transform" size={16} />
+                    </>
+                  )}
                 </button>
 
-                <div className="text-center pt-2">
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setActiveMode(activeMode === 'login' ? 'register' : 'login');
-                      setError('');
-                    }}
-                    className="text-slate-500 hover:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mt-1 transition-colors"
-                  >
-                    {activeMode === 'login' ? "New to BritSync? Create account" : "Have an account? Sign in here"}
-                  </button>
+                <div className="text-center text-xs text-slate-500 pt-1">
+                  {activeMode === 'login' ? (
+                    <>Don't have an account?{' '}
+                      <button type="button" onClick={switchMode} className="text-indigo-400 hover:text-indigo-300 font-semibold">
+                        Create one
+                      </button>
+                    </>
+                  ) : (
+                    <>Already have an account?{' '}
+                      <button type="button" onClick={switchMode} className="text-indigo-400 hover:text-indigo-300 font-semibold">
+                        Sign in
+                      </button>
+                    </>
+                  )}
                 </div>
               </form>
-            </div>
-            
-            {/* Footer Tip */}
-            <div className="p-6 bg-white/[0.01] border-t border-white/5 flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-              <p className="text-[9px] text-slate-500 font-bold leading-relaxed uppercase tracking-widest">
-                AES-256 Military-grade Encryption Active
-              </p>
+
+              <div className="px-6 sm:px-8 py-4 border-t border-white/5 bg-white/[0.01] flex items-center gap-2 text-[10px] text-slate-500 font-semibold uppercase tracking-widest">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                Secure session · Encrypted in transit
+              </div>
             </div>
           </div>
         </div>
