@@ -25,6 +25,13 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true
 }));
+
+// ─── Better Auth Integration ─────────────────────────────────────────────
+// IMPORTANT: Must be mounted BEFORE express.json() — Better-Auth reads the
+// raw request stream, and express.json() would consume the body first.
+app.all("/api/auth/*", toNodeHandler(auth));
+
+// Body parser AFTER Better-Auth
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -35,14 +42,6 @@ if (!fs.existsSync('./uploads')) {
 
 // GROQ Setup
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-// ─── Better Auth Integration ─────────────────────────────────────────────
-app.all("/api/auth/*", (req, res, next) => {
-  if (req.path.startsWith("/api/auth")) {
-    return toNodeHandler(auth)(req, res);
-  }
-  next();
-});
 
 // Helper to get session in routes
 async function getSession(req) {
