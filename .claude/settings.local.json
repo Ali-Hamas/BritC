@@ -14,7 +14,9 @@
       "Bash(node -c index.js)",
       "Bash(echo \"---EXIT:$?---\")",
       "Bash(node -c auth.js)",
-      "Bash(node -c supabaseClient.js)"
+      "Bash(node -c supabaseClient.js)",
+      "Bash(ls:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
