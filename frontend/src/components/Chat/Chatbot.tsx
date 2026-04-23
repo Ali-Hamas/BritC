@@ -860,11 +860,27 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
 
       let response = "";
       const lower = fullContent.toLowerCase();
-      const appointmentTriggers = ['book', 'schedule', 'appointment', 'call', 'meeting', 'discovery', 'talk to someone'];
+      // Stricter triggers — must be a clear booking intent, not a stray word like "call".
+      // Old broad list hijacked every message that mentioned "call" or "meeting".
+      const bookingPhrases = [
+        'book a call', 'book a meeting', 'book an appointment', 'book a discovery',
+        'schedule a call', 'schedule a meeting', 'schedule an appointment',
+        'set up a call', 'set up a meeting',
+        'arrange a call', 'arrange a meeting',
+        'discovery call', 'discovery meeting',
+        'talk to someone', 'talk to a human',
+        'speak to someone', 'speak to a human',
+        'i want to book', 'i would like to book',
+      ];
       
-      // Check if we should use the backend specialized agent (appointment booking)
-      const isBookingRequest = appointmentTriggers.some(t => lower.includes(t));
-      const alreadyInFlow = messages.some(m => m.role === 'assistant' && (m.content.includes('?')) && messages.indexOf(m) > messages.length - 3);
+      // Use the backend appointment agent ONLY for clear booking intent.
+      const isBookingRequest = bookingPhrases.some(p => lower.includes(p));
+      // Don't latch on every "?" — that catches every reply. Continue the booking
+      // flow only if the user previously asked to book AND the last assistant message
+      // looks like a booking step (asking for date/time/availability).
+      const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
+      const userEverAskedToBook = messages.some(m => m.role === 'user' && bookingPhrases.some(p => m.content.toLowerCase().includes(p)));
+      const alreadyInFlow = userEverAskedToBook && !!lastAssistant && /(\bdate\b|\btime\b|\bavailable\b|\bcalendar\b|\bappointment\b|\bbooking\b)/i.test(lastAssistant.content);
 
       if (isBookingRequest || alreadyInFlow) {
         try {
