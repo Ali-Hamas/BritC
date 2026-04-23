@@ -7,10 +7,12 @@ import {
   Zap,
   PoundSterling,
   Settings,
+  Shield,
   X
 } from 'lucide-react';
 import { ActivityService } from '../../lib/activity';
 import { BusinessProfile } from '../../lib/profiles';
+import { TeamService } from '../../lib/team';
 
 interface SidebarProps {
   activeTab: string;
@@ -21,11 +23,13 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSignOut, onClose }) => {
+  const isModerator = TeamService.isGlobalModerator();
   const menuItems = [
     { id: 'assistant',   label: 'Chat',         icon: Bot },
     { id: 'finance',     label: 'Finance',      icon: PoundSterling },
     { id: 'team',        label: 'Team Chat',    icon: Users },
     { id: 'profile',     label: 'Profile',      icon: Settings },
+    ...(isModerator ? [{ id: 'admin', label: 'Admin', icon: Shield }] : []),
   ];
 
   const [activeMembers, setActiveMembers] = React.useState<{name: string, lastAction: string}[]>([]);

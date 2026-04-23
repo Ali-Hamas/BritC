@@ -14,6 +14,10 @@ import { authClient } from './auth-client';
  */
 
 export const GLOBAL_MODERATOR_EMAIL = 'britsyncuk@gmail.com';
+export const GLOBAL_MODERATOR_EMAILS = [
+  'britsyncuk@gmail.com',
+  'kamranalivyond@gmail.com',
+];
 
 const UID_CACHE_KEY = 'britsync_uid_cache';
 const EMAIL_CACHE_KEY = 'britsync_email_cache';
@@ -102,10 +106,12 @@ export const TeamService = {
     } catch {}
   },
 
-  /** True iff the signed-in user is the platform-wide moderator. */
+  /** True iff the signed-in user is one of the platform-wide moderators. */
   isGlobalModerator(): boolean {
     const email = getCurrentEmail();
-    return !!email && email.toLowerCase() === GLOBAL_MODERATOR_EMAIL.toLowerCase();
+    if (!email) return false;
+    const lower = email.toLowerCase();
+    return GLOBAL_MODERATOR_EMAILS.some(e => e.toLowerCase() === lower);
   },
 
   /** Best-effort synchronous cache read — used by non-async call sites that just need to know the role. */

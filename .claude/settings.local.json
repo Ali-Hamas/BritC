@@ -16,7 +16,11 @@
       "Bash(node -c auth.js)",
       "Bash(node -c supabaseClient.js)",
       "Bash(ls:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(echo \"EXIT=$?\")",
+      "WebFetch(domain:console.groq.com)",
+      "Bash(npm install *)",
+      "Bash(node --check index.js)"
     ]
   }
 }

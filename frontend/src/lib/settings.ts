@@ -38,6 +38,21 @@ export const SettingsService = {
   setGroqModel: (model: string) => {
     localStorage.setItem('britsee_groq_model', model);
   },
+  // OpenRouter (fallback provider)
+  getOpenRouterApiKey: (): string => {
+    return localStorage.getItem('britsee_openrouter_api_key') ||
+      (import.meta as any).env.VITE_OPENROUTER_API_KEY ||
+      '';
+  },
+  setOpenRouterApiKey: (key: string) => {
+    localStorage.setItem('britsee_openrouter_api_key', key.trim());
+  },
+  getOpenRouterModel: (): string => {
+    return localStorage.getItem('britsee_openrouter_model') || 'deepseek/deepseek-chat-v3-0324:free';
+  },
+  setOpenRouterModel: (model: string) => {
+    localStorage.setItem('britsee_openrouter_model', model);
+  },
   getGlobalSystemPrompt: () => localStorage.getItem('britsee_global_system_prompt') || '',
   setGlobalSystemPrompt: (prompt: string) => localStorage.setItem('britsee_global_system_prompt', prompt),
   getSystemPrompt: (): string => {

@@ -16,6 +16,7 @@ const Onboarding = React.lazy(() => import('./components/Profile/Onboarding').th
 const ProfileView = React.lazy(() => import('./components/Profile/ProfileView').then(m => ({ default: m.ProfileView })));
 const TeamPanel = React.lazy(() => import('./components/Team/TeamPanel').then(m => ({ default: m.TeamPanel })));
 const FinanceDashboard = React.lazy(() => import('./components/Finance/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
+const AdminPanel = React.lazy(() => import('./components/Admin/AdminPanel').then(m => ({ default: m.AdminPanel })));
 
 // Error boundary
 class ErrorBoundary extends Component<{ children: ReactNode; name: string }, { hasError: boolean; error: string }> {
@@ -144,6 +145,8 @@ function App() {
         return <FinanceDashboard profile={profile} />;
       case 'profile':
         return <ProfileView profile={profile} onSignOut={handleSignOut} />;
+      case 'admin':
+        return <AdminPanel />;
       case 'assistant':
       default:
         return <Chatbot profile={profile} onSignOut={handleSignOut} />;

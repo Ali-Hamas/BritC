@@ -12,13 +12,20 @@ const {
   shouldStartAppointment,
   startAppointmentFlow
 } = require('./appointmentBooking');
-const jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken');
 const { auth } = require('./auth');
 const { toNodeHandler } = require("better-auth/node");
+const rateLimit = require('express-rate-limit');
 
 
 const app = express();
 const PORT = process.env.PORT || 5010;
+
+// Trust the first reverse proxy in front (Nginx, and Cloudflare once enabled)
+// so rate-limit keys off the real client IP from X-Forwarded-For instead of
+// the proxy's IP — otherwise every user looks like the same IP and one
+// limiter bucket covers everyone.
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
@@ -50,9 +57,42 @@ async function getSession(req) {
   });
 }
 
+// ─── Rate Limit — /api/groq ────────────────────────────────────────────────
+// Server-side guard against direct hits that bypass the client-side limiter.
+// Matches the client-side account-wide cap (25 req/min) with slight headroom
+// below Groq's free-tier 30 RPM so we trip first and the OpenRouter fallback
+// can absorb overflow cleanly. Keyed by IP.
+const groqRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: {
+      message: '⏱️ Britsee is handling a lot of traffic right now. Please wait a minute and try again.',
+      code: 'RATE_LIMIT_EXCEEDED',
+    },
+  },
+});
+
+// Daily cap — stops a determined attacker from sustaining abuse for hours.
+// 800/day sits ~20% below Groq's 1000 RPD free-tier ceiling.
+const groqDailyLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 800,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: {
+      message: '⏱️ Daily request limit reached. Service will resume tomorrow.',
+      code: 'DAILY_LIMIT_EXCEEDED',
+    },
+  },
+});
+
 // ─── Groq Proxy Route (Production) ─────────────────────────────────────────
 // This replaces the Vite dev proxy for production deployments
-app.post('/api/groq', async (req, res) => {
+app.post('/api/groq', groqRateLimiter, groqDailyLimiter, async (req, res) => {
   try {
     const { model, messages, temperature, max_tokens } = req.body;
     let modelToUse = model || 'llama-3.3-70b-versatile';
