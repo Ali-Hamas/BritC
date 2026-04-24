@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Shield, Lock, ArrowRight, Mail, Zap, Globe, Users, Loader2, Sparkles } from 'lucide-react';
-import { signIn, signUp } from '../../lib/auth-client';
+import { Shield, Lock, ArrowRight, Mail, Zap, Globe, Users, Loader2, Sparkles, X, CheckCircle2 } from 'lucide-react';
+import { signIn, signUp, forgetPassword } from '../../lib/auth-client';
 
 interface AuthProps {
   onAuthenticated: (profile: Record<string, any>) => void;
@@ -15,6 +15,44 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+
+  // Forgot-password modal state
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+
+  const openForgot = () => {
+    setForgotEmail(email);
+    setForgotError('');
+    setForgotSent(false);
+    setShowForgot(true);
+  };
+
+  const closeForgot = () => {
+    setShowForgot(false);
+    setForgotLoading(false);
+  };
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError('');
+    try {
+      const redirectTo = `${window.location.origin}/reset-password`;
+      const { error: fErr } = await forgetPassword({
+        email: forgotEmail,
+        redirectTo,
+      });
+      if (fErr) throw new Error(fErr.message || 'Could not send reset email');
+      setForgotSent(true);
+    } catch (err) {
+      setForgotError(err instanceof Error ? err.message : 'Something went wrong. Try again.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,7 +281,18 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
+                    {activeMode === 'login' && (
+                      <button
+                        type="button"
+                        onClick={openForgot}
+                        className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 uppercase tracking-wider"
+                      >
+                        Forgot?
+                      </button>
+                    )}
+                  </div>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                     <input
@@ -304,6 +353,95 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
           </div>
         </div>
       </div>
+
+      {/* Forgot-password modal */}
+      {showForgot && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={closeForgot}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md rounded-3xl bg-[#0a0b14] border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.6)] p-7"
+          >
+            <button
+              type="button"
+              onClick={closeForgot}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+
+            {!forgotSent ? (
+              <form onSubmit={handleForgot} className="space-y-5">
+                <div className="space-y-1">
+                  <h3 className="text-xl font-bold tracking-tight">Reset your password</h3>
+                  <p className="text-sm text-slate-500">
+                    Enter the email on your account and we'll send you a reset link.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                    <input
+                      type="email"
+                      required
+                      autoFocus
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="you@company.com"
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 text-sm"
+                    />
+                  </div>
+                </div>
+
+                {forgotError && (
+                  <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
+                    {forgotError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={forgotLoading || !forgotEmail}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 shadow-lg shadow-indigo-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                >
+                  {forgotLoading ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <>
+                      Send reset link
+                      <ArrowRight size={16} />
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <div className="text-center space-y-5 py-2">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                  <CheckCircle2 className="text-emerald-400" size={28} />
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="text-xl font-bold tracking-tight">Check your inbox</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    If an account exists for <span className="text-slate-200 font-semibold">{forgotEmail}</span>, we've sent a reset link. It expires in 1 hour.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeForgot}
+                  className="w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 transition-all"
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
