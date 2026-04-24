@@ -28,8 +28,20 @@ const PORT = process.env.PORT || 5010;
 app.set('trust proxy', 1);
 
 // Middleware
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "https://britsyncai.com",
+  "capacitor://localhost",
+  "http://localhost",
+  "https://localhost",
+];
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: (origin, callback) => {
+    // Allow requests with no Origin header (native apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true
 }));
 

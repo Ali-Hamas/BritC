@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import Header from './Header';
+import { MobileBottomNav } from './MobileBottomNav';
 import { BusinessProfile } from '../../lib/profiles';
 
 interface LayoutProps {
@@ -23,7 +24,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
-    <div className="flex h-screen w-full max-w-full bg-[#030712] text-slate-200 overflow-hidden font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="flex h-screen-dvh w-full max-w-full bg-[#030712] text-slate-200 overflow-hidden font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
       {/* Dynamic Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" />
@@ -61,19 +62,28 @@ export const Layout: React.FC<LayoutProps> = ({
 
       {/* Main Content Area - Full width on mobile */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full w-full">
-        <Header 
+        <Header
           profile={profile}
           onMenuClick={toggleSidebar}
           isMenuOpen={isSidebarOpen}
         />
-        
-        <main className="flex-1 overflow-hidden relative flex flex-col w-full">
+
+        <main className="flex-1 overflow-hidden relative flex flex-col w-full pb-[64px] md:pb-0">
           {/* Full width app viewport */}
           <div className="flex-1 w-full max-w-full mx-auto flex flex-col h-full">
              {children}
           </div>
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          onTabChange(tab);
+          setIsSidebarOpen(false);
+        }}
+      />
     </div>
   );
 };

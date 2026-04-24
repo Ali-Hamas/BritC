@@ -215,7 +215,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
       </header>
 
       {/* KPI tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiTile
           label="Revenue (30d)"
           value={gbp(kpis.last30Revenue)}
@@ -259,16 +259,16 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
             Add revenue and expenses manually or import a CSV. Once you have at least 7 days
             of data, you'll see deterministic forecasts and AI commentary here.
           </p>
-          <div className="flex gap-2 justify-center pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
             <button
               onClick={() => setShowForm(true)}
-              className="px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm font-semibold"
+              className="px-4 py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-semibold"
             >
               Add your first entry
             </button>
             <button
               onClick={() => setShowCsv(true)}
-              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold"
+              className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold"
             >
               Try sample CSV
             </button>
@@ -281,15 +281,15 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 glass-card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white">Revenue vs expenses — monthly</h3>
+              <h3 className="text-sm font-bold text-white">Revenue vs expenses</h3>
               <span className="text-[10px] text-slate-500 uppercase tracking-widest">Last 12 months</span>
             </div>
-            <div className="h-72">
+            <div className="h-64 sm:h-72">
               <ResponsiveContainer>
                 <BarChart data={monthly}>
                   <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
-                  <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
-                  <YAxis stroke="#64748b" fontSize={11} tickFormatter={v => `£${(v / 1000).toFixed(0)}k`} />
+                  <XAxis dataKey="label" stroke="#64748b" fontSize={10} />
+                  <YAxis stroke="#64748b" fontSize={10} tickFormatter={v => `£${(v / 1000).toFixed(0)}k`} />
                   <Tooltip
                     contentStyle={{
                       background: '#0a0b14',
@@ -299,9 +299,9 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
                     }}
                     formatter={(v: any) => gbp(Number(v))}
                   />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="revenue" name="Revenue" fill="#6366f1" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="expense" name="Expense" fill="#ec4899" radius={[6, 6, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar dataKey="revenue" name="Revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expense" name="Expense" fill="#ec4899" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -310,7 +310,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
           <div className="glass-card p-5">
             <h3 className="text-sm font-bold text-white mb-4">Expenses by category (90d)</h3>
             {categories.length ? (
-              <div className="h-72">
+              <div className="h-64 sm:h-72">
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie
@@ -318,7 +318,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
                       dataKey="amount"
                       nameKey="category"
                       innerRadius={50}
-                      outerRadius={90}
+                      outerRadius={80}
                       paddingAngle={2}
                     >
                       {categories.slice(0, 6).map((_, i) => (
@@ -334,7 +334,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
                       }}
                       formatter={(v: any, _n: any, e: any) => [gbp(Number(v)), e?.payload?.category]}
                     />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -353,11 +353,11 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
               <TrendingUp size={14} className="text-indigo-400" /> 30/60/90-day projection
             </h3>
             <span className="text-[10px] text-amber-400/90 uppercase tracking-widest flex items-center gap-1">
-              <Info size={10} /> AI estimate — not financial advice
+              <Info size={10} /> AI estimate
             </span>
           </div>
           {forecastPoints ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {forecastPoints.map(f => (
                 <div key={f.point} className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -403,7 +403,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
               className="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold hover:bg-indigo-500/20 disabled:opacity-60 flex items-center gap-2"
             >
               {narrLoading ? <Loader2 className="animate-spin" size={12} /> : <Sparkles size={12} />}
-              {narrative ? 'Regenerate' : 'Generate commentary'}
+              {narrative ? 'Regenerate' : 'Generate'}
             </button>
           </div>
           {narrError && (
@@ -415,13 +415,9 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
             <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{narrative}</div>
           ) : (
             <p className="text-slate-500 text-sm">
-              Click "Generate commentary" to get a plain-English read of your numbers. The AI is
-              only shown pre-computed totals; it cannot invent figures.
+              Click "Generate" to get a plain-English read of your numbers.
             </p>
           )}
-          <div className="mt-4 text-[10px] text-slate-500 uppercase tracking-widest flex items-center gap-1">
-            <Info size={10} /> AI commentary — not financial advice
-          </div>
         </div>
       )}
 
@@ -429,14 +425,16 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
       {hasData && (
         <div className="glass-card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-white">Entries</h3>
+            <h3 className="text-sm font-bold text-white">Recent Entries</h3>
             <span className="text-[11px] text-slate-500">
               {anomalies.length > 0 && (
-                <span className="text-amber-400">{anomalies.length} flagged</span>
+                <span className="text-amber-400">{anomalies.length} unusual</span>
               )}
             </span>
           </div>
-          <div className="overflow-x-auto -mx-5">
+          
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto -mx-5">
             <table className="w-full text-sm min-w-[600px]">
               <thead className="text-slate-500 text-[10px] uppercase tracking-widest border-b border-white/5">
                 <tr>
@@ -488,7 +486,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
                       <td className="px-3 py-2 text-right">
                         <button
                           onClick={() => handleDelete(e.id)}
-                          className="text-slate-600 hover:text-rose-400 transition"
+                          className="text-slate-600 hover:text-rose-400 transition p-1"
                           title="Delete"
                         >
                           <Trash2 size={14} />
@@ -500,6 +498,59 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Card List */}
+          <div className="md:hidden space-y-3">
+            {entries.slice(0, 50).map(e => {
+              const flag = e.id ? anomalyMap.get(e.id) : undefined;
+              return (
+                <div
+                  key={e.id}
+                  className={`p-4 rounded-xl border border-white/5 space-y-3 ${
+                    flag ? 'bg-amber-500/5 border-amber-500/10' : 'bg-white/[0.02]'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+                        {e.entry_date}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                            e.type === 'revenue' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                          }`}
+                        >
+                          {e.type}
+                        </span>
+                        <span className="text-sm font-bold text-white">{e.category}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-white font-mono">{gbp(e.amount)}</div>
+                      <button
+                        onClick={() => handleDelete(e.id)}
+                        className="text-slate-500 hover:text-rose-400 mt-2"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  {e.note && (
+                    <div className="text-xs text-slate-400 italic border-t border-white/5 pt-2">
+                      {e.note}
+                    </div>
+                  )}
+                  {flag && (
+                    <div className="text-[10px] text-amber-300 bg-amber-500/10 px-2 py-1.5 rounded-lg border border-amber-500/10 flex items-center gap-2">
+                      <AlertTriangle size={12} /> {flag.reason}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
           {entries.length > 50 && (
             <div className="text-center text-[11px] text-slate-500 pt-3">
               Showing 50 most recent of {entries.length} entries.

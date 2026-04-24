@@ -21,7 +21,10 @@
       "WebFetch(domain:console.groq.com)",
       "Bash(npm install *)",
       "Bash(node --check index.js)",
-      "Bash(node --check auth.js)"
+      "Bash(node --check auth.js)",
+      "Bash(curl -sS -o /dev/null -w \"HTTP:%{http_code} TIME:%{time_total}s\\\\n\" https://britsyncai.com/api/auth/get-session)",
+      "Bash(curl -sS -I https://britsyncai.com)",
+      "Bash(curl -sS -X OPTIONS https://britsyncai.com/api/auth/sign-in/email -H 'Origin: https://localhost' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -D - -o /dev/null)"
     ]
   }
 }

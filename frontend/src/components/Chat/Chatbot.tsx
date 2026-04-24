@@ -1097,9 +1097,17 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
         )}
 
         {/* Input Area */}
-        <div className="px-2 md:px-4 lg:px-6 pb-3 md:pb-6 lg:pb-8 flex-shrink-0">
+        <div
+          className="px-2 md:px-4 lg:px-6 pb-3 md:pb-6 lg:pb-8 flex-shrink-0"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
+        >
           <div className="max-w-4xl mx-auto flex items-center gap-1 md:gap-2 bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-2 md:px-4 py-2 md:py-3 lg:py-4 focus-within:border-indigo-500/40 focus-within:ring-2 md:focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all backdrop-blur-md shadow-2xl">
-            <button onClick={handleFileClick} className="text-white/20 hover:text-indigo-400 transition-colors p-1" title="Attach file">
+            <button
+              onClick={handleFileClick}
+              className="text-white/30 hover:text-indigo-400 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg"
+              title="Attach file"
+              aria-label="Attach file"
+            >
               <Paperclip size={18} />
             </button>
             <input
@@ -1108,12 +1116,13 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask Britsee..."
-              className="flex-1 bg-transparent text-xs md:text-sm text-white placeholder-white/20 outline-none px-1 md:px-2 min-w-0"
+              className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none px-1 md:px-2 min-w-0 py-2"
             />
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
-              className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-indigo-600 disabled:bg-white/5 flex items-center justify-center text-white disabled:text-white/10 transition-all hover:bg-indigo-500 active:scale-95 shadow-lg shadow-indigo-600/20 disabled:shadow-none flex-shrink-0"
+              className="w-10 h-10 rounded-lg md:rounded-xl bg-indigo-600 disabled:bg-white/5 flex items-center justify-center text-white disabled:text-white/10 transition-all hover:bg-indigo-500 active:scale-95 shadow-lg shadow-indigo-600/20 disabled:shadow-none flex-shrink-0"
+              aria-label="Send message"
             >
               {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </button>

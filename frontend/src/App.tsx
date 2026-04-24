@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Component } from 'react';
 import type { ReactNode } from 'react';
 import { Auth } from './components/Auth/Auth';
+import { ResetPassword } from './components/Auth/ResetPassword';
 import { Layout } from './components/Layout/Layout';
 import { useSession, signOut } from './lib/auth-client';
 import { ProfileService, BusinessProfile } from './lib/profiles';
@@ -12,7 +13,6 @@ import { Bot } from 'lucide-react';
 
 // Lazy-load components
 const Chatbot = React.lazy(() => import('./components/Chat/Chatbot').then(m => ({ default: m.Chatbot })));
-const Onboarding = React.lazy(() => import('./components/Profile/Onboarding').then(m => ({ default: m.Onboarding })));
 const ProfileView = React.lazy(() => import('./components/Profile/ProfileView').then(m => ({ default: m.ProfileView })));
 const TeamPanel = React.lazy(() => import('./components/Team/TeamPanel').then(m => ({ default: m.TeamPanel })));
 const FinanceDashboard = React.lazy(() => import('./components/Finance/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
@@ -48,6 +48,12 @@ const Spinner = () => (
 );
 
 function App() {
+  // Route: /reset-password is public — render it before any session gating
+  // so users clicking the email link (likely logged out) can actually reset.
+  if (typeof window !== 'undefined' && window.location.pathname === '/reset-password') {
+    return <ResetPassword />;
+  }
+
   const { data: session, isPending: loading } = useSession();
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
@@ -55,10 +61,18 @@ function App() {
   const [timedOut, setTimedOut] = useState(false);
 
   // 1. Initial Handshake Timeout
+  //    If the session request hangs (common in native WebView when the backend
+  //    is unreachable or CORS-blocked), flip `timedOut` after 7s so the user
+  //    can retry instead of staring at the splash forever.
+  const [forceUnlocked, setForceUnlocked] = useState(false);
   useEffect(() => {
+    if (!loading) return;
     const timer = setTimeout(() => {
-      if (loading) setTimedOut(true);
-    }, 10000);
+      setTimedOut(true);
+      // Hard-release the splash so the Auth screen renders even if the
+      // useSession hook is stuck in a pending state.
+      setForceUnlocked(true);
+    }, 7000);
     return () => clearTimeout(timer);
   }, [loading]);
 
@@ -77,6 +91,14 @@ function App() {
         u.user?.email ||
         (session as any).email ||
         null;
+      // Registered display name — set during signup via signUp.email({name}).
+      // Fall back to the email handle so existing users (pre-name feature) still
+      // see something sensible.
+      const displayName: string =
+        (typeof u.name === 'string' && u.name.trim()) ||
+        (typeof u.displayName === 'string' && u.displayName.trim()) ||
+        (typeof u.fullName === 'string' && u.fullName.trim()) ||
+        (email ? email.split('@')[0] : 'My Business');
 
       // Push identity into TeamService so sync callers (TeamService._uid,
       // TeamPanel, Chatbot) always resolve the current user. Also warms
@@ -97,19 +119,38 @@ function App() {
         } catch { /* ignore */ }
       }
 
-      // Priority: Always verify with Supabase to avoid loop
+      // Auto-profile: no onboarding form. If the user has saved profile data,
+      // load it; otherwise auto-create a minimal blank profile derived from
+      // their email so dependent code (Finance, Team, memory) keeps working.
+      // Users can edit business details from the Profile tab when they want
+      // personalized AI replies.
       ProfileService.getLatestProfile(uid).then(existingProfile => {
         if (existingProfile && existingProfile.businessName && existingProfile.businessName !== 'BritSync Partner') {
           localStorage.setItem(localKey, JSON.stringify(existingProfile));
           setProfile(existingProfile);
-          setOnboarded(true);
         } else {
-          // If no name found in DB, we MUST onboard
-          setOnboarded(false);
+          const blank = new BusinessProfile({
+            businessName: displayName,
+            industry: '',
+            audience: '',
+            revenueGoal: '',
+            userId: uid,
+          });
+          localStorage.setItem(localKey, JSON.stringify(blank));
+          setProfile(blank);
+          // Best-effort persist so Finance / Team queries resolve.
+          ProfileService.saveProfile(blank, uid).catch(() => {});
         }
+        setOnboarded(true);
       }).catch((err) => {
         console.error("Profile Fetch Error:", err);
-        if (!cached) setOnboarded(false);
+        // Even on failure, keep the user out of the onboarding form.
+        const blank = new BusinessProfile({
+          businessName: displayName,
+          userId: uid,
+        });
+        setProfile(blank);
+        setOnboarded(true);
       });
     } else if (!loading) {
       setOnboarded(null);
@@ -127,14 +168,6 @@ function App() {
     localStorage.removeItem('britc_chat_sessions');
     localStorage.removeItem('britc_active_session');
     window.location.reload();
-  };
-
-  const handleOnboardingComplete = (newProfile: BusinessProfile) => {
-    if (session?.user?.id) {
-      localStorage.setItem(`britsync_profile_v2_${session.user.id}`, JSON.stringify(newProfile));
-    }
-    setProfile(newProfile);
-    setOnboarded(true);
   };
 
   const renderView = () => {
@@ -155,7 +188,7 @@ function App() {
 
   // ─── Render Stages ───
 
-  if (loading || (session && onboarded === null)) {
+  if (!forceUnlocked && (loading || (session && onboarded === null))) {
     return (
       <div className="min-h-screen bg-[#030712] flex items-center justify-center p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.1),transparent_70%)]" />
@@ -192,18 +225,9 @@ function App() {
   }
 
   if (!session) {
-    return <Auth onAuthenticated={() => {}} onStartOnboarding={() => setOnboarded(false)} />;
+    return <Auth onAuthenticated={() => {}} onStartOnboarding={() => { /* onboarding disabled — user goes straight to Chat */ }} />;
   }
-
-  if (onboarded === false) {
-    return (
-      <div className="min-h-screen bg-[#030712] overflow-hidden">
-        <React.Suspense fallback={<Spinner />}>
-          <Onboarding onComplete={handleOnboardingComplete} userId={session.user.id} />
-        </React.Suspense>
-      </div>
-    );
-  }
+  // Onboarding form removed — new users auto-get a blank profile and land in Chat.
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab} onSignOut={handleSignOut} profile={profile}>

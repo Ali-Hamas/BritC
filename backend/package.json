@@ -25,7 +25,8 @@
     "multer": "^2.0.2",
     "nodemailer": "^8.0.1",
     "pg": "^8.11.3",
-    "puppeteer": "^24.40.0"
+    "puppeteer": "^24.40.0",
+    "resend": "^6.12.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
