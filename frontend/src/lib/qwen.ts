@@ -2,16 +2,14 @@
  * Qwen Service - Alibaba Cloud Model Studio (International)
  * Uses OpenAI-compatible API format via Vite proxy to avoid browser CORS.
  */
+import { getApiUrl } from './api-config';
+
 export interface QwenMessage {
   role: 'system' | 'user' | 'assistant';
   content: string | any[];
 }
 
 export const QwenService = {
-  // In dev: Vite proxies /api/qwen → dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions
-  // In prod: needs a real backend proxy (or use environment variable)
-  proxyUrl: '/api/qwen',
-
   async chat(messages: QwenMessage[], model: string = 'qwen-plus', apiKey: string): Promise<string> {
     if (!apiKey) throw new Error('Qwen API Key is missing. Please add it in Settings.');
 
@@ -19,7 +17,7 @@ export const QwenService = {
     const safeModel = model === 'qwen-vl-plus' ? 'qwen-plus' : model;
 
     try {
-      const response = await fetch(this.proxyUrl, {
+      const response = await fetch(getApiUrl('/qwen'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

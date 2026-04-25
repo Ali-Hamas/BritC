@@ -17,6 +17,7 @@ import { SearchService } from './search';
 import { ReportingService } from './reporting';
 import { MetricsService } from './metrics';
 import { CRMService } from './crm';
+import { getApiUrl } from './api-config';
 import { SettingsService } from './settings';
 import { ActivityService } from './activity';
 import { TeamService } from './team';
@@ -396,7 +397,7 @@ Include ONLY the email body (no subject line). Keep it under 150 words.`;
       // ── Get 10 Targeted Leads ─────────────────────────────────────────────
       case 'get_leads': {
         const query = params.query || `public email for ${params.niche || 'business'} in ${params.city || 'London'}`;
-        const res = await fetch('/api/browser/leads', {
+        const res = await fetch(getApiUrl('/browser/leads'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query })

@@ -1,6 +1,8 @@
 /**
  * Groq Service — Fast cloud AI via Groq API (OpenAI-compatible)
  */
+import { getApiUrl } from './api-config';
+
 export interface GroqMessage {
   role: 'system' | 'user' | 'assistant';
   content: string | Array<{ 
@@ -11,13 +13,10 @@ export interface GroqMessage {
 }
 
 export const GroqService = {
-  // Proxied via Vite in dev to avoid CORS
-  proxyUrl: '/api/groq',
-
   async chat(messages: GroqMessage[], model: string, apiKey: string): Promise<string> {
     if (!apiKey) throw new Error('Groq API Key is missing. Please add it in Settings.');
 
-    const response = await fetch(this.proxyUrl, {
+    const response = await fetch(getApiUrl('/groq'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

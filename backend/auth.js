@@ -103,15 +103,13 @@ const auth = betterAuth({
         ipAddress: {
             ipAddressHeaders: ['cf-connecting-ip', 'x-forwarded-for']
         },
-        // Required so the Capacitor Android WebView (origin https://localhost)
-        // can store the session cookie set by britsyncai.com. SameSite=None
-        // requires Secure, so this only works over HTTPS — which production is.
+        // SameSite=None;Secure so cookies work for both the same-site web app
+        // (britsyncai.com → britsyncai.com) and the cross-site Capacitor APK
+        // (https://localhost → britsyncai.com). On HTTPS this is supported by
+        // all modern browsers and Android WebView.
         defaultCookieAttributes: {
             sameSite: "none",
             secure: true,
-        },
-        crossSubDomainCookies: {
-            enabled: true,
         },
     }
 });

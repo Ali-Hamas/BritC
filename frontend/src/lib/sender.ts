@@ -15,7 +15,8 @@
  */
 
 // Proxied via Vite to bypass CORS issues.
-const SENDER_BASE = '/api/sender';
+import { getApiUrl } from './api-config';
+const SENDER_BASE = getApiUrl('/sender');
 
 export interface CampaignConfig {
   campaignName: string;       // was "name" — corrected per docs
