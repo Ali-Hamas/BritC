@@ -72,7 +72,7 @@ const ACTIVE_SESSION_KEY = 'britc_active_session';
 
 // Limits for localStorage to avoid QuotaExceededError
 const MAX_LOCAL_SESSIONS = 15; // Reduced from 50
-const MAX_MSG_CONTENT_LOCAL = 2000; // Truncate very long messages in local storage
+const MAX_MSG_CONTENT_LOCAL = 50000; // Truncate only extreme messages — AI code responses can be ~10-20KB
 const MAX_ATTACHMENT_SIZE_LOCAL = 500; // Truncate large attachment text in local storage
 const MAX_MESSAGES_PER_SESSION = 25; // Limit messages per session in local storage
 
