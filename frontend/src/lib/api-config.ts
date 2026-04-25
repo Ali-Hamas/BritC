@@ -9,8 +9,22 @@
 // In DEV mode, we default to empty string so that relative paths work with the Vite proxy
 // In PROD mode, we default to the live secure domain
 const isDev = (import.meta as any).env.DEV;
-const API_BASE_URL = (import.meta as any).env.VITE_API_URL || 
-  (isDev ? '' : (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'https://britsyncai.com/api'));
+
+// Detect Capacitor (Android/iOS native shell). The WebView origin is
+// https://localhost on Android — calling relative /api paths there would hit
+// the phone, not our backend. Force the absolute URL in that case.
+const isCapacitor =
+  typeof window !== 'undefined' &&
+  (window.location.protocol === 'capacitor:' ||
+    !!(window as any).Capacitor?.isNativePlatform?.() ||
+    (window.location.protocol === 'https:' && window.location.hostname === 'localhost'));
+
+const API_BASE_URL = (import.meta as any).env.VITE_API_URL ||
+  (isCapacitor
+    ? 'https://britsyncai.com/api'
+    : (isDev
+        ? ''
+        : (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'https://britsyncai.com/api')));
 
 /**
  * Normalizes and returns a full API URL for a given endpoint path.
