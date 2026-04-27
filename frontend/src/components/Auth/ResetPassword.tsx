@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, ArrowRight, Loader2, CheckCircle2, AlertTriangle, Zap } from 'lucide-react';
+import { Lock, ArrowRight, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { resetPassword } from '../../lib/auth-client';
 
 export const ResetPassword: React.FC = () => {

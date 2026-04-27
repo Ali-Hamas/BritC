@@ -4,7 +4,6 @@ import {
   ChevronRight,
   Bot,
   Users,
-  Zap,
   PoundSterling,
   Settings,
   Shield,

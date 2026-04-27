@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, ArrowRight, Mail, Zap, Globe, Users, Loader2, Sparkles, X, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, ArrowRight, Mail, Globe, Users, Loader2, Sparkles, X, CheckCircle2 } from 'lucide-react';
 import { signIn, signUp, forgetPassword } from '../../lib/auth-client';
 
 interface AuthProps {
