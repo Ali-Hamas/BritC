@@ -42,13 +42,24 @@ interface ChatSession {
   pin?: string;
 }
 
-// ─── Quick Action Chips ────────────────────────────────────────────────────────
+// ─── Chat Modes (Kimi-style mode selector) ────────────────────────────────────
 
-const QUICK_ACTIONS = [
-  { icon: Search,       label: 'Web Research',    prompt: 'Research current trends in UK small business automation', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
-  { icon: Users,        label: 'Team Collab',     prompt: 'How can our team use AI to automate cold email outreach?', color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20' },
-  { icon: FileText,     label: 'Draft Content',   prompt: 'Draft a 300-word blog post about the benefits of AI for small agencies', color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
-  { icon: Mail,         label: 'Email Draft',     prompt: 'Write a professional email welcoming a new team member to Britsee', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
+type ChatMode = 'default' | 'web' | 'team' | 'draft' | 'email';
+
+interface ModeOption {
+  id: ChatMode;
+  label: string;
+  description: string;
+  icon: typeof Search;
+  prefix: string;
+}
+
+const CHAT_MODES: ModeOption[] = [
+  { id: 'default', label: 'Standard', description: 'Quick AI response', icon: Bot, prefix: '' },
+  { id: 'web',     label: 'Web Research', description: 'Search the web for current info', icon: Search, prefix: 'Research the web and find current information about: ' },
+  { id: 'team',    label: 'Team Collab', description: 'Brainstorm with your team', icon: Users, prefix: 'Help our team collaborate on: ' },
+  { id: 'draft',   label: 'Draft Content', description: 'Generate articles, posts, copy', icon: FileText, prefix: 'Draft content for: ' },
+  { id: 'email',   label: 'Email Draft', description: 'Write a professional email', icon: Mail, prefix: 'Write a professional email for: ' },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -715,7 +726,8 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(true);
+  const [chatMode, setChatMode] = useState<ChatMode>('default');
+  const [showModeMenu, setShowModeMenu] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -784,11 +796,11 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  // Show quick actions when session is fresh
+  // Reset mode when switching sessions
   useEffect(() => {
-    const userMessages = messages.filter(m => m.role === 'user');
-    setShowQuickActions(userMessages.length === 0);
-  }, [activeSessionId, messages.length]);
+    setChatMode('default');
+    setShowModeMenu(false);
+  }, [activeSessionId]);
 
   const joinTeamChatByPin = async (pin: string) => {
     setIsJoining(true);
@@ -865,10 +877,13 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
   };
 
   const handleSend = async (text?: string) => {
-    const messageText = (text || input).trim();
-    if (!messageText || isLoading) return;
+    const rawText = (text || input).trim();
+    if (!rawText || isLoading) return;
 
-    setShowQuickActions(false);
+    const activeMode = CHAT_MODES.find(m => m.id === chatMode);
+    const messageText = activeMode && activeMode.prefix
+      ? `${activeMode.prefix}${rawText}`
+      : rawText;
 
     let fullContent = messageText;
     if (attachments.length > 0) {
@@ -890,6 +905,8 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
     setMessages(prev => uniquifyMessages([...prev, userMsg]));
     setInput('');
     setAttachments([]);
+    setChatMode('default');
+    setShowModeMenu(false);
     setIsLoading(true);
 
     const currentUser = TeamService.getCurrentMember();
@@ -1131,20 +1148,7 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Actions */}
-        <AnimatePresence>
-          {showQuickActions && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-              className="px-3 md:px-4 lg:px-6 pb-3 md:pb-4 flex flex-wrap gap-2 overflow-x-auto scrollbar-hide">
-              {QUICK_ACTIONS.map((qa) => (
-                <button key={qa.label} onClick={() => handleSend(qa.prompt)}
-                  className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 rounded-xl border text-[10px] md:text-xs font-bold transition-all hover:scale-105 active:scale-95 whitespace-nowrap shadow-lg shadow-black/20 ${qa.color}`}>
-                  <qa.icon size={12} />{qa.label}
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* (Mode chips removed — replaced by Kimi-style dropdown next to input) */}
 
         {/* Attachment Preview */}
         {attachments.length > 0 && (
@@ -1180,9 +1184,84 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Britsync AI..."
+              placeholder={
+                chatMode === 'default'
+                  ? 'Ask Britsync AI...'
+                  : `${CHAT_MODES.find(m => m.id === chatMode)?.label}: type your request...`
+              }
               className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none px-1 md:px-2 min-w-0 py-2"
             />
+
+            {/* Mode selector (Kimi-style) */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => setShowModeMenu(v => !v)}
+                className={`flex items-center gap-1.5 px-2.5 md:px-3 py-2 rounded-lg border text-[11px] md:text-xs font-semibold transition-all whitespace-nowrap ${
+                  chatMode === 'default'
+                    ? 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
+                    : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25'
+                }`}
+                title="Choose chat mode"
+              >
+                {(() => {
+                  const m = CHAT_MODES.find(x => x.id === chatMode)!;
+                  const Icon = m.icon;
+                  return <Icon size={12} />;
+                })()}
+                <span className="hidden sm:inline">
+                  {CHAT_MODES.find(m => m.id === chatMode)?.label}
+                </span>
+                <ChevronDown size={12} className={`transition-transform ${showModeMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {showModeMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowModeMenu(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute right-0 bottom-full mb-2 w-64 bg-[#0b1020] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 p-1"
+                    >
+                      {CHAT_MODES.map(m => {
+                        const Icon = m.icon;
+                        const active = m.id === chatMode;
+                        return (
+                          <button
+                            key={m.id}
+                            onClick={() => {
+                              setChatMode(m.id);
+                              setShowModeMenu(false);
+                              inputRef.current?.focus();
+                            }}
+                            className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-left transition-colors ${
+                              active
+                                ? 'bg-indigo-500/15 text-white'
+                                : 'text-white/80 hover:bg-white/5'
+                            }`}
+                          >
+                            <Icon size={14} className={`mt-0.5 flex-shrink-0 ${active ? 'text-indigo-400' : 'text-white/50'}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold">{m.label}</span>
+                                {active && <span className="text-[9px] text-indigo-300 font-bold uppercase tracking-widest">Active</span>}
+                              </div>
+                              <p className="text-[10px] text-white/40 mt-0.5 leading-snug">{m.description}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
