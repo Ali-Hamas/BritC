@@ -241,9 +241,10 @@ const HistorySidebar = ({
             </div>
             <button
               onClick={e => { e.stopPropagation(); onDeleteSession(s.id); }}
-              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-500/20 hover:text-red-400 transition-all flex-shrink-0"
+              title="Delete chat"
+              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all flex-shrink-0"
             >
-              <X size={11} />
+              <Trash2 size={12} />
             </button>
           </div>
         ))}
@@ -332,7 +333,7 @@ const HistorySidebar = ({
         <div className="flex items-center gap-2">
           <Bot size={16} className="text-indigo-400" />
           <div className="flex flex-col">
-            <span className="text-xs md:text-sm font-semibold text-white">Britsee</span>
+            <span className="text-xs md:text-sm font-semibold text-white">Britsync AI</span>
             <div className="flex items-center gap-1">
               <div className={`w-1.5 h-1.5 rounded-full ${
                 backendStatus === 'online' ? 'bg-emerald-500 animate-pulse' : 
@@ -561,14 +562,50 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const renderContent = (text: string) => {
-    const parts = text.split(/(\*\*.*?\*\*|`[^`]+`|\n)/g);
+  const renderInline = (text: string, keyPrefix: string) => {
+    const parts = text.split(/(\*\*.*?\*\*|`[^`\n]+`|\n)/g);
     return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
-      if (part.startsWith('`') && part.endsWith('`')) return <code key={i} className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-300 font-mono text-[10px] md:text-[11px]">{part.slice(1, -1)}</code>;
-      if (part === '\n') return <br key={i} />;
-      return <span key={i}>{part}</span>;
+      const k = `${keyPrefix}-${i}`;
+      if (part.startsWith('**') && part.endsWith('**')) return <strong key={k} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+      if (part.startsWith('`') && part.endsWith('`')) return <code key={k} className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-300 font-mono text-[10px] md:text-[11px]">{part.slice(1, -1)}</code>;
+      if (part === '\n') return <br key={k} />;
+      return <span key={k}>{part}</span>;
     });
+  };
+
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+  };
+
+  const renderContent = (text: string) => {
+    const blocks = text.split(/```(\w+)?\n?([\s\S]*?)```/g);
+    const out: React.ReactNode[] = [];
+    for (let i = 0; i < blocks.length; i++) {
+      if (i % 3 === 0) {
+        if (blocks[i]) out.push(<span key={`t-${i}`}>{renderInline(blocks[i], `t${i}`)}</span>);
+      } else if (i % 3 === 1) {
+        const lang = blocks[i] || 'code';
+        const code = blocks[i + 1] || '';
+        out.push(
+          <div key={`c-${i}`} className="my-2 rounded-lg overflow-hidden border border-white/10 bg-black/40">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-white/5 border-b border-white/10">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{lang}</span>
+              <button
+                onClick={() => copyCode(code)}
+                className="text-[10px] text-slate-400 hover:text-white transition-colors"
+              >
+                Copy
+              </button>
+            </div>
+            <pre className="p-3 overflow-x-auto text-[11px] md:text-xs font-mono text-emerald-300 whitespace-pre">
+              <code>{code}</code>
+            </pre>
+          </div>
+        );
+        i++;
+      }
+    }
+    return out;
   };
 
   return (
@@ -649,6 +686,13 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
   const [isJoining, setIsJoining] = useState(false);
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', confirmLabel: 'Delete', onConfirm: () => {} });
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages: Message[] = activeSession?.messages || [];
@@ -728,7 +772,7 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
         role: 'assistant',
         content: activeSession?.isTeam 
           ? `Welcome to your **Team Collaboration Hub**! 👥\n\nThis is a shared session (PIN: **${activeSession.pin}**). Every message you send here is synchronized with your team. How can we work together today?`
-          : `Hello! I'm **Britsee**, your AI Assistant. 🚀\n\nI'm here to help you with research, marketing, and business automation. How can I assist you today?`,
+          : `Hello! I'm **Britsync AI**. 🚀\n\nI'm here to help you with research, marketing, and business automation. How can I assist you today?`,
         timestamp: new Date(),
       }]);
     }
@@ -767,14 +811,25 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
   };
 
   const deleteSession = (id: string) => {
-    setSessions(prev => {
-      const remaining = prev.filter(s => s.id !== id);
-      if (id === activeSessionId && remaining.length > 0) {
-        setActiveSessionId(remaining[0].id);
-      } else if (remaining.length === 0) {
-        createNewSession();
-      }
-      return remaining;
+    const target = sessions.find(s => s.id === id);
+    const title = target?.title || 'this chat';
+    setConfirmModal({
+      open: true,
+      title: `Delete "${title}"?`,
+      message: 'This will permanently remove this chat and all of its messages. This action cannot be undone.',
+      confirmLabel: 'Delete chat',
+      onConfirm: () => {
+        setSessions(prev => {
+          const remaining = prev.filter(s => s.id !== id);
+          if (id === activeSessionId && remaining.length > 0) {
+            setActiveSessionId(remaining[0].id);
+          } else if (remaining.length === 0) {
+            createNewSession();
+          }
+          return remaining;
+        });
+        setConfirmModal(c => ({ ...c, open: false }));
+      },
     });
   };
 
@@ -1007,7 +1062,7 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
                 <Bot size={18} className="text-white" />
               </div>
               <div className="min-w-0">
-                <h2 className="font-bold text-white text-xs md:text-sm truncate max-w-[100px] sm:max-w-[140px] md:max-w-[200px] lg:max-w-none">{activeSession?.title || 'Britsee'}</h2>
+                <h2 className="font-bold text-white text-xs md:text-sm truncate max-w-[100px] sm:max-w-[140px] md:max-w-[200px] lg:max-w-none">{activeSession?.title || 'Britsync AI'}</h2>
                 <p className="text-[10px] md:text-[11px] text-emerald-400 flex items-center gap-1">
                   <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                   <span className="truncate">AI Active</span>
@@ -1031,7 +1086,17 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
                 <span className="hidden md:inline">New</span>
               </button>
               <button
-                onClick={() => { if (confirm('Clear conversation?')) { setMessages([]); ChatHistoryService.clearMessages(); } }}
+                onClick={() => setConfirmModal({
+                  open: true,
+                  title: 'Clear this conversation?',
+                  message: 'All messages in the current chat will be permanently deleted. This cannot be undone.',
+                  confirmLabel: 'Clear messages',
+                  onConfirm: () => {
+                    setMessages([]);
+                    ChatHistoryService.clearMessages();
+                    setConfirmModal(c => ({ ...c, open: false }));
+                  },
+                })}
                 className="p-2 rounded-xl hover:bg-rose-500/10 text-white/20 hover:text-rose-400 transition-all"
               >
                 <Trash2 size={14} />
@@ -1115,7 +1180,7 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Britsee..."
+              placeholder="Ask Britsync AI..."
               className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none px-1 md:px-2 min-w-0 py-2"
             />
             <button
@@ -1138,6 +1203,54 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
         isJoining={isJoining}
         error={pinError}
       />
+
+      <AnimatePresence>
+        {confirmModal.open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            onClick={() => setConfirmModal(c => ({ ...c, open: false }))}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.15 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md bg-[#0b1020] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-5 md:p-6">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/20 flex items-center justify-center flex-shrink-0">
+                    <Trash2 size={18} className="text-rose-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base md:text-lg font-bold text-white leading-tight">{confirmModal.title}</h3>
+                    <p className="text-xs md:text-sm text-white/60 mt-1.5 leading-relaxed">{confirmModal.message}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 mt-5">
+                  <button
+                    onClick={() => setConfirmModal(c => ({ ...c, open: false }))}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmModal.onConfirm}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors flex items-center gap-2"
+                  >
+                    <Trash2 size={14} />
+                    {confirmModal.confirmLabel}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

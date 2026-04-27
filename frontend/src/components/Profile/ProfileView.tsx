@@ -43,7 +43,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut }) 
                    <span className="text-sm text-white font-medium">{profile.audience || 'General'}</span>
                 </div>
                 <div className="flex flex-col gap-2 py-3 border-b border-white/5">
-                   <span className="text-sm text-slate-400">Assistant Goals</span>
+                   <span className="text-sm text-slate-400">Britsync AI Goals</span>
                    <p className="text-sm text-slate-300 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/10">
                       {profile.revenueGoal || 'No goals specified yet.'}
                    </p>
@@ -69,7 +69,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut }) 
                 className="flex items-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl hover:bg-rose-500 hover:text-white transition-all font-bold"
              >
                 <LogOut size={18} />
-                Sign Out from Britsee
+                Sign Out from Britsync AI
              </button>
           </div>
         </div>
@@ -82,7 +82,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut }) 
                  <h3 className="text-sm font-bold uppercase tracking-widest">Security</h3>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                 Your data is protected by Britsee's enterprise-grade encryption.
+                 Your data is protected by Britsync AI's enterprise-grade encryption.
               </p>
               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                  <div className="h-full w-full bg-indigo-500/30 animate-pulse" />

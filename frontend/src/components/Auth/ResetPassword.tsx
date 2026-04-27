@@ -65,11 +65,11 @@ export const ResetPassword: React.FC = () => {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center shadow-xl">
-              <Zap className="text-white fill-white" size={20} />
+            <div className="w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl">
+              <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-2xl font-black tracking-tight">
-              BritSync <span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">Assistant</span>
+              Britsync <span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">AI</span>
             </h1>
           </div>
         </div>

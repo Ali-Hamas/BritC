@@ -45,6 +45,7 @@ export interface MyTeamContext {
 }
 
 const LOCAL_CACHE_KEY = 'britsync_team_cache_v2';
+const ACTIVE_TEAM_KEY = 'britsync_active_team_id';
 
 function getCurrentUserId(): string | null {
   // Better-Auth's getSession() is async and returns a Promise — calling it
@@ -120,8 +121,73 @@ export const TeamService = {
   },
 
   /**
+   * Read the currently active team id from localStorage. Used to pick which
+   * team is "current" when the user owns or belongs to several.
+   */
+  getActiveTeamId(): string | null {
+    try {
+      return localStorage.getItem(ACTIVE_TEAM_KEY);
+    } catch {
+      return null;
+    }
+  },
+
+  setActiveTeamId(teamId: string | null): void {
+    try {
+      if (teamId) localStorage.setItem(ACTIVE_TEAM_KEY, teamId);
+      else localStorage.removeItem(ACTIVE_TEAM_KEY);
+    } catch {}
+  },
+
+  /**
+   * Return every team the user is involved in, as either owner or member.
+   * Includes role + displayName per team. Used by the team switcher UI.
+   */
+  async getMyTeams(userId: string): Promise<Array<{ team: Team; role: 'owner' | 'member'; displayName: string | null }>> {
+    if (!userId) return [];
+    const out: Array<{ team: Team; role: 'owner' | 'member'; displayName: string | null }> = [];
+
+    const { data: ownedTeams } = await supabase
+      .from('teams')
+      .select('*')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: true });
+    if (ownedTeams) {
+      for (const t of ownedTeams as Team[]) {
+        out.push({ team: t, role: 'owner', displayName: 'Owner' });
+      }
+    }
+
+    const { data: memberships } = await supabase
+      .from('team_members')
+      .select('team_id, role, display_name')
+      .eq('user_id', userId);
+    if (memberships && memberships.length > 0) {
+      const ownedIds = new Set(out.map(o => o.team.id));
+      const memberOnly = (memberships as any[]).filter(m => m.role !== 'owner' && !ownedIds.has(m.team_id));
+      if (memberOnly.length > 0) {
+        const { data: memberTeams } = await supabase
+          .from('teams')
+          .select('*')
+          .in('id', memberOnly.map(m => m.team_id));
+        if (memberTeams) {
+          for (const m of memberOnly) {
+            const t = (memberTeams as Team[]).find(x => x.id === m.team_id);
+            if (t) out.push({ team: t, role: 'member', displayName: m.display_name || 'Member' });
+          }
+        }
+      }
+    }
+
+    return out;
+  },
+
+  /**
    * Load the team the current user belongs to (as owner or member).
    * Returns null if no team yet.
+   *
+   * If the user has multiple teams, returns the active one (per
+   * `getActiveTeamId()`); falls back to the first team found.
    *
    * Special case: if the signed-in user is the GLOBAL_MODERATOR_EMAIL and
    * has no team, we auto-provision one so the moderator seat is always live.
@@ -133,41 +199,16 @@ export const TeamService = {
       return empty;
     }
 
-    // Own team first (if user is an owner)
-    const { data: owned } = await supabase
-      .from('teams')
-      .select('*')
-      .eq('owner_id', userId)
-      .maybeSingle();
+    const all = await this.getMyTeams(userId);
 
-    if (owned) {
+    if (all.length > 0) {
+      const activeId = this.getActiveTeamId();
+      const picked = (activeId && all.find(t => t.team.id === activeId)) || all[0];
+      if (!activeId) this.setActiveTeamId(picked.team.id);
       const ctx: MyTeamContext = {
-        team: owned as Team,
-        role: 'owner',
-        displayName: 'Owner',
-      };
-      cache(ctx);
-      return ctx;
-    }
-
-    // Otherwise look up membership
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('team_id, role, display_name')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (membership) {
-      const { data: team } = await supabase
-        .from('teams')
-        .select('*')
-        .eq('id', membership.team_id)
-        .maybeSingle();
-
-      const ctx: MyTeamContext = {
-        team: (team as Team) || null,
-        role: membership.role as 'owner' | 'member',
-        displayName: membership.display_name || 'Member',
+        team: picked.team,
+        role: picked.role,
+        displayName: picked.displayName,
       };
       cache(ctx);
       return ctx;
@@ -190,7 +231,7 @@ export const TeamService = {
     return empty;
   },
 
-  /** Creates a team for the given user. Fails if they already own one. */
+  /** Creates a team for the given user. A user may own multiple teams. */
   async createTeam(userId: string, title: string): Promise<Team> {
     if (!userId) throw new Error('Not signed in');
     const pin = randomPin();
@@ -211,6 +252,8 @@ export const TeamService = {
         { onConflict: 'team_id,user_id' }
       );
 
+    // Newly-created team becomes the active one immediately.
+    this.setActiveTeamId(team.id);
     cache({ team, role: 'owner', displayName: 'Owner' });
     return team;
   },

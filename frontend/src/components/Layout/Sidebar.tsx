@@ -47,10 +47,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
     <aside className="w-full md:w-64 lg:w-72 bg-[#030712] border-r border-white/5 flex flex-col h-full z-50 overflow-y-auto">
       <div className="p-4 md:p-6 flex items-center justify-between">
         <div className="flex items-center gap-3 group cursor-pointer">
-          <div className="h-10 w-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-            <Zap className="text-white fill-white" size={24} />
+          <div className="h-10 w-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+            <img src="/favicon.png" alt="Britsync AI" className="h-full w-full object-cover" />
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">Britsee</span>
+          <span className="text-xl font-bold text-white tracking-tight">Britsync AI</span>
         </div>
         <button 
           onClick={onClose} 
@@ -118,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
           <LogOut size={18} className="text-slate-500 group-hover:text-rose-400" />
           <span>Sign Out</span>
         </button>
-        <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest opacity-50 font-bold">Britsee Assistant v1.0</p>
+        <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest opacity-50 font-bold">Britsync AI v1.0</p>
       </div>
     </aside>
   );

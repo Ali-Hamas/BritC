@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { 
-  Users, Key, Trash2, Copy, CheckCircle, 
-  Loader2, Plus, Brain, Save, Zap, AlertTriangle, TrendingUp, BarChart3
+import { useState, useEffect, useRef } from 'react';
+import {
+  Users, Key, Trash2, Copy, CheckCircle,
+  Loader2, Plus, Brain, Save, Zap, AlertTriangle, TrendingUp, BarChart3, ChevronDown, Paperclip
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TeamService, type Team, type TeamMember } from '../../lib/team';
+import { FileHandlingService } from '../../lib/fileHandling';
 import { MemoryService, type MemoryBlock, type MemoryType } from '../../lib/memory';
 import { GrowthService, type GrowthInsight } from '../../lib/growth';
 import type { BusinessProfile } from '../../lib/profiles';
@@ -12,6 +13,10 @@ import type { BusinessProfile } from '../../lib/profiles';
 export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null; userId?: string | null }) => {
   const [loading, setLoading] = useState(true);
   const [ctx, setCtx] = useState<{ team: Team | null; role: 'owner' | 'member' | null; displayName: string | null } | null>(null);
+  const [allTeams, setAllTeams] = useState<Array<{ team: Team; role: 'owner' | 'member'; displayName: string | null }>>([]);
+  const [showTeamSwitcher, setShowTeamSwitcher] = useState(false);
+  const [showNewTeamModal, setShowNewTeamModal] = useState(false);
+  const [newTeamName, setNewTeamName] = useState('');
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [memoryBlocks, setMemoryBlocks] = useState<MemoryBlock[]>([]);
   const [insights, setInsights] = useState<GrowthInsight[]>([]);
@@ -21,8 +26,10 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
   const [editingBlockId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isSavingMemory, setIsSavingMemory] = useState(false);
+  const [isAttachingFile, setIsAttachingFile] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
+  const memoryFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     loadData();
@@ -38,9 +45,13 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
         return;
       }
       setIsModerator(TeamService.isGlobalModerator());
+
+      const teams = await TeamService.getMyTeams(uid);
+      setAllTeams(teams);
+
       const currentCtx = await TeamService.getMyTeam(uid);
       setCtx(currentCtx);
-      
+
       if (currentCtx.team) {
         if (currentCtx.role === 'owner') {
           const [mems, pulse, bns] = await Promise.all([
@@ -62,12 +73,21 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
     }
   };
 
-  const handleCreateTeam = async () => {
+  const handleSwitchTeam = (teamId: string) => {
+    TeamService.setActiveTeamId(teamId);
+    setShowTeamSwitcher(false);
+    loadData();
+  };
+
+  const handleCreateTeam = async (customName?: string) => {
     setActionLoading(true);
     try {
       const uid = userId || TeamService._uid();
       if (!uid) { alert('You must be signed in.'); return; }
-      await TeamService.createTeam(uid, `${profile?.businessName || 'My'} Team`);
+      const title = (customName && customName.trim()) || `${profile?.businessName || 'My'} Team ${allTeams.length + 1}`;
+      await TeamService.createTeam(uid, title);
+      setShowNewTeamModal(false);
+      setNewTeamName('');
       await loadData();
     } catch (err: any) {
       alert(err.message || 'Failed to create team');
@@ -153,6 +173,85 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
     setMemoryBlocks(blocks);
   };
 
+  const handleAttachFileToDirective = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsAttachingFile(true);
+    try {
+      const chunks: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        const processed = await FileHandlingService.processFile(f);
+        if (processed.content) {
+          chunks.push(`\n\n--- Attached file: ${f.name} ---\n${processed.content}`);
+        } else {
+          chunks.push(`\n\n--- Attached file: ${f.name} (${FileHandlingService.formatSize(f.size)}) — binary, content not extracted ---`);
+        }
+      }
+      setEditContent(prev => (prev || '') + chunks.join(''));
+    } catch (err: any) {
+      alert('Failed to read file: ' + (err.message || err));
+    } finally {
+      setIsAttachingFile(false);
+      if (memoryFileInputRef.current) memoryFileInputRef.current.value = '';
+    }
+  };
+
+  const renderNewTeamModal = () => {
+    if (!showNewTeamModal) return null;
+    return (
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        onClick={() => { if (!actionLoading) { setShowNewTeamModal(false); setNewTeamName(''); } }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          className="w-full max-w-md bg-[#0b1020] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+        >
+          <div className="p-5 md:p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                <Users size={18} className="text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base md:text-lg font-bold text-white leading-tight">Create new team</h3>
+                <p className="text-xs md:text-sm text-white/60 mt-1.5 leading-relaxed">
+                  Each team gets its own PIN, members, and Strategic Memory. You can switch between teams anytime.
+                </p>
+              </div>
+            </div>
+            <input
+              type="text"
+              autoFocus
+              value={newTeamName}
+              onChange={e => setNewTeamName(e.target.value)}
+              placeholder="e.g. Marketing Squad"
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500/50 focus:outline-none"
+              onKeyDown={e => { if (e.key === 'Enter' && !actionLoading) handleCreateTeam(newTeamName); }}
+            />
+            <div className="flex items-center justify-end gap-2 mt-5">
+              <button
+                onClick={() => { setShowNewTeamModal(false); setNewTeamName(''); }}
+                disabled={actionLoading}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleCreateTeam(newTeamName)}
+                disabled={actionLoading}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-indigo-500 hover:bg-indigo-600 transition-colors flex items-center gap-2 disabled:opacity-60"
+              >
+                {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                Create team
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-indigo-500" size={32} /></div>;
   }
@@ -170,7 +269,7 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
             Create a team to generate a secure PIN. You can share this PIN with your colleagues to link them to your workspace. Their chats will remain completely private, but the AI will be guided by your strategic memory.
           </p>
           <button
-            onClick={handleCreateTeam}
+            onClick={() => setShowNewTeamModal(true)}
             disabled={actionLoading}
             className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center mx-auto gap-2"
           >
@@ -178,6 +277,7 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
             Initialize Team Workspace
           </button>
         </div>
+        {renderNewTeamModal()}
       </div>
     );
   }
@@ -206,17 +306,86 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
             {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
             Disconnect from Team
           </button>
+
+          <div className="pt-6 border-t border-white/5">
+            <p className="text-xs text-slate-500 mb-3">Want your own workspace too?</p>
+            <button
+              onClick={() => setShowNewTeamModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
+            >
+              <Plus size={14} />
+              Create your own team
+            </button>
+          </div>
         </div>
+        {renderNewTeamModal()}
       </div>
     );
   }
 
   // ─── Owner View ───
   const categories: MemoryType[] = ['strategic', 'operational', 'instructional', 'constraint', 'interpretation'];
+  const ownedTeams = allTeams.filter(t => t.role === 'owner');
 
   return (
     <div className="h-full overflow-y-auto px-4 sm:px-6 py-6 sm:py-8 pb-32 scrollbar-thin">
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
+
+        {/* Team Switcher */}
+        {(ownedTeams.length > 1 || allTeams.length > 1) && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
+              <button
+                onClick={() => setShowTeamSwitcher(v => !v)}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold text-white transition-colors"
+              >
+                <Users size={14} className="text-indigo-400" />
+                <span className="truncate max-w-[200px]">{ctx.team.title || 'My Team'}</span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform ${showTeamSwitcher ? 'rotate-180' : ''}`} />
+              </button>
+              {showTeamSwitcher && (
+                <div className="absolute top-full left-0 mt-2 w-72 bg-[#0b1020] border border-white/10 rounded-xl shadow-2xl z-30 overflow-hidden">
+                  <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 border-b border-white/5">Your teams</div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {allTeams.map(t => (
+                      <button
+                        key={t.team.id}
+                        onClick={() => handleSwitchTeam(t.team.id)}
+                        className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-2 text-xs transition-colors ${
+                          t.team.id === ctx.team!.id ? 'bg-indigo-500/10 text-white' : 'text-slate-300 hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold truncate">{t.team.title || 'My Team'}</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{t.role}</p>
+                        </div>
+                        {t.team.id === ctx.team!.id && <CheckCircle size={14} className="text-indigo-400 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setShowNewTeamModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
+            >
+              <Plus size={14} />
+              New Team
+            </button>
+          </div>
+        )}
+        {ownedTeams.length === 1 && allTeams.length === 1 && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowNewTeamModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
+            >
+              <Plus size={14} />
+              New Team
+            </button>
+          </div>
+        )}
 
         {/* Header & PIN */}
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:items-start justify-between">
@@ -402,23 +571,36 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
                               autoFocus
                               value={editContent}
                               onChange={(e) => setEditContent(e.target.value)}
-                              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-slate-200 text-sm focus:border-indigo-500/50 outline-none h-32 resize-none"
+                              placeholder="Type your directive… or attach a file to import its contents."
+                              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-slate-200 text-sm focus:border-indigo-500/50 outline-none h-40 resize-none placeholder:text-slate-600"
                             />
-                            <div className="flex justify-between items-center">
-                              <button 
-                                onClick={() => handleDeleteMemory(block.id)}
-                                className="p-2 text-slate-500 hover:text-rose-400 transition-colors"
-                              >
-                                <Trash2 size={18} />
-                              </button>
+                            <div className="flex justify-between items-center flex-wrap gap-2">
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleDeleteMemory(block.id)}
+                                  className="p-2 text-slate-500 hover:text-rose-400 transition-colors"
+                                  title="Delete directive"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                                <button
+                                  onClick={() => memoryFileInputRef.current?.click()}
+                                  disabled={isAttachingFile}
+                                  className="p-2 text-slate-500 hover:text-indigo-400 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+                                  title="Attach a file (text from .txt, .csv, .md, .json, etc. will be added to this directive)"
+                                >
+                                  {isAttachingFile ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
+                                  <span className="hidden sm:inline">Attach file</span>
+                                </button>
+                              </div>
                               <div className="flex gap-2">
-                                <button 
+                                <button
                                   onClick={() => setEditingId(null)}
                                   className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white"
                                 >
                                   Cancel
                                 </button>
-                                <button 
+                                <button
                                   onClick={handleSaveMemory}
                                   disabled={isSavingMemory}
                                   className="px-4 py-2 bg-indigo-500 text-white rounded-lg text-xs font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-2"
@@ -469,6 +651,15 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
         </div>
 
       </div>
+      {renderNewTeamModal()}
+      <input
+        ref={memoryFileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        accept=".txt,.md,.csv,.json,.pdf,.doc,.docx,.xlsx,image/*"
+        onChange={handleAttachFileToDirective}
+      />
     </div>
   );
 };

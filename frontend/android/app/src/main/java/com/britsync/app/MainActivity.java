@@ -1,4 +1,4 @@
-package com.britsyncai.app;
+package com.britsync.app;
 
 import com.getcapacitor.BridgeActivity;
 

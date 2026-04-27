@@ -11,7 +11,7 @@ export interface FinancePdfInput {
   narrative?: string;
 }
 
-const FOOTER = 'AI-generated estimate — not financial advice. Britsync Assistant.';
+const FOOTER = 'AI-generated estimate — not financial advice. Britsync AI.';
 
 function gbp(n: number | null | undefined): string {
   if (n == null) return '—';

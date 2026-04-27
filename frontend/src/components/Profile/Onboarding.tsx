@@ -61,7 +61,7 @@ export const Onboarding = ({ userId, onComplete }: OnboardingProps) => {
                                 type="text"
                                 value={formData.businessName}
                                 onChange={(e) => handleInputChange('businessName', e.target.value)}
-                                placeholder="e.g. Britsee Assistant Ltd"
+                                placeholder="e.g. Britsync AI Ltd"
                                 className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:border-primary/50 text-white placeholder:text-slate-600"
                             />
                         </div>
@@ -80,7 +80,7 @@ export const Onboarding = ({ userId, onComplete }: OnboardingProps) => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">What you want from the assistant?</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">What you want from Britsync AI?</label>
                             <textarea
                                 value={formData.revenueGoal}
                                 onChange={(e) => handleInputChange('revenueGoal', e.target.value)}

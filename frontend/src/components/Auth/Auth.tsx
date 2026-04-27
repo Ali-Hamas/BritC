@@ -126,13 +126,13 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 blur-xl opacity-60" />
-              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center shadow-xl">
-                <Zap className="text-white fill-white" size={22} />
+              <div className="relative w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl">
+                <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
               </div>
             </div>
             <div>
               <h1 className="text-3xl font-black tracking-tight">
-                BritSync <span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">Assistant</span>
+                Britsync <span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">AI</span>
               </h1>
               <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500 font-semibold mt-0.5">
                 AI Workspace for UK Agencies
@@ -198,10 +198,10 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
               {/* Mobile brand */}
               <div className="lg:hidden pt-8 pb-2 text-center">
                 <div className="inline-flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center">
-                    <Zap className="text-white fill-white" size={18} />
+                  <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
+                    <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
                   </div>
-                  <h2 className="text-xl font-black tracking-tight">BritSync</h2>
+                  <h2 className="text-xl font-black tracking-tight">Britsync AI</h2>
                 </div>
               </div>
 
