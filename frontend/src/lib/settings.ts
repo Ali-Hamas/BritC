@@ -53,6 +53,36 @@ export const SettingsService = {
   setOpenRouterModel: (model: string) => {
     localStorage.setItem('britsee_openrouter_model', model);
   },
+  // Google Gemini (free fallback — 1,500 req/day)
+  getGeminiApiKey: (): string => {
+    return localStorage.getItem('britsee_gemini_api_key') ||
+      (import.meta as any).env.VITE_GEMINI_API_KEY ||
+      '';
+  },
+  setGeminiApiKey: (key: string) => {
+    localStorage.setItem('britsee_gemini_api_key', key.trim());
+  },
+  getGeminiModel: (): string => {
+    return localStorage.getItem('britsee_gemini_model') || 'gemini-2.0-flash';
+  },
+  setGeminiModel: (model: string) => {
+    localStorage.setItem('britsee_gemini_model', model);
+  },
+  // Cerebras Cloud (free fallback — extremely fast, 1M tokens/day)
+  getCerebrasApiKey: (): string => {
+    return localStorage.getItem('britsee_cerebras_api_key') ||
+      (import.meta as any).env.VITE_CEREBRAS_API_KEY ||
+      'csk-fvy2rtd2ctn9mc8vx5nejxkwvrvwdm23crwm3ec4hyewt6yj';
+  },
+  setCerebrasApiKey: (key: string) => {
+    localStorage.setItem('britsee_cerebras_api_key', key.trim());
+  },
+  getCerebrasModel: (): string => {
+    return localStorage.getItem('britsee_cerebras_model') || 'qwen-3-235b-a22b-instruct-2507';
+  },
+  setCerebrasModel: (model: string) => {
+    localStorage.setItem('britsee_cerebras_model', model);
+  },
   getGlobalSystemPrompt: () => localStorage.getItem('britsee_global_system_prompt') || '',
   setGlobalSystemPrompt: (prompt: string) => localStorage.setItem('britsee_global_system_prompt', prompt),
   getSystemPrompt: (): string => {
