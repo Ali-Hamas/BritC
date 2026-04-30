@@ -4,7 +4,8 @@ import {
   FileText, Mail,
   Search, ExternalLink, ChevronRight,
   Paperclip, Image, File, X, Plus, MessageSquare,
-  Clock, ChevronLeft, Trash2, Share2, Users, Lock, ChevronDown, Zap, Menu
+  Clock, ChevronLeft, Trash2, Share2, Users, Lock, ChevronDown, Zap, Menu,
+  Mic, MicOff, Volume2, VolumeX
 } from 'lucide-react';
 import { AIService } from '../../lib/ai';
 import { parseAction, executeAction } from '../../lib/agent';
@@ -19,6 +20,7 @@ import { PinEntryModal } from './PinEntryModal';
 import { getApiUrl } from '../../lib/api-config';
 import type { BusinessProfile } from '../../lib/profiles';
 import { GrowthService } from '../../lib/growth';
+import { VoiceService } from '../../lib/voice';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -563,7 +565,15 @@ const ActionResultCard = ({ result }: { result: ActionResult }) => {
 
 // ─── Message Bubble ────────────────────────────────────────────────────────────
 
-const MessageBubble = ({ msg }: { msg: Message }) => {
+const MessageBubble = ({
+  msg,
+  onSpeak,
+  isSpeaking,
+}: {
+  msg: Message;
+  onSpeak?: (id: string, content: string) => void;
+  isSpeaking?: boolean;
+}) => {
   const isUser = msg.role === 'user';
   const [copied, setCopied] = useState(false);
 
@@ -659,9 +669,26 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
           <button
             onClick={handleCopy}
             className={`absolute -top-2 ${isUser ? '-left-6 md:-left-8' : '-right-6 md:-right-8'} opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 md:p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all touch-manipulation`}
+            aria-label="Copy message"
           >
             <Copy size={11} />
           </button>
+
+          {/* Read-aloud button (assistant messages only) */}
+          {!isUser && onSpeak && (
+            <button
+              onClick={() => onSpeak(msg.id, msg.content)}
+              className={`absolute -top-2 -right-14 md:-right-16 opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 md:p-1.5 rounded-lg ${
+                isSpeaking
+                  ? 'bg-indigo-500/30 text-indigo-200'
+                  : 'bg-white/10 hover:bg-white/20 text-white/60 hover:text-white'
+              } transition-all touch-manipulation`}
+              aria-label={isSpeaking ? 'Stop reading' : 'Read aloud'}
+              title={isSpeaking ? 'Stop' : 'Read aloud'}
+            >
+              {isSpeaking ? <VolumeX size={11} /> : <Volume2 size={11} />}
+            </button>
+          )}
         </div>
 
         {/* Action Result */}
@@ -728,6 +755,11 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
   const [isLoading, setIsLoading] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>('default');
   const [showModeMenu, setShowModeMenu] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [autoSpeak, setAutoSpeak] = useState<boolean>(() => localStorage.getItem('britsee_auto_speak') === '1');
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
+  const inputBeforeListenRef = useRef<string>('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -1029,6 +1061,83 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
+  // ─── Voice handlers ─────────────────────────────────────────────────────────
+  const toggleListening = () => {
+    if (isListening) {
+      VoiceService.stopListening();
+      setIsListening(false);
+      return;
+    }
+    setVoiceError(null);
+    inputBeforeListenRef.current = input;
+    const ok = VoiceService.startListening({
+      onResult: (transcript, isFinal) => {
+        const merged = (inputBeforeListenRef.current
+          ? inputBeforeListenRef.current.trimEnd() + ' '
+          : '') + transcript;
+        setInput(merged);
+        if (isFinal) {
+          inputBeforeListenRef.current = merged;
+        }
+      },
+      onError: (msg) => {
+        setVoiceError(msg);
+        setIsListening(false);
+      },
+      onEnd: () => setIsListening(false),
+    });
+    if (ok) setIsListening(true);
+  };
+
+  const speakMessage = (msgId: string, content: string) => {
+    if (speakingMsgId === msgId) {
+      VoiceService.cancelSpeak();
+      setSpeakingMsgId(null);
+      return;
+    }
+    VoiceService.speak(content, {
+      onEnd: () => setSpeakingMsgId(null),
+      onError: () => setSpeakingMsgId(null),
+    });
+    setSpeakingMsgId(msgId);
+  };
+
+  const toggleAutoSpeak = () => {
+    setAutoSpeak(v => {
+      const next = !v;
+      localStorage.setItem('britsee_auto_speak', next ? '1' : '0');
+      if (!next) {
+        VoiceService.cancelSpeak();
+        setSpeakingMsgId(null);
+      }
+      return next;
+    });
+  };
+
+  // Stop voice on unmount
+  useEffect(() => {
+    return () => {
+      VoiceService.stopListening();
+      VoiceService.cancelSpeak();
+    };
+  }, []);
+
+  // Auto-read newest assistant message when toggle is on
+  const lastSpokenIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!autoSpeak || isLoading) return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== 'assistant' || last.isActionRunning) return;
+    if (lastSpokenIdRef.current === last.id) return;
+    if (!last.content?.trim()) return;
+    lastSpokenIdRef.current = last.id;
+    VoiceService.speak(last.content, {
+      onEnd: () => setSpeakingMsgId(null),
+      onError: () => setSpeakingMsgId(null),
+    });
+    setSpeakingMsgId(last.id);
+  }, [messages, autoSpeak, isLoading]);
+
   return (
     <div className="flex h-full w-full bg-[#030712] overflow-hidden relative">
       {/* Mobile Overlay */}
@@ -1126,7 +1235,12 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
         <div className="flex-1 overflow-y-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8 space-y-4 md:space-y-6 scrollbar-thin">
           <AnimatePresence initial={false}>
             {messages.map(msg => (
-              <MessageBubble key={msg.id} msg={msg} />
+              <MessageBubble
+                key={msg.id}
+                msg={msg}
+                onSpeak={speakMessage}
+                isSpeaking={speakingMsgId === msg.id}
+              />
             ))}
           </AnimatePresence>
 
@@ -1162,6 +1276,25 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Voice status / error banner */}
+        {(isListening || voiceError) && (
+          <div className="px-3 md:px-6 pb-1">
+            <div className={`text-[11px] flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
+              voiceError
+                ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300 animate-pulse'
+            }`}>
+              {voiceError ? <MicOff size={12} /> : <Mic size={12} />}
+              <span>{voiceError || 'Listening… speak now'}</span>
+              {voiceError && (
+                <button onClick={() => setVoiceError(null)} className="ml-auto text-red-300/60 hover:text-red-200">
+                  <X size={12} />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -1261,6 +1394,33 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
                 )}
               </AnimatePresence>
             </div>
+
+            <button
+              onClick={toggleListening}
+              disabled={isLoading}
+              className={`w-10 h-10 rounded-lg md:rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0 ${
+                isListening
+                  ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
+              }`}
+              title={isListening ? 'Stop listening' : 'Voice input'}
+              aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+            >
+              {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+            </button>
+
+            <button
+              onClick={toggleAutoSpeak}
+              className={`hidden sm:flex w-10 h-10 rounded-lg md:rounded-xl items-center justify-center transition-all active:scale-95 flex-shrink-0 ${
+                autoSpeak
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+                  : 'bg-white/5 text-white/40 hover:text-white border border-white/10'
+              }`}
+              title={autoSpeak ? 'Auto-read replies: ON' : 'Auto-read replies: OFF'}
+              aria-label="Toggle auto-read"
+            >
+              {autoSpeak ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
 
             <button
               onClick={() => handleSend()}

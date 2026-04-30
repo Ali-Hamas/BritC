@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Users, Key, Trash2, Copy, CheckCircle,
-  Loader2, Plus, Brain, Save, Zap, AlertTriangle, TrendingUp, BarChart3, ChevronDown, Paperclip
+  Loader2, Plus, Brain, Save, Zap, ChevronDown, Paperclip
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TeamService, type Team, type TeamMember } from '../../lib/team';
 import { FileHandlingService } from '../../lib/fileHandling';
 import { MemoryService, type MemoryBlock, type MemoryType } from '../../lib/memory';
-import { GrowthService, type GrowthInsight } from '../../lib/growth';
 import type { BusinessProfile } from '../../lib/profiles';
 
 export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null; userId?: string | null }) => {
@@ -19,8 +18,6 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
   const [newTeamName, setNewTeamName] = useState('');
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [memoryBlocks, setMemoryBlocks] = useState<MemoryBlock[]>([]);
-  const [insights, setInsights] = useState<GrowthInsight[]>([]);
-  const [pulseText, setPulseText] = useState('');
   const [isModerator, setIsModerator] = useState(false);
 
   const [editingBlockId, setEditingId] = useState<string | null>(null);
@@ -54,14 +51,8 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
 
       if (currentCtx.team) {
         if (currentCtx.role === 'owner') {
-          const [mems, pulse, bns] = await Promise.all([
-            TeamService.getTeamMembers(currentCtx.team.id),
-            GrowthService.getBusinessPulse(profile, uid),
-            GrowthService.detectBottlenecks(profile, uid)
-          ]);
+          const mems = await TeamService.getTeamMembers(currentCtx.team.id);
           setMembers(mems);
-          setPulseText(pulse);
-          setInsights(bns);
         }
         const blocks = await MemoryService.syncFromTeam(currentCtx.team.id);
         setMemoryBlocks(blocks);
@@ -403,7 +394,7 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
             <p className="text-slate-400 text-xs sm:text-sm">
               {isModerator
                 ? 'Your memory directives guide every team member\'s private chat. Members cannot see each other — they only feel your strategy through the AI.'
-                : 'Control your team\'s access and the AI\'s strategic alignment. Data-driven growth insights are powered by live finance and operations pulses.'}
+                : 'Control your team\'s access and the AI\'s strategic alignment. Manage members, share the join PIN, and curate the shared memory directives.'}
             </p>
           </div>
 
@@ -431,64 +422,6 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Live Business Pulse & Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-           <div className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
-                <TrendingUp size={80} />
-              </div>
-              <div className="flex items-center gap-3 mb-6">
-                 <BarChart3 className="text-emerald-400" size={20} />
-                 <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">Live Business Pulse</h2>
-              </div>
-              <div className="space-y-4">
-                 <div className="p-4 bg-black/40 border border-white/5 rounded-2xl">
-                    <pre className="text-xs text-emerald-400/90 font-mono whitespace-pre-wrap leading-relaxed">
-                      {pulseText || 'Calibrating neural pulse...'}
-                    </pre>
-                 </div>
-                 <p className="text-[10px] text-slate-500 italic">
-                   This data is automatically injected into all team AI interactions to ground responses in financial reality.
-                 </p>
-              </div>
-           </div>
-
-           <div className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6">
-              <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                 <AlertTriangle className="text-amber-400" size={20} />
-                 <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">Growth Bottlenecks</h2>
-              </div>
-              <div className="space-y-3">
-                 {insights.length > 0 ? insights.map((insight, i) => (
-                    <motion.div 
-                      key={i}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className={`p-4 rounded-2xl border ${
-                        insight.type === 'warning' ? 'bg-amber-500/5 border-amber-500/20' : 'bg-indigo-500/5 border-indigo-500/20'
-                      }`}
-                    >
-                       <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${
-                            insight.type === 'warning' ? 'bg-amber-500/20 text-amber-500' : 'bg-indigo-500/20 text-indigo-400'
-                          }`}>
-                            {insight.impact} IMPACT
-                          </span>
-                          <h4 className="text-sm font-bold text-white">{insight.title}</h4>
-                       </div>
-                       <p className="text-xs text-slate-400 leading-relaxed">{insight.description}</p>
-                    </motion.div>
-                 )) : (
-                    <div className="p-8 text-center border-2 border-dashed border-white/5 rounded-2xl">
-                       <CheckCircle size={24} className="text-emerald-500 mx-auto mb-2 opacity-50" />
-                       <p className="text-xs text-slate-500 font-medium">No immediate bottlenecks detected. System stable.</p>
-                    </div>
-                 )}
-              </div>
-           </div>
         </div>
 
         {/* Member List */}

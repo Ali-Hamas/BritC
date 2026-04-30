@@ -104,6 +104,7 @@ function App() {
       // TeamPanel, Chatbot) always resolve the current user. Also warms
       // team context + moderator memory so member chats get fresh directives.
       TeamService.setCurrentIdentity(uid, email);
+      TeamService.refreshAdminCache().catch(() => {});
       TeamService.getMyTeam(uid).then(ctx => {
         if (ctx?.team?.id) MemoryService.syncFromTeam(ctx.team.id).catch(() => {});
       }).catch(() => {});
@@ -165,8 +166,9 @@ function App() {
     await signOut();
     setProfile(null);
     setOnboarded(false);
-    localStorage.removeItem('britc_chat_sessions');
-    localStorage.removeItem('britc_active_session');
+    // NOTE: do NOT remove britc_chat_sessions / britc_active_session / britsee_active_session.
+    // Chat history lives in Supabase keyed by session_id; wiping these keys orphans the rows
+    // and the user sees an empty sidebar after re-login. They are restored by the next user.
     window.location.reload();
   };
 

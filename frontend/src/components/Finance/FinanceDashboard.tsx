@@ -12,7 +12,11 @@ import {
   AlertTriangle,
   Info,
   Trash2,
+  BarChart3,
+  CheckCircle,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { GrowthService, type GrowthInsight } from '../../lib/growth';
 import {
   ResponsiveContainer,
   BarChart,
@@ -96,6 +100,8 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
   const [narrative, setNarrative] = React.useState('');
   const [narrLoading, setNarrLoading] = React.useState(false);
   const [narrError, setNarrError] = React.useState('');
+  const [pulseText, setPulseText] = React.useState('');
+  const [insights, setInsights] = React.useState<GrowthInsight[]>([]);
 
   const refresh = React.useCallback(async () => {
     if (!userId) return;
@@ -111,6 +117,25 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
   React.useEffect(() => {
     refresh();
   }, [refresh]);
+
+  React.useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [pulse, bns] = await Promise.all([
+          GrowthService.getBusinessPulse(profile, userId),
+          GrowthService.detectBottlenecks(profile, userId),
+        ]);
+        if (cancelled) return;
+        setPulseText(pulse);
+        setInsights(bns);
+      } catch {
+        /* non-fatal */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userId, profile, entries.length]);
 
   // Derived numbers (pure, deterministic)
   const kpis: FinanceKpis = React.useMemo(() => computeKpis(entries), [entries]);
@@ -249,6 +274,64 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
           deltaDir={kpis.runwayDays == null ? 'up' : 'down'}
           icon={<AlertTriangle size={16} />}
         />
+      </div>
+
+      {/* Live Business Pulse & Growth Bottlenecks */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="glass-card p-4 sm:p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+            <TrendingUp size={80} />
+          </div>
+          <div className="flex items-center gap-3 mb-6">
+            <BarChart3 className="text-emerald-400" size={20} />
+            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">Live Business Pulse</h2>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-black/40 border border-white/5 rounded-2xl">
+              <pre className="text-xs text-emerald-400/90 font-mono whitespace-pre-wrap leading-relaxed">
+                {pulseText || 'Calibrating neural pulse...'}
+              </pre>
+            </div>
+            <p className="text-[10px] text-slate-500 italic">
+              This data is automatically injected into all team AI interactions to ground responses in financial reality.
+            </p>
+          </div>
+        </div>
+
+        <div className="glass-card p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <AlertTriangle className="text-amber-400" size={20} />
+            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">Growth Bottlenecks</h2>
+          </div>
+          <div className="space-y-3">
+            {insights.length > 0 ? insights.map((insight, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className={`p-4 rounded-2xl border ${
+                  insight.type === 'warning' ? 'bg-amber-500/5 border-amber-500/20' : 'bg-indigo-500/5 border-indigo-500/20'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${
+                    insight.type === 'warning' ? 'bg-amber-500/20 text-amber-500' : 'bg-indigo-500/20 text-indigo-400'
+                  }`}>
+                    {insight.impact} IMPACT
+                  </span>
+                  <h4 className="text-sm font-bold text-white">{insight.title}</h4>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">{insight.description}</p>
+              </motion.div>
+            )) : (
+              <div className="p-8 text-center border-2 border-dashed border-white/5 rounded-2xl">
+                <CheckCircle size={24} className="text-emerald-500 mx-auto mb-2 opacity-50" />
+                <p className="text-xs text-slate-500 font-medium">No immediate bottlenecks detected. System stable.</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {!hasData && !loading && (

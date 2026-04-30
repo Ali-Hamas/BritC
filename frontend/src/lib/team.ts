@@ -46,6 +46,7 @@ export interface MyTeamContext {
 
 const LOCAL_CACHE_KEY = 'britsync_team_cache_v2';
 const ACTIVE_TEAM_KEY = 'britsync_active_team_id';
+const ADMIN_LIST_CACHE_KEY = 'britsync_admin_list_cache';
 
 function getCurrentUserId(): string | null {
   // Better-Auth's getSession() is async and returns a Promise — calling it
@@ -107,12 +108,87 @@ export const TeamService = {
     } catch {}
   },
 
-  /** True iff the signed-in user is one of the platform-wide moderators. */
+  /**
+   * True iff the signed-in user is a platform admin.
+   * - Hardcoded GLOBAL_MODERATOR_EMAILS = "superadmins" (immune to demotion)
+   * - Plus any user_id present in the cached app_admins list.
+   *
+   * Sync — backed by localStorage cache. Call refreshAdminCache() once at app
+   * boot (and after every promote/demote) to keep the cache fresh.
+   */
   isGlobalModerator(): boolean {
     const email = getCurrentEmail();
-    if (!email) return false;
-    const lower = email.toLowerCase();
-    return GLOBAL_MODERATOR_EMAILS.some(e => e.toLowerCase() === lower);
+    if (email) {
+      const lower = email.toLowerCase();
+      if (GLOBAL_MODERATOR_EMAILS.some(e => e.toLowerCase() === lower)) return true;
+    }
+    const uid = getCurrentUserId();
+    if (uid) {
+      try {
+        const raw = localStorage.getItem(ADMIN_LIST_CACHE_KEY);
+        if (raw) {
+          const ids = JSON.parse(raw) as string[];
+          if (Array.isArray(ids) && ids.includes(uid)) return true;
+        }
+      } catch {}
+    }
+    return false;
+  },
+
+  /** True iff this user is a hardcoded superadmin (cannot be demoted). */
+  isSuperAdmin(email?: string | null): boolean {
+    const e = (email ?? getCurrentEmail() ?? '').toLowerCase();
+    if (!e) return false;
+    return GLOBAL_MODERATOR_EMAILS.some(x => x.toLowerCase() === e);
+  },
+
+  /** Pull the latest admin list from Supabase and cache the user_ids. */
+  async refreshAdminCache(): Promise<string[]> {
+    try {
+      const { data, error } = await supabase
+        .from('app_admins')
+        .select('user_id');
+      if (error) {
+        console.warn('[TeamService] refreshAdminCache failed:', error.message);
+        return [];
+      }
+      const ids = (data || []).map((r: any) => r.user_id).filter(Boolean);
+      try { localStorage.setItem(ADMIN_LIST_CACHE_KEY, JSON.stringify(ids)); } catch {}
+      return ids;
+    } catch (err) {
+      console.warn('[TeamService] refreshAdminCache exception:', err);
+      return [];
+    }
+  },
+
+  /** List of {user_id, granted_at, granted_by} rows. */
+  async listAdmins(): Promise<{ user_id: string; granted_by: string | null; granted_at: string }[]> {
+    const { data, error } = await supabase
+      .from('app_admins')
+      .select('*')
+      .order('granted_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data || []) as any[];
+  },
+
+  /** Promote a user to admin. No-op if already admin. */
+  async promoteAdmin(userId: string): Promise<void> {
+    const grantedBy = getCurrentUserId();
+    const { error } = await supabase
+      .from('app_admins')
+      .upsert({ user_id: userId, granted_by: grantedBy }, { onConflict: 'user_id' });
+    if (error) throw new Error(error.message);
+    await this.refreshAdminCache();
+  },
+
+  /** Demote (revoke) a user. Cannot demote a hardcoded superadmin. */
+  async demoteAdmin(userId: string): Promise<void> {
+    const { error } = await supabase
+      .from('app_admins')
+      .delete()
+      .eq('user_id', userId);
+    if (error) throw new Error(error.message);
+    await this.refreshAdminCache();
   },
 
   /** Best-effort synchronous cache read — used by non-async call sites that just need to know the role. */
