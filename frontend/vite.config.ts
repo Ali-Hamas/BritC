@@ -70,6 +70,18 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Proxy Account (approval status, referral validation)
+      '/api/account': {
+        target: 'http://localhost:5010',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy Admin (pending users, referrals management)
+      '/api/admin': {
+        target: 'http://localhost:5010',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

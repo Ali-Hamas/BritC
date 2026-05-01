@@ -19,9 +19,11 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Shield, Users, Briefcase, Trash2, Loader2, AlertTriangle, RefreshCw,
   Search, ShieldCheck, ShieldOff, ShieldPlus, BarChart3, Crown, X,
+  CheckCircle, Clock, Link as LinkIcon, Copy, Ban, Plus,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { TeamService, type Team } from '../../lib/team';
+import { adminListPending, adminDecideUser, adminListReferrals, adminCreateReferral, adminRevokeReferral, type PendingUser, type ReferralToken } from '../../lib/approval';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,22 +45,35 @@ interface AdminRow {
   granted_at: string;
 }
 
-type Tab = 'overview' | 'users' | 'teams' | 'admins';
+type Tab = 'overview' | 'users' | 'teams' | 'admins' | 'pending' | 'referrals';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const AdminPanel = () => {
+export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [teams, setTeams] = useState<TeamWithCount[]>([]);
   const [adminRows, setAdminRows] = useState<AdminRow[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null);
+  const [referralTokens, setReferralTokens] = useState<ReferralToken[]>([]);
+  const [showCreateReferral, setShowCreateReferral] = useState(false);
+  const [referralNote, setReferralNote] = useState('');
 
-  const isModerator = TeamService.isGlobalModerator();
+  // Check moderator status using both the passed email (from session) and the
+  // cached email, so we never lose admin access due to a stale localStorage.
+  const isModerator = useMemo(() => {
+    if (userEmail && TeamService.isGlobalModerator()) return true;
+    if (userEmail) {
+      const lower = userEmail.toLowerCase();
+      if (TeamService.isSuperAdmin(lower)) return true;
+    }
+    return TeamService.isGlobalModerator();
+  }, [userEmail]);
 
   const showToast = (kind: 'ok' | 'err', msg: string) => {
     setToast({ kind, msg });
@@ -79,23 +94,40 @@ export const AdminPanel = () => {
       if (userErr) throw new Error(`Users: ${userErr.message}`);
       if (teamErr) throw new Error(`Teams: ${teamErr.message}`);
 
-      const enriched: TeamWithCount[] = [];
-      for (const t of (teamRows || []) as Team[]) {
-        const { count } = await supabase
+      // Batch all team member counts in a single query instead of N sequential queries
+      const teamIds = (teamRows || []).map((t: any) => t.id);
+      let memberCounts: Record<string, number> = {};
+      if (teamIds.length > 0) {
+        const { data: counts, error: countErr } = await supabase
           .from('team_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('team_id', t.id);
-        const owner = (userRows || []).find((u: any) => u.id === t.owner_id);
-        enriched.push({
-          ...t,
-          member_count: count ?? 0,
-          owner_email: owner?.email ?? null,
-        });
+          .select('team_id')
+          .in('team_id', teamIds)
+          .then(r => r);
+        if (!countErr && counts) {
+          for (const c of counts) {
+            memberCounts[c.team_id] = (memberCounts[c.team_id] || 0) + 1;
+          }
+        }
       }
+
+      const enriched: TeamWithCount[] = (teamRows || []).map((t: Team) => ({
+        ...t,
+        member_count: memberCounts[t.id] || 0,
+        owner_email: (userRows || []).find((u: any) => u.id === t.owner_id)?.email ?? null,
+      }));
 
       setUsers((userRows || []) as UserRow[]);
       setTeams(enriched);
       setAdminRows(adminList);
+
+      // Load pending users and referrals in parallel
+      const [pendingResult, referralsResult] = await Promise.allSettled([
+        adminListPending(),
+        adminListReferrals(),
+      ]);
+      if (pendingResult.status === 'fulfilled') setPendingUsers(pendingResult.value);
+      if (referralsResult.status === 'fulfilled') setReferralTokens(referralsResult.value);
+
       await TeamService.refreshAdminCache();
     } catch (err: any) {
       setError(err.message || 'Failed to load admin data');
@@ -225,6 +257,22 @@ export const AdminPanel = () => {
     }
   };
 
+  const handleDecidePending = async (u: PendingUser, decision: 'approved' | 'rejected') => {
+    const verb = decision === 'approved' ? 'Approve' : 'Reject';
+    if (!window.confirm(`${verb} ${u.email}?`)) return;
+    setBusyId(u.user_id);
+    try {
+      await adminDecideUser(u.user_id, decision);
+      showToast('ok', `${u.email} ${decision === 'approved' ? 'approved' : 'rejected'}.`);
+      const pending = await adminListPending();
+      setPendingUsers(pending);
+    } catch (err: any) {
+      showToast('err', `${verb} failed: ` + (err?.message || 'unknown'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   // ─── Bounce screen ──────────────────────────────────────────────────────
   if (!isModerator) {
     return (
@@ -297,9 +345,11 @@ export const AdminPanel = () => {
         <div className="flex gap-1 p-1 bg-[#0d1126] border border-white/5 rounded-xl overflow-x-auto scrollbar-none">
           {([
             { id: 'overview', label: 'Overview', icon: BarChart3 },
+            { id: 'pending',  label: 'Pending',  icon: Clock      },
             { id: 'users',    label: 'Users',    icon: Users      },
             { id: 'teams',    label: 'Teams',    icon: Briefcase  },
             { id: 'admins',   label: 'Admins',   icon: Crown      },
+            { id: 'referrals', label: 'Referrals', icon: LinkIcon  },
           ] as { id: Tab; label: string; icon: typeof BarChart3 }[]).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -312,15 +362,21 @@ export const AdminPanel = () => {
             >
               <Icon size={14} />
               <span>{label}</span>
+              {id === 'pending' && pendingUsers.length > 0 && (
+                <span className="text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded px-1.5 py-0.5">
+                  {pendingUsers.length}
+                </span>
+              )}
               {id === 'users' && <span className="text-[10px] opacity-60">{users.length}</span>}
               {id === 'teams' && <span className="text-[10px] opacity-60">{teams.length}</span>}
               {id === 'admins' && <span className="text-[10px] opacity-60">{adminUsers.length}</span>}
+              {id === 'referrals' && <span className="text-[10px] opacity-60">{referralTokens.length}</span>}
             </button>
           ))}
         </div>
 
         {/* Search bar (hidden on overview) */}
-        {tab !== 'overview' && tab !== 'admins' && (
+        {tab !== 'overview' && tab !== 'admins' && tab !== 'pending' && (
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
@@ -385,6 +441,65 @@ export const AdminPanel = () => {
               </div>
             </section>
           </div>
+        )}
+
+        {/* ── Pending Approvals ──────────────────────────────────────── */}
+        {tab === 'pending' && (
+          <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                  <Clock size={16} className="text-amber-400" />
+                  Awaiting Approval
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">New signups can't access the app until approved.</p>
+              </div>
+              <button
+                onClick={load}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-semibold text-slate-300 transition-colors"
+              >
+                <RefreshCw size={12} /> Refresh
+              </button>
+            </div>
+
+            {pendingUsers.length === 0 ? (
+              <p className="text-slate-500 text-sm italic py-8 text-center">No pending signups.</p>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {pendingUsers.map(u => (
+                  <div key={u.user_id} className="py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center text-amber-300 font-bold flex-shrink-0">
+                      {(u.email || '?')[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-white truncate font-medium">{u.email}</p>
+                      <p className="text-[11px] text-slate-500 truncate">
+                        {u.name ? `${u.name} · ` : ''}Signed up {new Date(u.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <button
+                        onClick={() => handleDecidePending(u, 'rejected')}
+                        disabled={busyId === u.user_id}
+                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg text-xs font-semibold text-rose-300 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {busyId === u.user_id ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />}
+                        Reject
+                      </button>
+                      <button
+                        onClick={() => handleDecidePending(u, 'approved')}
+                        disabled={busyId === u.user_id}
+                        className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-semibold text-emerald-300 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {busyId === u.user_id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+                        Approve
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
         {/* ── Users ──────────────────────────────────────────────────── */}
@@ -671,6 +786,145 @@ export const AdminPanel = () => {
               )}
             </div>
           </section>
+        )}
+
+        {/* ── Referrals ──────────────────────────────────────────────── */}
+        {tab === 'referrals' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">
+                Referral Tokens
+              </h2>
+              <button
+                onClick={() => setShowCreateReferral(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 text-indigo-300 rounded-xl text-xs font-bold transition-colors"
+              >
+                <Plus size={14} />
+                Create Token
+              </button>
+            </div>
+
+            {referralTokens.length === 0 ? (
+              <div className="text-center py-16 bg-[#151520] border border-white/5 rounded-2xl">
+                <LinkIcon size={32} className="text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-500 text-sm">No referral tokens yet. Create one to invite users with auto-approval.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {referralTokens.map((t) => {
+                  const isUnused = !t.used_at && !t.revoked_at;
+                  const isUsed = !!t.used_at;
+                  const isRevoked = !!t.revoked_at;
+                  return (
+                    <div key={t.token} className="bg-[#151520] border border-white/5 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <code className="text-xs text-slate-400 font-mono bg-black/30 px-2 py-0.5 rounded">
+                            {t.token.slice(0, 8)}...{t.token.slice(-4)}
+                          </code>
+                          <Badge
+                            label={isRevoked ? 'Revoked' : isUsed ? 'Used' : 'Active'}
+                            tone={isRevoked ? 'rose' : isUsed ? 'emerald' : 'amber'}
+                          />
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          Created {new Date(t.created_at).toLocaleDateString()}
+                          {t.used_by && ` · Used by ${t.used_email || t.used_by}`}
+                          {t.note && ` · ${t.note}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {isUnused && (
+                          <>
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/?ref=${t.token}`;
+                                navigator.clipboard.writeText(url);
+                                showToast('ok', 'Referral URL copied!');
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg text-xs font-bold transition-colors"
+                            >
+                              <Copy size={12} />
+                              Copy URL
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Revoke token ${t.token.slice(0, 8)}...?`)) return;
+                                setBusyId(t.token);
+                                try {
+                                  await adminRevokeReferral(t.token);
+                                  showToast('ok', 'Token revoked.');
+                                  const referrals = await adminListReferrals();
+                                  setReferralTokens(referrals);
+                                } catch (err: any) {
+                                  showToast('err', 'Revoke failed: ' + (err?.message || 'unknown'));
+                                } finally {
+                                  setBusyId(null);
+                                }
+                              }}
+                              disabled={busyId === t.token}
+                              className="flex items-center gap-1.5 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 rounded-lg text-xs font-bold disabled:opacity-50 transition-colors"
+                            >
+                              <Ban size={12} />
+                              Revoke
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Create Referral Modal */}
+        {showCreateReferral && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreateReferral(false)}>
+            <div className="bg-[#0f1025] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-white">Create Referral Token</h3>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Note (optional)</label>
+                <input
+                  type="text"
+                  value={referralNote}
+                  onChange={e => setReferralNote(e.target.value)}
+                  placeholder="e.g. Q2 campaign, John Doe invite"
+                  className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/60 placeholder:text-slate-600"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowCreateReferral(false)}
+                  className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 rounded-xl text-sm font-bold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setBusyId('create-referral');
+                    try {
+                      const token = await adminCreateReferral(referralNote || undefined);
+                      const referrals = await adminListReferrals();
+                      setReferralTokens(referrals);
+                      setShowCreateReferral(false);
+                      setReferralNote('');
+                      showToast('ok', `Token created: ${token.token.slice(0, 8)}...`);
+                    } catch (err: any) {
+                      showToast('err', 'Create failed: ' + (err?.message || 'unknown'));
+                    } finally {
+                      setBusyId(null);
+                    }
+                  }}
+                  disabled={busyId === 'create-referral'}
+                  className="flex-1 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-sm font-bold disabled:opacity-50 transition-colors"
+                >
+                  {busyId === 'create-referral' ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
       </div>

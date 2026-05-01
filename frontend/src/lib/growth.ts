@@ -13,13 +13,17 @@ export const GrowthService = {
   /**
    * Generates a "Business Context" string for the AI.
    * This combines financial health, marketing stats, and operational status.
+   * 
+   * For Team Members: Sensitive data like exact profit/expense is hidden,
+   * showing only revenue trends and goal progress.
    */
-  async getBusinessPulse(profile: BusinessProfile | null, userId: string): Promise<string> {
+  async getBusinessPulse(profile: BusinessProfile | null, userId: string, isTeamMode = false): Promise<string> {
     if (!userId) return "Business context unavailable (Not signed in).";
 
     try {
       // 1. Fetch Finance Stats
       const forecast = await FinanceService.getForecast(profile, userId);
+      const goals = await FinanceService.getGoals(userId);
       const currentMonth = forecast[forecast.length - 1] || { revenue: 0, expenses: 0, profit: 0 };
       const prevMonth = forecast[forecast.length - 2] || { revenue: 0, expenses: 0, profit: 0 };
 
@@ -31,9 +35,21 @@ export const GrowthService = {
       let pulse = `### BUSINESS PULSE (LIVE DATA)\n\n`;
       
       pulse += `[FINANCE]\n`;
-      pulse += `- Current Month Revenue: £${currentMonth.revenue.toLocaleString()}\n`;
-      pulse += `- Current Month Profit: £${currentMonth.profit.toLocaleString()}\n`;
-      pulse += `- Revenue Trend: ${currentMonth.revenue >= prevMonth.revenue ? '↑' : '↓'} vs last month\n\n`;
+      if (isTeamMode) {
+        // Team-Safe Pulse: Hide specific profit/expenses
+        const revenueTrend = currentMonth.revenue >= prevMonth.revenue ? 'increasing' : 'decreasing';
+        pulse += `- Revenue Trend: The business is currently seeing an ${revenueTrend} trend in revenue compared to last month.\n`;
+        if (goals?.target_monthly_revenue) {
+          const progress = Math.round((currentMonth.revenue / goals.target_monthly_revenue) * 100);
+          pulse += `- Target Progress: The team has achieved ${progress}% of this month's revenue target.\n`;
+        }
+      } else {
+        // Owner Pulse: Full transparency
+        pulse += `- Current Month Revenue: £${currentMonth.revenue.toLocaleString()}\n`;
+        pulse += `- Current Month Profit: £${currentMonth.profit.toLocaleString()}\n`;
+        pulse += `- Revenue Trend: ${currentMonth.revenue >= prevMonth.revenue ? '↑' : '↓'} vs last month\n`;
+      }
+      pulse += `\n`;
 
       pulse += `[OPERATIONS]\n`;
       pulse += `- Total Leads in Database: ${stats.totalLeads}\n`;

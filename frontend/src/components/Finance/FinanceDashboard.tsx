@@ -48,6 +48,7 @@ import type {
   Anomaly,
 } from '../../lib/financeAnalytics';
 import { FinanceNarrativeService } from '../../lib/financeNarrative';
+import { ScenarioSimulator } from './ScenarioSimulator';
 import { EntryForm } from './EntryForm';
 import { CsvImport } from './CsvImport';
 import { exportFinancePdf } from './FinanceExportPdf';
@@ -472,6 +473,9 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
           )}
         </div>
       )}
+
+      {/* Scenario simulator */}
+      {hasData && <ScenarioSimulator entries={entries} />}
 
       {/* AI commentary */}
       {hasData && (

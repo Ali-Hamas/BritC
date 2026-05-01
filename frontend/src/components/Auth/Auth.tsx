@@ -1,20 +1,37 @@
-import React, { useState } from 'react';
-import { Shield, Lock, ArrowRight, Mail, Globe, Users, Loader2, Sparkles, X, CheckCircle2 } from 'lucide-react';
-import { signIn, signUp, forgetPassword } from '../../lib/auth-client';
+import React, { useState, useEffect } from 'react';
+import { Shield, Lock, ArrowRight, Mail, Globe, Users, Loader2, Sparkles, X, CheckCircle2, Gift } from 'lucide-react';
+import { signIn, signUp, signOut, forgetPassword } from '../../lib/auth-client';
+import { getMyApprovalStatus, claimReferralForEmail } from '../../lib/approval';
 
 interface AuthProps {
   onAuthenticated: (profile: Record<string, any>) => void;
   onStartOnboarding: () => void;
 }
 
-export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }) => {
+export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding: _onStartOnboarding }) => {
   const [activeMode, setActiveMode] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pendingState, setPendingState] = useState<null | 'pending' | 'rejected'>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+
+  // Referral token from URL (?ref=...). When present, the new account skips
+  // admin approval and lands on the enterprise plan automatically. We capture
+  // it once on mount, switch the form to register mode, and stash the token
+  // until signup so the backend can claim it atomically with user creation.
+  const [referral, setReferral] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setReferral(ref);
+      setActiveMode('register');
+    }
+  }, []);
 
   // Forgot-password modal state
   const [showForgot, setShowForgot] = useState(false);
@@ -67,6 +84,13 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
       });
 
       if (authError) throw new Error(authError.message || 'Login failed');
+
+      const status = await getMyApprovalStatus();
+      if (status === 'pending' || status === 'rejected') {
+        await signOut().catch(() => {});
+        setPendingState(status);
+        return;
+      }
       onAuthenticated({});
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unexpected error. Try again.');
@@ -81,6 +105,18 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
     setError('');
 
     try {
+      // If we hold a referral token, hand it to the backend BEFORE signup so
+      // the user-create hook can match it. The backend validates the token
+      // is unused; if invalid we surface a clear error rather than silently
+      // creating a pending account.
+      let referralAccepted = false;
+      if (referral) {
+        referralAccepted = await claimReferralForEmail(email, referral);
+        if (!referralAccepted) {
+          throw new Error('This invite link is invalid or has already been used.');
+        }
+      }
+
       const { error: authError } = await signUp.email({
         email,
         password,
@@ -89,7 +125,16 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
       });
 
       if (authError) throw new Error(authError.message || 'Registration failed');
-      onStartOnboarding();
+
+      if (referralAccepted) {
+        // Referred users are auto-approved + on enterprise. Better-Auth
+        // already auto-signed them in; let the parent app re-check session.
+        onAuthenticated({});
+        return;
+      }
+
+      await signOut().catch(() => {});
+      setPendingState('pending');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unexpected error. Try again.');
     } finally {
@@ -101,6 +146,46 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
     setActiveMode(activeMode === 'login' ? 'register' : 'login');
     setError('');
   };
+
+  if (pendingState) {
+    const isRejected = pendingState === 'rejected';
+    return (
+      <div className="min-h-screen bg-[#05060d] text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-gradient-to-br from-indigo-600/30 via-violet-500/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-gradient-to-tr from-fuchsia-600/20 via-indigo-500/10 to-transparent rounded-full blur-3xl" />
+        </div>
+        <div className="relative z-10 w-full max-w-md">
+          <div className="rounded-[2rem] bg-[#0a0b14]/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.5)] p-8 sm:p-10 text-center space-y-5">
+            <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${
+              isRejected
+                ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400'
+                : 'bg-amber-500/10 border border-amber-500/30 text-amber-400'
+            }`}>
+              {isRejected ? <X size={32} /> : <Shield size={32} />}
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold tracking-tight">
+                {isRejected ? 'Application not approved' : 'Account under review'}
+              </h2>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                {isRejected
+                  ? 'Your account application was not approved. If you believe this was a mistake, please contact support.'
+                  : 'Your account has been created and is awaiting admin approval. You will receive an email once a decision is made.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setPendingState(null); setActiveMode('login'); setEmail(''); setPassword(''); }}
+              className="w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 transition-all"
+            >
+              Back to sign in
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#05060d] text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
@@ -248,6 +333,16 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding }
                       : 'Start building with your AI teammate in seconds.'}
                   </p>
                 </div>
+
+                {activeMode === 'register' && referral && (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <Gift size={18} className="text-emerald-400 mt-0.5 shrink-0" />
+                    <div className="text-xs text-emerald-200 leading-relaxed">
+                      <strong className="font-bold text-emerald-300">Invite link detected.</strong>{' '}
+                      Your account will be activated instantly with full Enterprise access — no admin approval needed.
+                    </div>
+                  </div>
+                )}
 
                 {activeMode === 'register' && (
                   <div className="space-y-1.5">

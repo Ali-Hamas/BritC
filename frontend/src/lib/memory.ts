@@ -13,7 +13,7 @@
 import { supabase } from './supabase';
 import { TeamService } from './team';
 
-export type MemoryType = 'strategic' | 'operational' | 'instructional' | 'constraint' | 'interpretation';
+export type MemoryType = 'strategic' | 'operational' | 'instructional' | 'constraint' | 'interpretation' | 'financial';
 
 export interface MemoryBlock {
   id: string;
@@ -217,6 +217,7 @@ export const MemoryService = {
       instructional: [],
       constraint: [],
       interpretation: [],
+      financial: [],
     };
     memory.forEach(m => categories[m.type].push(m));
 

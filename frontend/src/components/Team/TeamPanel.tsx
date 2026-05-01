@@ -1,15 +1,46 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Users, Key, Trash2, Copy, CheckCircle,
-  Loader2, Plus, Brain, Save, Zap, ChevronDown, Paperclip
+  Loader2, Plus, Brain, Save, Zap, ChevronDown, Paperclip,
+  AlertTriangle, TrendingUp, BarChart3
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TeamService, type Team, type TeamMember } from '../../lib/team';
 import { FileHandlingService } from '../../lib/fileHandling';
 import { MemoryService, type MemoryBlock, type MemoryType } from '../../lib/memory';
+import { GrowthService, type GrowthInsight } from '../../lib/growth';
 import type { BusinessProfile } from '../../lib/profiles';
 
-export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null; userId?: string | null }) => {
+function parsePulseSections(text: string): Array<{ title: string; items: string[] }> {
+  const sections: Array<{ title: string; items: string[] }> = [];
+  let current: { title: string; items: string[] } | null = null;
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (!line || line.startsWith('###')) continue;
+    const header = line.match(/^\[([^\]]+)\]$/);
+    if (header) {
+      if (current) sections.push(current);
+      current = { title: header[1], items: [] };
+      continue;
+    }
+    if (line.startsWith('-') && current) {
+      current.items.push(line.replace(/^-\s*/, ''));
+    }
+  }
+  if (current) sections.push(current);
+  return sections;
+}
+
+export const TeamPanel = ({
+  profile,
+  userId,
+  plan,
+}: {
+  profile: BusinessProfile | null;
+  userId?: string | null;
+  plan?: 'free' | 'enterprise' | null;
+}) => {
+  const isFreePlan = plan === 'free';
   const [loading, setLoading] = useState(true);
   const [ctx, setCtx] = useState<{ team: Team | null; role: 'owner' | 'member' | null; displayName: string | null } | null>(null);
   const [allTeams, setAllTeams] = useState<Array<{ team: Team; role: 'owner' | 'member'; displayName: string | null }>>([]);
@@ -26,6 +57,8 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
   const [isAttachingFile, setIsAttachingFile] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
+  const [pulseText, setPulseText] = useState('');
+  const [insights, setInsights] = useState<GrowthInsight[]>([]);
   const memoryFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -53,6 +86,14 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
         if (currentCtx.role === 'owner') {
           const mems = await TeamService.getTeamMembers(currentCtx.team.id);
           setMembers(mems);
+          try {
+            const [pulse, bns] = await Promise.all([
+              GrowthService.getBusinessPulse(profile, uid),
+              GrowthService.detectBottlenecks(profile, uid),
+            ]);
+            setPulseText(pulse);
+            setInsights(bns);
+          } catch { /* non-fatal */ }
         }
         const blocks = await MemoryService.syncFromTeam(currentCtx.team.id);
         setMemoryBlocks(blocks);
@@ -315,7 +356,7 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
   }
 
   // ─── Owner View ───
-  const categories: MemoryType[] = ['strategic', 'operational', 'instructional', 'constraint', 'interpretation'];
+  const categories: MemoryType[] = ['strategic', 'operational', 'instructional', 'constraint', 'interpretation', 'financial'];
   const ownedTeams = allTeams.filter(t => t.role === 'owner');
 
   return (
@@ -398,30 +439,123 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
             </p>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 w-full md:w-auto md:min-w-[240px] shadow-2xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="flex items-center justify-between mb-3 relative z-10">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                <Key size={12} className="text-indigo-400" /> Team Join PIN
-              </span>
-              <button 
-                onClick={handleRotatePin}
-                disabled={actionLoading}
-                className="text-[10px] bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 px-2 py-1 rounded transition-colors"
+          {isFreePlan && ctx.role === 'owner' ? (
+            <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 w-full md:w-auto md:min-w-[260px] relative overflow-hidden">
+              <div className="flex items-center gap-2 mb-2">
+                <Key size={14} className="text-amber-400" />
+                <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest">
+                  Free plan · solo workspace
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                Inviting team members is an Enterprise feature (£480/mo). Upgrade to share a join PIN.
+              </p>
+              <a
+                href="mailto:info@britsyncai.com?subject=Britsync Enterprise Upgrade"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white text-[11px] font-bold uppercase tracking-wider hover:from-indigo-400 hover:to-fuchsia-400 transition-all"
               >
-                Rotate PIN
-              </button>
+                Upgrade
+              </a>
             </div>
-            <div className="flex items-center justify-between relative z-10 gap-2">
-              <span className="text-2xl sm:text-3xl font-black text-white tracking-[0.15em] sm:tracking-[0.2em] font-mono truncate">{ctx.team.pin}</span>
-              <button 
-                onClick={() => { navigator.clipboard.writeText(ctx.team!.pin); setCopiedPin(true); setTimeout(() => setCopiedPin(false), 2000); }}
-                className="p-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-lg transition-colors"
-              >
-                {copiedPin ? <CheckCircle size={18} /> : <Copy size={18} />}
-              </button>
+          ) : (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 w-full md:w-auto md:min-w-[240px] shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center justify-between mb-3 relative z-10">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                  <Key size={12} className="text-indigo-400" /> Team Join PIN
+                </span>
+                <button
+                  onClick={handleRotatePin}
+                  disabled={actionLoading}
+                  className="text-[10px] bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 px-2 py-1 rounded transition-colors"
+                >
+                  Rotate PIN
+                </button>
+              </div>
+              <div className="flex items-center justify-between relative z-10 gap-2">
+                <span className="text-2xl sm:text-3xl font-black text-white tracking-[0.15em] sm:tracking-[0.2em] font-mono truncate">{ctx.team.pin}</span>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(ctx.team!.pin); setCopiedPin(true); setTimeout(() => setCopiedPin(false), 2000); }}
+                  className="p-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-lg transition-colors"
+                >
+                  {copiedPin ? <CheckCircle size={18} /> : <Copy size={18} />}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+        </div>
+
+        {/* Owner-only Finance Intelligence */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 shrink-0">
+                <BarChart3 size={18} />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-white">Live Business Pulse</h3>
+                <p className="text-[11px] sm:text-xs text-slate-500">Owner-only · finance signal</p>
+              </div>
+            </div>
+            {pulseText ? (
+              <div className="space-y-4">
+                {parsePulseSections(pulseText).map(sec => (
+                  <div key={sec.title}>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">{sec.title}</p>
+                    <ul className="space-y-1">
+                      {sec.items.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                          <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-slate-500 text-xs sm:text-sm">Add finance entries to see your live business pulse here.</p>
+            )}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 shrink-0">
+                <AlertTriangle size={18} />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-white">Growth Bottlenecks</h3>
+                <p className="text-[11px] sm:text-xs text-slate-500">Owner-only · detected blockers</p>
+              </div>
+            </div>
+            {insights.length === 0 ? (
+              <p className="text-slate-500 text-xs sm:text-sm flex items-center gap-2">
+                <TrendingUp size={14} className="text-emerald-400 shrink-0" />
+                No bottlenecks detected.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {insights.slice(0, 4).map((ins, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                    <span className="leading-relaxed">
+                      <strong className="text-white">{ins.title}</strong>
+                      <span className="text-slate-400"> — {ins.description}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
         </div>
 
         {/* Member List */}
@@ -468,7 +602,7 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {categories.slice(0, 3).map(cat => (
+              {categories.slice(0, 4).map(cat => (
                 <button
                   key={cat}
                   onClick={() => handleCreateMemory(cat)}
@@ -478,6 +612,14 @@ export const TeamPanel = ({ profile, userId }: { profile: BusinessProfile | null
                   {cat}
                 </button>
               ))}
+              {/* Financial Shortcut */}
+              <button
+                onClick={() => handleCreateMemory('financial')}
+                className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-bold text-emerald-400 transition-all flex items-center gap-1.5 capitalize"
+              >
+                <Plus size={14} />
+                Financial
+              </button>
             </div>
           </div>
 

@@ -957,7 +957,7 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
       let bottlenecksText = "";
       
       if (userId) {
-        businessPulse = await GrowthService.getBusinessPulse(profile, userId);
+        businessPulse = await GrowthService.getBusinessPulse(profile, userId, isTeamMode);
         const bns = await GrowthService.detectBottlenecks(profile, userId);
         bottlenecksText = bns.map(b => `- [${b.impact.toUpperCase()}] ${b.title}: ${b.description}`).join('\n');
       }

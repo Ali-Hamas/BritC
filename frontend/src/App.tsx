@@ -7,7 +7,10 @@ import { useSession, signOut } from './lib/auth-client';
 import { ProfileService, BusinessProfile } from './lib/profiles';
 import { TeamService } from './lib/team';
 import { MemoryService } from './lib/memory';
-
+import { getMyApprovalStatus, getMyPlan, type ApprovalStatus, type Plan } from './lib/approval';
+import { UpgradeScreen } from './components/Common/UpgradeScreen';
+import { PendingApprovalScreen } from './components/Auth/PendingApprovalScreen';
+import { RejectedScreen } from './components/Auth/RejectedScreen';
 
 import { Bot } from 'lucide-react';
 
@@ -59,6 +62,8 @@ function App() {
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState('assistant');
   const [timedOut, setTimedOut] = useState(false);
+  const [approval, setApproval] = useState<ApprovalStatus | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
 
   // 1. Initial Handshake Timeout
   //    If the session request hangs (common in native WebView when the backend
@@ -155,8 +160,39 @@ function App() {
       });
     } else if (!loading) {
       setOnboarded(null);
+      setApproval(null);
     }
   }, [session, loading]);
+
+  // Approval gate: probe once per session, then poll every 10s for auto-unlock
+  useEffect(() => {
+    if (!session?.user?.id) { setApproval(null); return; }
+    let cancelled = false;
+    setApproval(null); // reset on session change
+    const check = async () => {
+      try {
+        const status = await getMyApprovalStatus();
+        // 'no_session' means auth cookie didn't reach backend; treat as approved
+        // to avoid blocking valid users on transient network issues.
+        if (!cancelled) setApproval(status === 'no_session' ? 'approved' : status);
+      } catch {
+        if (!cancelled) setApproval('approved');
+      }
+    };
+    check();
+    const interval = setInterval(check, 10000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [session?.user?.id]);
+
+  // Plan probe: fetch subscription tier so we can gate paid features.
+  useEffect(() => {
+    if (!session?.user?.id) { setPlan(null); return; }
+    let cancelled = false;
+    getMyPlan().then(p => {
+      if (!cancelled) setPlan(p || 'free');
+    }).catch(() => { if (!cancelled) setPlan('free'); });
+    return () => { cancelled = true; };
+  }, [session?.user?.id]);
 
   const handleSignOut = async () => {
     if (session?.user?.id) {
@@ -172,16 +208,24 @@ function App() {
     window.location.reload();
   };
 
+  // Free plan locks all paid skills behind UpgradeScreen. Team Chat is
+  // available but TeamPanel itself disables member-add for free users.
+  const isFree = plan === 'free';
+
   const renderView = () => {
     switch (activeTab) {
       case 'team':
-        return <TeamPanel profile={profile} userId={session?.user?.id || null} />;
+        return <TeamPanel profile={profile} userId={session?.user?.id || null} plan={plan} />;
       case 'finance':
-        return <FinanceDashboard profile={profile} />;
+        return isFree
+          ? <UpgradeScreen feature="Finance dashboard" />
+          : <FinanceDashboard profile={profile} />;
       case 'profile':
         return <ProfileView profile={profile} onSignOut={handleSignOut} />;
       case 'admin':
-        return <AdminPanel />;
+        const u: any = session.user;
+        const adminEmail = u.email || u.emailAddress || u.primaryEmail || '';
+        return <AdminPanel userEmail={adminEmail} />;
       case 'assistant':
       default:
         return <Chatbot profile={profile} onSignOut={handleSignOut} />;
@@ -228,6 +272,33 @@ function App() {
 
   if (!session) {
     return <Auth onAuthenticated={() => {}} onStartOnboarding={() => { /* onboarding disabled — user goes straight to Chat */ }} />;
+  }
+
+  // Approval check in progress — block with spinner to prevent flicker/login loop
+  if (approval === null) {
+    return (
+      <div className="min-h-screen bg-[#030712] flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.1),transparent_70%)]" />
+        <div className="text-center relative z-10 animate-in fade-in duration-1000">
+          <div className="relative w-24 h-24 mx-auto">
+            <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full animate-pulse" />
+            <div className="animate-spin rounded-full h-24 w-24 border-t-2 border-indigo-500 border-r-2 border-r-transparent relative z-10 shadow-[0_0_30px_rgba(99,102,241,0.3)]"></div>
+          </div>
+          <p className="text-slate-500 font-bold text-[10px] tracking-[0.4em] uppercase mt-8 animate-pulse">Checking Access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (approval === 'pending') {
+    const u: any = session.user;
+    const email = u.email || u.emailAddress || u.primaryEmail || '';
+    return <PendingApprovalScreen email={email} onSignOut={handleSignOut} />;
+  }
+  if (approval === 'rejected') {
+    const u: any = session.user;
+    const email = u.email || u.emailAddress || u.primaryEmail || '';
+    return <RejectedScreen email={email} onSignOut={handleSignOut} />;
   }
   // Onboarding form removed — new users auto-get a blank profile and land in Chat.
 
