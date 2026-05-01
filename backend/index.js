@@ -118,9 +118,10 @@ app.get('/api/seats', async (_req, res) => {
 });
 
 // Public news feed — RSS aggregator with 10-min in-memory cache.
-const { getCachedNews } = require('./news');
+// Lazy-required so a missing fast-xml-parser dep can't crash the auth boot.
 app.get('/api/news', async (_req, res) => {
   try {
+    const { getCachedNews } = require('./news');
     const items = await getCachedNews();
     res.json({ items });
   } catch (err) {
