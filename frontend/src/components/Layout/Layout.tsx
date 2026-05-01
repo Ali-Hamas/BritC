@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import Header from './Header';
 import { MobileBottomNav } from './MobileBottomNav';
 import { BusinessProfile } from '../../lib/profiles';
+import type { SubscriptionStatus } from '../../lib/subscription';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface LayoutProps {
   onTabChange: (tab: string) => void;
   onSignOut: () => void;
   profile: BusinessProfile | null;
+  subscription?: SubscriptionStatus | null;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ 
@@ -17,7 +19,8 @@ export const Layout: React.FC<LayoutProps> = ({
   activeTab, 
   onTabChange, 
   onSignOut,
-  profile 
+  profile,
+  subscription,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
@@ -57,6 +60,7 @@ export const Layout: React.FC<LayoutProps> = ({
           onSignOut={onSignOut}
           profile={profile}
           onClose={() => setIsSidebarOpen(false)}
+          subscription={subscription}
         />
       </aside>
 
@@ -87,3 +91,4 @@ export const Layout: React.FC<LayoutProps> = ({
     </div>
   );
 };
+

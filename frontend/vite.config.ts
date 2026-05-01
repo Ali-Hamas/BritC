@@ -82,6 +82,18 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Proxy Subscription endpoints
+      '/api/subscription': {
+        target: 'http://localhost:5010',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy all other /api routes to local backend
+      '/api': {
+        target: 'http://localhost:5010',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

@@ -131,11 +131,19 @@ async function sendResetPasswordEmail({ user, url }) {
 // signup URL and stashes it here keyed by email so the user-create hook can
 // consume it atomically with row creation. Cleared on consumption.
 const _pendingReferrals = new Map();
+const _pendingIntents = new Map();
+
 function stashSignupReferral(email, token) {
     if (!email || !token) return;
     _pendingReferrals.set(email.toLowerCase(), { token, ts: Date.now() });
     // Auto-expire after 5 minutes so we never leak entries.
     setTimeout(() => _pendingReferrals.delete(email.toLowerCase()), 5 * 60 * 1000);
+}
+
+function stashSignupIntent(email, intent) {
+    if (!email || !intent) return;
+    _pendingIntents.set(email.toLowerCase(), { intent, ts: Date.now() });
+    setTimeout(() => _pendingIntents.delete(email.toLowerCase()), 5 * 60 * 1000);
 }
 
 async function consumeReferralForUser(client, user) {
@@ -166,18 +174,27 @@ const auth = betterAuth({
                     const client = await pool.connect();
                     try {
                         const claimed = await consumeReferralForUser(client, user);
+                        
+                        // Handle stashed intent (free vs enterprise)
+                        const email = (user.email || '').toLowerCase();
+                        const stashedIntent = _pendingIntents.get(email);
+                        const requestedPlan = stashedIntent ? stashedIntent.intent : 'free';
+                        _pendingIntents.delete(email);
+
                         // Referred users skip approval AND get enterprise plan.
-                        // Direct signups land in pending approval + free plan.
-                        const approvalStatus = claimed ? 'approved' : 'pending';
+                        // Direct signups require a referral link — they land on
+                        // referral_required status and free plan until they
+                        // register with a valid referral link.
+                        const approvalStatus = claimed ? 'approved' : 'referral_required';
                         const decidedAt = claimed ? 'NOW()' : 'NULL';
                         const plan = claimed ? 'enterprise' : 'free';
                         const planSource = claimed ? 'referral' : 'signup';
 
                         await client.query(
-                            `INSERT INTO account_approvals (user_id, status, decided_at, decided_by)
-                             VALUES ($1, $2, ${decidedAt}, $3)
+                            `INSERT INTO account_approvals (user_id, status, decided_at, decided_by, requested_plan)
+                             VALUES ($1, $2, ${decidedAt}, $3, $4)
                              ON CONFLICT (user_id) DO NOTHING`,
-                            [user.id, approvalStatus, claimed ? 'referral' : null]
+                            [user.id, approvalStatus, claimed ? 'referral' : null, requestedPlan]
                         );
                         await client.query(
                             `INSERT INTO account_subscriptions (user_id, plan, source)
@@ -186,7 +203,7 @@ const auth = betterAuth({
                             [user.id, plan, planSource]
                         );
                         console.log(
-                            `[Auth] User created: ${user.email} → approval=${approvalStatus}, plan=${plan}`
+                            `[Auth] User created: ${user.email} → approval=${approvalStatus}, plan=${plan}, requested=${requestedPlan}`
                         );
                     } catch (err) {
                         console.error('[Auth] Failed to provision new user rows:', err);
@@ -237,4 +254,4 @@ const auth = betterAuth({
     }
 });
 
-module.exports = { auth, pool, sendApprovalEmail, stashSignupReferral };
+module.exports = { auth, pool, sendApprovalEmail, stashSignupReferral, stashSignupIntent };

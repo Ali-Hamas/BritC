@@ -10,6 +10,7 @@ import { FileHandlingService } from '../../lib/fileHandling';
 import { MemoryService, type MemoryBlock, type MemoryType } from '../../lib/memory';
 import { GrowthService, type GrowthInsight } from '../../lib/growth';
 import type { BusinessProfile } from '../../lib/profiles';
+import { PlanSelectionModal } from '../Common/PlanSelectionModal';
 
 function parsePulseSections(text: string): Array<{ title: string; items: string[] }> {
   const sections: Array<{ title: string; items: string[] }> = [];
@@ -111,7 +112,13 @@ export const TeamPanel = ({
     loadData();
   };
 
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
   const handleCreateTeam = async (customName?: string) => {
+    if (isFreePlan) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setActionLoading(true);
     try {
       const uid = userId || TeamService._uid();
@@ -300,16 +307,33 @@ export const TeamPanel = ({
           <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
             Create a team to generate a secure PIN. You can share this PIN with your colleagues to link them to your workspace. Their chats will remain completely private, but the AI will be guided by your strategic memory.
           </p>
-          <button
-            onClick={() => setShowNewTeamModal(true)}
-            disabled={actionLoading}
-            className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center mx-auto gap-2"
-          >
-            {actionLoading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
-            Initialize Team Workspace
-          </button>
+          {isFreePlan ? (
+            <div className="space-y-4">
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 max-w-sm mx-auto">
+                <p className="text-xs text-amber-300 mb-3">
+                  Free plan includes <span className="font-bold">1 team chat</span>. Upgrade to Enterprise (£449/mo) to create additional teams.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center mx-auto gap-2"
+              >
+                <Zap size={20} />
+                Upgrade to Enterprise
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowNewTeamModal(true)}
+              disabled={actionLoading}
+              className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-500/20 flex items-center justify-center mx-auto gap-2"
+            >
+              {actionLoading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
+              Initialize Team Workspace
+            </button>
+          )}
         </div>
-        {renderNewTeamModal()}
+        {!isFreePlan && renderNewTeamModal()}
       </div>
     );
   }
@@ -340,14 +364,29 @@ export const TeamPanel = ({
           </button>
 
           <div className="pt-6 border-t border-white/5">
-            <p className="text-xs text-slate-500 mb-3">Want your own workspace too?</p>
-            <button
-              onClick={() => setShowNewTeamModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
-            >
-              <Plus size={14} />
-              Create your own team
-            </button>
+            {isFreePlan ? (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500">Want your own workspace?</p>
+                <button
+                  onClick={() => setShowUpgradeModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-xl text-sm font-semibold text-emerald-300 transition-colors"
+                >
+                  <Zap size={14} />
+                  Upgrade to Enterprise
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500 mb-3">Want your own workspace too?</p>
+                <button
+                  onClick={() => setShowNewTeamModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
+                >
+                  <Plus size={14} />
+                  Create your own team
+                </button>
+              </>
+            )}
           </div>
         </div>
         {renderNewTeamModal()}
@@ -398,24 +437,36 @@ export const TeamPanel = ({
                 </div>
               )}
             </div>
-            <button
-              onClick={() => setShowNewTeamModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
-            >
-              <Plus size={14} />
-              New Team
-            </button>
+            {!isFreePlan && (
+              <button
+                onClick={() => setShowNewTeamModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
+              >
+                <Plus size={14} />
+                New Team
+              </button>
+            )}
           </div>
         )}
         {ownedTeams.length === 1 && allTeams.length === 1 && (
           <div className="flex justify-end">
-            <button
-              onClick={() => setShowNewTeamModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
-            >
-              <Plus size={14} />
-              New Team
-            </button>
+            {!isFreePlan ? (
+              <button
+                onClick={() => setShowNewTeamModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 rounded-xl text-sm font-semibold text-indigo-300 transition-colors"
+              >
+                <Plus size={14} />
+                New Team
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-xl text-sm font-semibold text-emerald-300 transition-colors"
+              >
+                <Zap size={14} />
+                Upgrade to Enterprise
+              </button>
+            )}
           </div>
         )}
 
@@ -447,11 +498,11 @@ export const TeamPanel = ({
                   Free plan · solo workspace
                 </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed mb-3">
-                Inviting team members is an Enterprise feature (£480/mo). Upgrade to share a join PIN.
+               <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                Inviting team members and creating additional team chats is an Enterprise feature (£449/mo). Upgrade to unlock.
               </p>
               <a
-                href="mailto:info@britsyncai.com?subject=Britsync Enterprise Upgrade"
+                href="mailto:info@britsyncai.com?subject=Britsee Enterprise Upgrade"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white text-[11px] font-bold uppercase tracking-wider hover:from-indigo-400 hover:to-fuchsia-400 transition-all"
               >
                 Upgrade
@@ -727,6 +778,7 @@ export const TeamPanel = ({
 
       </div>
       {renderNewTeamModal()}
+      <PlanSelectionModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
       <input
         ref={memoryFileInputRef}
         type="file"
@@ -738,3 +790,4 @@ export const TeamPanel = ({
     </div>
   );
 };
+

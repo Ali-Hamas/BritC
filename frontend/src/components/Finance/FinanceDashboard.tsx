@@ -14,6 +14,7 @@ import {
   Trash2,
   BarChart3,
   CheckCircle,
+  Mail,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GrowthService, type GrowthInsight } from '../../lib/growth';
@@ -51,6 +52,7 @@ import { FinanceNarrativeService } from '../../lib/financeNarrative';
 import { ScenarioSimulator } from './ScenarioSimulator';
 import { EntryForm } from './EntryForm';
 import { CsvImport } from './CsvImport';
+import { ReportScheduleModal } from './ReportScheduleModal';
 import { exportFinancePdf } from './FinanceExportPdf';
 import { useSession } from '../../lib/auth-client';
 
@@ -98,6 +100,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
   const [loading, setLoading] = React.useState(true);
   const [showForm, setShowForm] = React.useState(false);
   const [showCsv, setShowCsv] = React.useState(false);
+  const [showSchedule, setShowSchedule] = React.useState(false);
   const [narrative, setNarrative] = React.useState('');
   const [narrLoading, setNarrLoading] = React.useState(false);
   const [narrError, setNarrError] = React.useState('');
@@ -236,6 +239,12 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold hover:bg-white/10 disabled:opacity-50"
           >
             <FileDown size={14} /> Export PDF
+          </button>
+          <button
+            onClick={() => setShowSchedule(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold hover:bg-white/10"
+          >
+            <Mail size={14} /> Schedule Reports
           </button>
         </div>
       </header>
@@ -475,7 +484,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
       )}
 
       {/* Scenario simulator */}
-      {hasData && <ScenarioSimulator entries={entries} />}
+      {hasData && <ScenarioSimulator entries={entries} userId={userId} />}
 
       {/* AI commentary */}
       {hasData && (
@@ -667,6 +676,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
           onImported={() => refresh()}
         />
       )}
+      <ReportScheduleModal open={showSchedule} onClose={() => setShowSchedule(false)} />
     </div>
   );
 };

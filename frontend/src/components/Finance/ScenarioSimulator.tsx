@@ -8,6 +8,11 @@ import {
   monthlyAggregate, dailyAggregate, forecast, computeKpis,
 } from '../../lib/financeAnalytics';
 import type { MonthlyAggregate, ForecastPoint, FinanceKpis } from '../../lib/financeAnalytics';
+import {
+  getFinanceStyle,
+  getScenarioDefaults,
+  FINANCE_STYLE_LABELS,
+} from '../../lib/financeStyle';
 
 const gbp = (n: number | null | undefined) =>
   n == null ? '—' : '£' + Math.round(n).toLocaleString('en-GB');
@@ -19,12 +24,6 @@ interface ScenarioInputs {
   salaryPerHire: number;    // GBP/month
 }
 
-const DEFAULT_INPUTS: ScenarioInputs = {
-  revenuePct: 0,
-  expensePct: 0,
-  newHeadcount: 0,
-  salaryPerHire: 3500,
-};
 
 function applyScenario(entries: FinanceEntry[], s: ScenarioInputs): FinanceEntry[] {
   const revMul = 1 + s.revenuePct / 100;
@@ -87,8 +86,10 @@ const Slider: React.FC<SliderProps> = ({ label, value, min, max, step = 1, suffi
   </div>
 );
 
-export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[] }> = ({ entries }) => {
-  const [inputs, setInputs] = React.useState<ScenarioInputs>(DEFAULT_INPUTS);
+export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: string }> = ({ entries, userId }) => {
+  const style = React.useMemo(() => getFinanceStyle(userId), [userId]);
+  const styleDefaults = React.useMemo<ScenarioInputs>(() => getScenarioDefaults(style), [style]);
+  const [inputs, setInputs] = React.useState<ScenarioInputs>(styleDefaults);
 
   const baseMonthly: MonthlyAggregate[] = React.useMemo(
     () => monthlyAggregate(entries).slice(-6),
@@ -123,15 +124,22 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[] }> = ({ entri
     });
   }, [baseMonthly, scenarioMonthly]);
 
-  const dirty = inputs.revenuePct !== 0 || inputs.expensePct !== 0 || inputs.newHeadcount !== 0;
+  const dirty =
+    inputs.revenuePct !== styleDefaults.revenuePct ||
+    inputs.expensePct !== styleDefaults.expensePct ||
+    inputs.newHeadcount !== styleDefaults.newHeadcount ||
+    inputs.salaryPerHire !== styleDefaults.salaryPerHire;
   const profitDeltaPct = deltaPct(scenarioKpis.last30Profit, baseKpis.last30Profit);
-  const reset = () => setInputs(DEFAULT_INPUTS);
+  const reset = () => setInputs(styleDefaults);
 
   return (
     <div className="glass-card p-5 space-y-5">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <Sliders size={14} className="text-indigo-400" /> Scenario Simulator
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/20">
+            {FINANCE_STYLE_LABELS[style]} preset
+          </span>
         </h3>
         {dirty && (
           <button
@@ -215,7 +223,7 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[] }> = ({ entri
               />
               <Tooltip
                 contentStyle={{ background: '#0a0b14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
-                formatter={(v: number) => '£' + Math.round(v).toLocaleString('en-GB')}
+                formatter={(v) => '£' + Math.round(v as number).toLocaleString('en-GB')}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="baseProfit" name="Baseline profit" fill="#475569" radius={[4, 4, 0, 0]} />
@@ -291,3 +299,8 @@ const ResultTile: React.FC<{
     </div>
   );
 };
+
+
+
+
+

@@ -19,11 +19,13 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Shield, Users, Briefcase, Trash2, Loader2, AlertTriangle, RefreshCw,
   Search, ShieldCheck, ShieldOff, ShieldPlus, BarChart3, Crown, X,
-  CheckCircle, Clock, Link as LinkIcon, Copy, Ban, Plus,
+  CheckCircle, Clock, Link as LinkIcon, Copy, Ban, Plus, CreditCard,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { TeamService, type Team } from '../../lib/team';
 import { adminListPending, adminDecideUser, adminListReferrals, adminCreateReferral, adminRevokeReferral, type PendingUser, type ReferralToken } from '../../lib/approval';
+import { adminListSubscriptions, formatBytes, type AdminSubscriptionRow } from '../../lib/subscription';
+import { getApiUrl } from '../../lib/api-config';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,7 +47,7 @@ interface AdminRow {
   granted_at: string;
 }
 
-type Tab = 'overview' | 'users' | 'teams' | 'admins' | 'pending' | 'referrals';
+type Tab = 'overview' | 'users' | 'teams' | 'admins' | 'pending' | 'referrals' | 'subscriptions';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -63,6 +65,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
   const [referralTokens, setReferralTokens] = useState<ReferralToken[]>([]);
   const [showCreateReferral, setShowCreateReferral] = useState(false);
   const [referralNote, setReferralNote] = useState('');
+  const [subscriptionRows, setSubscriptionRows] = useState<AdminSubscriptionRow[]>([]);
 
   // Check moderator status using both the passed email (from session) and the
   // cached email, so we never lose admin access due to a stale localStorage.
@@ -120,13 +123,15 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
       setTeams(enriched);
       setAdminRows(adminList);
 
-      // Load pending users and referrals in parallel
-      const [pendingResult, referralsResult] = await Promise.allSettled([
+      // Load pending users, referrals, and subscriptions in parallel
+      const [pendingResult, referralsResult, subsResult] = await Promise.allSettled([
         adminListPending(),
         adminListReferrals(),
+        adminListSubscriptions(),
       ]);
       if (pendingResult.status === 'fulfilled') setPendingUsers(pendingResult.value);
       if (referralsResult.status === 'fulfilled') setReferralTokens(referralsResult.value);
+      if (subsResult.status === 'fulfilled') setSubscriptionRows(subsResult.value);
 
       await TeamService.refreshAdminCache();
     } catch (err: any) {
@@ -273,6 +278,26 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
     }
   };
 
+  const handleSetPlan = async (userId: string, email: string, plan: 'free' | 'enterprise') => {
+    if (!window.confirm(`Set ${email} to ${plan} plan?`)) return;
+    setBusyId(userId);
+    try {
+      const res = await fetch(getApiUrl('/api/admin/set-plan'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, plan }),
+      });
+      if (!res.ok) throw new Error('Failed to update plan');
+      showToast('ok', `${email} is now on ${plan} plan.`);
+      await load();
+    } catch (err: any) {
+      showToast('err', 'Plan change failed: ' + (err?.message || 'unknown'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   // ─── Bounce screen ──────────────────────────────────────────────────────
   if (!isModerator) {
     return (
@@ -345,6 +370,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
         <div className="flex gap-1 p-1 bg-[#0d1126] border border-white/5 rounded-xl overflow-x-auto scrollbar-none">
           {([
             { id: 'overview', label: 'Overview', icon: BarChart3 },
+            { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
             { id: 'pending',  label: 'Pending',  icon: Clock      },
             { id: 'users',    label: 'Users',    icon: Users      },
             { id: 'teams',    label: 'Teams',    icon: Briefcase  },
@@ -371,6 +397,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
               {id === 'teams' && <span className="text-[10px] opacity-60">{teams.length}</span>}
               {id === 'admins' && <span className="text-[10px] opacity-60">{adminUsers.length}</span>}
               {id === 'referrals' && <span className="text-[10px] opacity-60">{referralTokens.length}</span>}
+              {id === 'subscriptions' && <span className="text-[10px] opacity-60">{subscriptionRows.length}</span>}
             </button>
           ))}
         </div>
@@ -443,6 +470,137 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
           </div>
         )}
 
+        {/* ── Subscriptions ──────────────────────────────────────────── */}
+        {tab === 'subscriptions' && (
+          <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-white/5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    <CreditCard size={16} className="text-emerald-400" />
+                    Subscriptions
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {subscriptionRows.filter(s => s.plan === 'enterprise').length} Enterprise · {subscriptionRows.filter(s => s.plan === 'free').length} Free
+                  </p>
+                </div>
+                <button
+                  onClick={load}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-semibold text-slate-300 transition-colors"
+                >
+                  <RefreshCw size={12} /> Refresh
+                </button>
+              </div>
+            </div>
+
+            {subscriptionRows.length === 0 ? (
+              <p className="text-slate-500 text-sm italic py-8 text-center">No subscription records found.</p>
+            ) : (
+              <>
+                {/* Mobile cards */}
+                <div className="lg:hidden divide-y divide-white/5">
+                  {subscriptionRows.map(s => (
+                    <div key={s.user_id} className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-white text-sm truncate">{s.email}</p>
+                        <Badge label={s.plan} tone={s.plan === 'enterprise' ? 'emerald' : 'amber'} />
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                        <span className={`px-2 py-0.5 rounded-md border ${
+                          s.subscription_status === 'active' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
+                          s.subscription_status === 'past_due' ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' :
+                          'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                        }`}>
+                          {s.subscription_status}
+                        </span>
+                        <span className="text-slate-400">{formatBytes(s.storage_used || 0)} used</span>
+                      </div>
+                      <p className="text-[10px] text-slate-600">
+                        Source: {s.source} · Joined {s.created_at ? new Date(s.created_at).toLocaleDateString() : '—'}
+                      </p>
+                      <div className="flex gap-2 pt-1">
+                        {s.plan !== 'enterprise' && (
+                          <ActionBtn tone="emerald" icon={Crown} label="Grant Enterprise" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'enterprise')} />
+                        )}
+                        {s.plan !== 'free' && (
+                          <ActionBtn tone="slate" icon={ShieldOff} label="Set Free" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'free')} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden lg:block">
+                  <table className="w-full text-sm">
+                    <thead className="bg-[#0d1126] text-slate-400 text-[11px] uppercase tracking-widest">
+                      <tr>
+                        <th className="text-left px-6 py-3 font-bold">User</th>
+                        <th className="text-left px-6 py-3 font-bold">Plan</th>
+                        <th className="text-left px-6 py-3 font-bold">Status</th>
+                        <th className="text-left px-6 py-3 font-bold">Storage Used</th>
+                        <th className="text-left px-6 py-3 font-bold">Source</th>
+                        <th className="text-left px-6 py-3 font-bold">Joined</th>
+                        <th className="text-right px-6 py-3 font-bold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {subscriptionRows.map(s => (
+                        <tr key={s.user_id} className="hover:bg-white/[0.02]">
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-300 font-bold flex-shrink-0">
+                                {(s.email || '?')[0].toUpperCase()}
+                              </div>
+                              <span className="text-white font-medium truncate max-w-[220px]">{s.email}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={`text-xs font-bold px-2 py-1 rounded-md border ${
+                              s.plan === 'enterprise'
+                                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                                : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                            }`}>
+                              {s.plan.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={`text-xs px-2 py-1 rounded-md border ${
+                              s.subscription_status === 'active' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
+                              s.subscription_status === 'past_due' ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' :
+                              s.subscription_status === 'canceled' ? 'bg-slate-500/10 text-slate-400 border-slate-500/20' :
+                              'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                            }`}>
+                              {s.subscription_status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-xs text-slate-300 font-mono">
+                            {formatBytes(s.storage_used || 0)}
+                          </td>
+                          <td className="px-6 py-3 text-xs text-slate-400">{s.source}</td>
+                          <td className="px-6 py-3 text-xs text-slate-400">
+                            {s.created_at ? new Date(s.created_at).toLocaleDateString() : '—'}
+                          </td>
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-2 justify-end">
+                              {s.plan !== 'enterprise' && (
+                                <ActionBtn tone="emerald" icon={Crown} label="Grant Enterprise" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'enterprise')} />
+                              )}
+                              {s.plan !== 'free' && (
+                                <ActionBtn tone="slate" icon={ShieldOff} label="Set Free" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'free')} />
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </section>
+        )}
+
         {/* ── Pending Approvals ──────────────────────────────────────── */}
         {tab === 'pending' && (
           <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6">
@@ -473,9 +631,18 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-white truncate font-medium">{u.email}</p>
-                      <p className="text-[11px] text-slate-500 truncate">
-                        {u.name ? `${u.name} · ` : ''}Signed up {new Date(u.created_at).toLocaleDateString()}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[11px] text-slate-500 truncate">
+                          {u.name ? `${u.name} · ` : ''}Signed up {new Date(u.created_at).toLocaleDateString()}
+                        </p>
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+                          u.requested_plan === 'enterprise' 
+                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' 
+                            : 'bg-white/5 text-slate-500 border-white/10'
+                        }`}>
+                          {u.requested_plan || 'free'}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
                       <button
@@ -829,7 +996,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                         </div>
                         <p className="text-[11px] text-slate-500">
                           Created {new Date(t.created_at).toLocaleDateString()}
-                          {t.used_by && ` · Used by ${t.used_email || t.used_by}`}
+                          {t.used_email && ` · Used by ${t.used_email || t.used_email}`}
                           {t.note && ` · ${t.note}`}
                         </p>
                       </div>
@@ -974,7 +1141,7 @@ const Badge = ({ label, tone }: { label: string; tone: 'amber' | 'emerald' | 'ro
 const ActionBtn = ({
   tone, icon: Icon, label, busy, onClick,
 }: {
-  tone: 'rose' | 'amber' | 'slate';
+  tone: 'rose' | 'amber' | 'slate' | 'emerald';
   icon: typeof Trash2;
   label: string;
   busy?: boolean;
@@ -984,6 +1151,7 @@ const ActionBtn = ({
     rose:  'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/30 text-rose-300',
     amber: 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300',
     slate: 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300',
+    emerald: 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-300',
   };
   return (
     <button
@@ -996,3 +1164,4 @@ const ActionBtn = ({
     </button>
   );
 };
+

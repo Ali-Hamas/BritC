@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Lock, ArrowRight, Mail, Globe, Users, Loader2, Sparkles, X, CheckCircle2, Gift } from 'lucide-react';
 import { signIn, signUp, signOut, forgetPassword } from '../../lib/auth-client';
-import { getMyApprovalStatus, claimReferralForEmail } from '../../lib/approval';
+import { getMyApprovalStatus, claimReferralForEmail, recordSignupIntent } from '../../lib/approval';
 
 interface AuthProps {
   onAuthenticated: (profile: Record<string, any>) => void;
-  onStartOnboarding: () => void;
+  onStartOnboarding?: () => void;
+  initialMode?: 'login' | 'register';
+  intent?: 'free' | 'enterprise' | null;
 }
 
-export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding: _onStartOnboarding }) => {
-  const [activeMode, setActiveMode] = useState<'login' | 'register'>('login');
+export const Auth: React.FC<AuthProps> = ({ 
+  onAuthenticated, 
+  onStartOnboarding: _onStartOnboarding,
+  initialMode = 'login',
+  intent = null
+}) => {
+  const [activeMode, setActiveMode] = useState<'login' | 'register'>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [pendingState, setPendingState] = useState<null | 'pending' | 'rejected'>(null);
@@ -32,6 +39,11 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding: 
       setActiveMode('register');
     }
   }, []);
+
+  // Sync mode if props change
+  useEffect(() => {
+    setActiveMode(initialMode);
+  }, [initialMode]);
 
   // Forgot-password modal state
   const [showForgot, setShowForgot] = useState(false);
@@ -105,7 +117,12 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated, onStartOnboarding: 
     setError('');
 
     try {
-      // If we hold a referral token, hand it to the backend BEFORE signup so
+      // 1. Record intent (free/enterprise) first
+      if (intent) {
+        await recordSignupIntent(email, intent);
+      }
+
+      // 2. If we hold a referral token, hand it to the backend BEFORE signup so
       // the user-create hook can match it. The backend validates the token
       // is unused; if invalid we surface a clear error rather than silently
       // creating a pending account.

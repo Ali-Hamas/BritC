@@ -7,10 +7,12 @@ import { useSession, signOut } from './lib/auth-client';
 import { ProfileService, BusinessProfile } from './lib/profiles';
 import { TeamService } from './lib/team';
 import { MemoryService } from './lib/memory';
-import { getMyApprovalStatus, getMyPlan, type ApprovalStatus, type Plan } from './lib/approval';
+import { getMyApprovalStatus, type ApprovalStatus } from './lib/approval';
+import { getSubscriptionStatus, type SubscriptionStatus } from './lib/subscription';
 import { UpgradeScreen } from './components/Common/UpgradeScreen';
-import { PendingApprovalScreen } from './components/Auth/PendingApprovalScreen';
+import { ReferralRequiredScreen } from './components/Auth/ReferralRequiredScreen';
 import { RejectedScreen } from './components/Auth/RejectedScreen';
+import { LandingPage } from './components/Marketing/LandingPage';
 
 import { Bot } from 'lucide-react';
 
@@ -20,6 +22,7 @@ const ProfileView = React.lazy(() => import('./components/Profile/ProfileView').
 const TeamPanel = React.lazy(() => import('./components/Team/TeamPanel').then(m => ({ default: m.TeamPanel })));
 const FinanceDashboard = React.lazy(() => import('./components/Finance/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
 const AdminPanel = React.lazy(() => import('./components/Admin/AdminPanel').then(m => ({ default: m.AdminPanel })));
+const NewsFeed = React.lazy(() => import('./components/News/NewsFeed').then(m => ({ default: m.NewsFeed })));
 
 // Error boundary
 class ErrorBoundary extends Component<{ children: ReactNode; name: string }, { hasError: boolean; error: string }> {
@@ -63,7 +66,13 @@ function App() {
   const [activeTab, setActiveTab] = useState('assistant');
   const [timedOut, setTimedOut] = useState(false);
   const [approval, setApproval] = useState<ApprovalStatus | null>(null);
-  const [plan, setPlan] = useState<Plan | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [isAuthView, setIsAuthView] = useState(false);
+  const [authIntent, setAuthIntent] = useState<'free' | 'enterprise' | null>(null);
+
+  // Free plan locks all paid skills behind UpgradeScreen. Team Chat is
+  // available but TeamPanel itself disables member-add for free users.
+  const isFree = !subscription || subscription.plan === 'free';
 
   // 1. Initial Handshake Timeout
   //    If the session request hangs (common in native WebView when the backend
@@ -88,7 +97,7 @@ function App() {
       // Better-Auth may expose the email under `email`, `emailAddress`, or
       // nested on `user.email`. Fall back to all known shapes so the moderator
       // detection (which keys off email) works regardless of session version.
-      const u: any = session.user;
+      const u: any = session?.user || {};
       const email =
         u.email ||
         u.emailAddress ||
@@ -184,13 +193,13 @@ function App() {
     return () => { cancelled = true; clearInterval(interval); };
   }, [session?.user?.id]);
 
-  // Plan probe: fetch subscription tier so we can gate paid features.
+  // Subscription probe: fetch plan, storage, billing info
   useEffect(() => {
-    if (!session?.user?.id) { setPlan(null); return; }
+    if (!session?.user?.id) { setSubscription(null); return; }
     let cancelled = false;
-    getMyPlan().then(p => {
-      if (!cancelled) setPlan(p || 'free');
-    }).catch(() => { if (!cancelled) setPlan('free'); });
+    getSubscriptionStatus().then(s => {
+      if (!cancelled) setSubscription(s || null);
+    }).catch(() => { if (!cancelled) setSubscription(null); });
     return () => { cancelled = true; };
   }, [session?.user?.id]);
 
@@ -202,28 +211,27 @@ function App() {
     await signOut();
     setProfile(null);
     setOnboarded(false);
+    setSubscription(null);
     // NOTE: do NOT remove britc_chat_sessions / britc_active_session / britsee_active_session.
     // Chat history lives in Supabase keyed by session_id; wiping these keys orphans the rows
     // and the user sees an empty sidebar after re-login. They are restored by the next user.
     window.location.reload();
   };
 
-  // Free plan locks all paid skills behind UpgradeScreen. Team Chat is
-  // available but TeamPanel itself disables member-add for free users.
-  const isFree = plan === 'free';
-
   const renderView = () => {
     switch (activeTab) {
       case 'team':
-        return <TeamPanel profile={profile} userId={session?.user?.id || null} plan={plan} />;
+        return <TeamPanel profile={profile} userId={session?.user?.id || null} plan={subscription?.plan || 'free'} />;
       case 'finance':
         return isFree
           ? <UpgradeScreen feature="Finance dashboard" />
           : <FinanceDashboard profile={profile} />;
+      case 'news':
+        return <NewsFeed />;
       case 'profile':
-        return <ProfileView profile={profile} onSignOut={handleSignOut} />;
+        return <ProfileView profile={profile} onSignOut={handleSignOut} subscription={subscription} />;
       case 'admin':
-        const u: any = session.user;
+        const u: any = session?.user || {};
         const adminEmail = u.email || u.emailAddress || u.primaryEmail || '';
         return <AdminPanel userEmail={adminEmail} />;
       case 'assistant':
@@ -271,7 +279,27 @@ function App() {
   }
 
   if (!session) {
-    return <Auth onAuthenticated={() => {}} onStartOnboarding={() => { /* onboarding disabled — user goes straight to Chat */ }} />;
+    if (!isAuthView) {
+      return (
+        <LandingPage 
+          onGetStarted={(intent) => {
+            setAuthIntent(intent || 'free');
+            setIsAuthView(true);
+          }} 
+          onLogin={() => {
+            setAuthIntent(null);
+            setIsAuthView(true);
+          }} 
+        />
+      );
+    }
+    return (
+      <Auth 
+        onAuthenticated={() => {}} 
+        initialMode={authIntent ? 'register' : 'login'}
+        intent={authIntent}
+      />
+    );
   }
 
   // Approval check in progress — block with spinner to prevent flicker/login loop
@@ -290,20 +318,20 @@ function App() {
     );
   }
 
-  if (approval === 'pending') {
-    const u: any = session.user;
+  if (approval === 'referral_required' || approval === 'pending') {
+    const u: any = session?.user || {};
     const email = u.email || u.emailAddress || u.primaryEmail || '';
-    return <PendingApprovalScreen email={email} onSignOut={handleSignOut} />;
+    return <ReferralRequiredScreen email={email} onSignOut={handleSignOut} />;
   }
   if (approval === 'rejected') {
-    const u: any = session.user;
+    const u: any = session?.user || {};
     const email = u.email || u.emailAddress || u.primaryEmail || '';
     return <RejectedScreen email={email} onSignOut={handleSignOut} />;
   }
   // Onboarding form removed — new users auto-get a blank profile and land in Chat.
 
   return (
-    <Layout activeTab={activeTab} onTabChange={setActiveTab} onSignOut={handleSignOut} profile={profile}>
+    <Layout activeTab={activeTab} onTabChange={setActiveTab} onSignOut={handleSignOut} profile={profile} subscription={subscription}>
       <React.Suspense fallback={<Spinner />}>
         <ErrorBoundary name={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}>
           <div className="h-full w-full flex flex-col">
@@ -316,3 +344,5 @@ function App() {
 }
 
 export default App;
+
+

@@ -1,12 +1,13 @@
 import { getApiUrl } from './api-config';
 
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'no_session';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'no_session' | 'referral_required';
 
 export interface PendingUser {
   user_id: string;
   email: string;
   name: string | null;
   status: 'pending';
+  requested_plan: 'free' | 'enterprise';
   created_at: string;
 }
 
@@ -99,6 +100,18 @@ export async function claimReferralForEmail(email: string, token: string): Promi
   }
 }
 
+// Pre-stash a signup intent (free or enterprise) with the backend.
+export async function recordSignupIntent(email: string, intent: 'free' | 'enterprise'): Promise<void> {
+  try {
+    await fetch(getApiUrl('/account/intent'), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, intent }),
+    });
+  } catch { /* best effort */ }
+}
+
 export async function adminListReferrals(): Promise<ReferralToken[]> {
   const res = await fetch(getApiUrl('/admin/referrals'), { credentials: 'include' });
   if (!res.ok) throw new Error(`Failed to load referrals (${res.status})`);
@@ -141,3 +154,4 @@ export async function validateReferralToken(token: string): Promise<boolean> {
     return false;
   }
 }
+

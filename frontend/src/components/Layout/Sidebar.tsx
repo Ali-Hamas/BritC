@@ -7,11 +7,15 @@ import {
   PoundSterling,
   Settings,
   Shield,
-  X
+  X,
+  Zap,
+  Newspaper,
 } from 'lucide-react';
 import { ActivityService } from '../../lib/activity';
 import { BusinessProfile } from '../../lib/profiles';
 import { TeamService } from '../../lib/team';
+import { type SubscriptionStatus } from '../../lib/subscription';
+import { PlanSelectionModal } from '../Common/PlanSelectionModal';
 
 interface SidebarProps {
   activeTab: string;
@@ -19,13 +23,17 @@ interface SidebarProps {
   onSignOut?: () => void;
   profile: BusinessProfile | null;
   onClose?: () => void;
+  subscription?: SubscriptionStatus | null;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSignOut, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSignOut, onClose, subscription }) => {
+  const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
   const isModerator = TeamService.isGlobalModerator();
+  const isFree = !subscription || subscription.plan === 'free';
   const menuItems = [
     { id: 'assistant',   label: 'Chat',         icon: Bot },
     { id: 'finance',     label: 'Finance',      icon: PoundSterling },
+    { id: 'news',        label: 'News',         icon: Newspaper },
     { id: 'team',        label: 'Team Chat',    icon: Users },
     { id: 'profile',     label: 'Profile',      icon: Settings },
     ...(isModerator ? [{ id: 'admin', label: 'Admin', icon: Shield }] : []),
@@ -110,6 +118,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
       )}
 
       <div className="p-4 md:p-6 border-t border-white/5 space-y-3 md:space-y-4">
+        {isFree && (
+          <button
+            onClick={() => setShowUpgradeModal(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-500/20"
+          >
+            <Zap size={16} />
+            Upgrade to Enterprise
+          </button>
+        )}
         <button
           onClick={onSignOut}
           className="w-full flex items-center gap-3 px-3 md:px-4 py-3 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200 group font-medium text-sm"
@@ -119,6 +136,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
         </button>
         <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest opacity-50 font-bold">Britsync AI v1.0</p>
       </div>
+      <PlanSelectionModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </aside>
   );
 };
+

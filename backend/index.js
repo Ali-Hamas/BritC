@@ -13,10 +13,11 @@ const {
   startAppointmentFlow
 } = require('./appointmentBooking');
 const jwt = require('jsonwebtoken');
-const { auth, pool, sendApprovalEmail, stashSignupReferral } = require('./auth');
+const { auth, pool, sendApprovalEmail, stashSignupReferral, stashSignupIntent } = require('./auth');
 const crypto = require('crypto');
 const { toNodeHandler } = require("better-auth/node");
 const rateLimit = require('express-rate-limit');
+const { createCheckoutSession, createCustomerPortal, constructEvent, stripe, WEBHOOK_SECRET } = require('./stripe');
 
 
 const app = express();
@@ -46,7 +47,17 @@ app.use(cors({
   credentials: true
 }));
 
-// ─── Referral pre-stash endpoint ──────────────────────────────────────────
+// ─── Intent / Referral pre-stash endpoints ──────────────────────────────────
+
+// The frontend POSTs { email, intent } here just before calling signUp.email,
+// so the user-create hook in auth.js can capture the requested plan.
+app.post('/api/account/intent', express.json(), async (req, res) => {
+  const { email, intent } = req.body || {};
+  if (!email || !intent) return res.status(400).json({ error: 'INVALID_INPUT' });
+  stashSignupIntent(email, intent);
+  res.json({ ok: true });
+});
+
 // The frontend POSTs { email, token } here just before calling signUp.email,
 // so the user-create hook in auth.js can match the (just-validated) token to
 // the new user by email. Token is verified to exist + be unused; if it's
@@ -85,6 +96,36 @@ app.post('/api/account/validate-referral', express.json(), async (req, res) => {
   } catch (err) {
     console.error('[/api/account/validate-referral]', err);
     res.json({ valid: false });
+  }
+});
+
+// Public seat counter for the landing page social-proof block.
+// Counts active enterprise subscriptions against the global cap of 1500.
+const SEAT_CAP = 1500;
+app.get('/api/seats', async (_req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*)::int AS taken
+         FROM account_subscriptions
+        WHERE plan = 'enterprise'`
+    );
+    const taken = rows[0]?.taken || 0;
+    res.json({ taken, cap: SEAT_CAP, remaining: Math.max(0, SEAT_CAP - taken) });
+  } catch (err) {
+    console.error('[/api/seats]', err);
+    res.json({ taken: 0, cap: SEAT_CAP, remaining: SEAT_CAP });
+  }
+});
+
+// Public news feed — RSS aggregator with 10-min in-memory cache.
+const { getCachedNews } = require('./news');
+app.get('/api/news', async (_req, res) => {
+  try {
+    const items = await getCachedNews();
+    res.json({ items });
+  } catch (err) {
+    console.error('[/api/news]', err);
+    res.json({ items: [] });
   }
 });
 
@@ -209,7 +250,7 @@ app.get('/api/account/status', async (req, res) => {
 app.get('/api/admin/pending-users', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT a.user_id, a.status, a.created_at, u.email, u.name
+      `SELECT a.user_id, a.status, a.created_at, a.requested_plan, u.email, u.name
        FROM account_approvals a
        JOIN "user" u ON u.id = a.user_id
        WHERE a.status = 'pending'
@@ -357,6 +398,214 @@ app.post('/api/admin/referrals/revoke', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('[/api/admin/referrals/revoke]', err);
     res.status(500).json({ error: 'REVOKE_FAILED' });
+  }
+});
+
+// ─── Subscription endpoints ──────────────────────────────────────────────
+
+// Stripe webhook — must be before express.json() middleware strips raw body
+// But since we mount express.json() inline on individual routes, this route
+// uses raw body parsing to verify the Stripe signature.
+app.post('/api/subscription/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  if (!sig) return res.status(400).json({ error: 'No signature' });
+  try {
+    const event = constructEvent(req.body, sig);
+
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const { metadata, subscription } = event.data.object;
+        const userId = metadata?.userId;
+        if (userId && subscription) {
+          const sub = await stripe.subscriptions.retrieve(subscription);
+          await pool.query(
+            `UPDATE account_subscriptions
+             SET plan = 'enterprise', source = 'stripe',
+                 stripe_customer_id = $2, stripe_subscription_id = $3,
+                 subscription_status = 'active',
+                 billing_cycle_start = TO_TIMESTAMP($4),
+                 billing_cycle_end = TO_TIMESTAMP($5),
+                 updated_at = NOW()
+             WHERE user_id = $1`,
+            [userId, sub.customer, subscription, sub.current_period_start, sub.current_period_end]
+          );
+          await pool.query(
+            `UPDATE account_approvals SET status = 'approved' WHERE user_id = $1`,
+            [userId]
+          );
+          console.log(`[Stripe] User ${userId} subscribed to enterprise`);
+        }
+        break;
+      }
+      case 'invoice.payment_succeeded': {
+        const sub = await stripe.subscriptions.retrieve(event.data.object.subscription);
+        await pool.query(
+          `UPDATE account_subscriptions
+           SET subscription_status = 'active',
+               billing_cycle_start = TO_TIMESTAMP($1),
+               billing_cycle_end = TO_TIMESTAMP($2)
+           WHERE stripe_subscription_id = $3`,
+          [sub.current_period_start, sub.current_period_end, sub.id]
+        );
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const sub = await stripe.subscriptions.retrieve(event.data.object.subscription);
+        await pool.query(
+          `UPDATE account_subscriptions SET subscription_status = 'past_due'
+           WHERE stripe_subscription_id = $1`,
+          [sub.id]
+        );
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        await pool.query(
+          `UPDATE account_subscriptions
+           SET plan = 'free', subscription_status = 'canceled',
+               stripe_subscription_id = NULL, source = 'stripe_canceled'
+           WHERE stripe_subscription_id = $1`,
+          [sub.id]
+        );
+        console.log(`[Stripe] Subscription ${sub.id} canceled — user downgraded to free`);
+        break;
+      }
+    }
+    res.json({ received: true });
+  } catch (err) {
+    console.error('[Stripe webhook error]', err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/subscription/create-checkout', async (req, res) => {
+  try {
+    const session = await getSession(req);
+    if (!session?.user?.id) return res.status(401).json({ error: 'NOT_AUTHENTICATED' });
+    const { url, sessionId } = await createCheckoutSession(
+      session.user.id,
+      session.user.email,
+      session.user.name || ''
+    );
+    res.json({ url, sessionId });
+  } catch (err) {
+    console.error('[create-checkout]', err);
+    res.status(500).json({ error: 'CHECKOUT_FAILED' });
+  }
+});
+
+app.get('/api/subscription/portal', async (req, res) => {
+  try {
+    const session = await getSession(req);
+    if (!session?.user?.id) return res.status(401).json({ error: 'NOT_AUTHENTICATED' });
+    const { rows } = await pool.query(
+      'SELECT stripe_customer_id FROM account_subscriptions WHERE user_id = $1',
+      [session.user.id]
+    );
+    if (!rows[0]?.stripe_customer_id) {
+      return res.status(400).json({ error: 'NO_CUSTOMER_ID' });
+    }
+    const url = await createCustomerPortal(rows[0].stripe_customer_id);
+    res.json({ url });
+  } catch (err) {
+    console.error('[subscription-portal]', err);
+    res.status(500).json({ error: 'PORTAL_FAILED' });
+  }
+});
+
+app.post('/api/subscription/cancel', async (req, res) => {
+  try {
+    const session = await getSession(req);
+    if (!session?.user?.id) return res.status(401).json({ error: 'NOT_AUTHENTICATED' });
+    const { rows } = await pool.query(
+      'SELECT stripe_subscription_id FROM account_subscriptions WHERE user_id = $1',
+      [session.user.id]
+    );
+    if (!rows[0]?.stripe_subscription_id) {
+      return res.status(400).json({ error: 'NO_SUBSCRIPTION' });
+    }
+    await stripe.subscriptions.update(rows[0].stripe_subscription_id, {
+      cancel_at_period_end: true,
+    });
+    await pool.query(
+      `UPDATE account_subscriptions SET subscription_status = 'canceled'
+       WHERE user_id = $1`,
+      [session.user.id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[cancel-subscription]', err);
+    res.status(500).json({ error: 'CANCEL_FAILED' });
+  }
+});
+
+app.get('/api/subscription/status', async (req, res) => {
+  try {
+    const session = await getSession(req);
+    if (!session?.user?.id) return res.status(401).json({ error: 'NOT_AUTHENTICATED' });
+    const { rows } = await pool.query(
+      `SELECT plan, subscription_status, storage_used, stripe_customer_id,
+              stripe_subscription_id, billing_cycle_start, billing_cycle_end,
+              source
+       FROM account_subscriptions WHERE user_id = $1`,
+      [session.user.id]
+    );
+    const sub = rows[0] || {};
+    const STORAGE_LIMIT = 64 * 1024 * 1024 * 1024; // 64 GB in bytes
+    res.json({
+      plan: sub.plan || 'free',
+      subscriptionStatus: sub.subscription_status || 'none',
+      storageUsed: sub.storage_used || 0,
+      storageLimit: sub.plan === 'enterprise' ? STORAGE_LIMIT : 0,
+      billingCycleStart: sub.billing_cycle_start,
+      billingCycleEnd: sub.billing_cycle_end,
+      source: sub.source || 'signup',
+    });
+  } catch (err) {
+    console.error('[subscription-status]', err);
+    res.status(500).json({ error: 'STATUS_FAILED' });
+  }
+});
+
+app.get('/api/admin/subscriptions', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT s.user_id, u.email, s.plan, s.subscription_status,
+              s.storage_used, s.billing_cycle_start, s.billing_cycle_end,
+              s.source, u."createdAt" as created_at
+       FROM account_subscriptions s
+       JOIN "user" u ON s.user_id = u.id
+       ORDER BY u."createdAt" DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('[admin-subscriptions]', err);
+    res.status(500).json({ error: 'LIST_FAILED' });
+  }
+});
+
+app.post('/api/account/storage', async (req, res) => {
+  try {
+    const session = await getSession(req);
+    if (!session?.user?.id) return res.status(401).json({ error: 'NOT_AUTHENTICATED' });
+    const { bytes } = req.body || {};
+    if (bytes === undefined) {
+      const { rows } = await pool.query(
+        'SELECT storage_used FROM account_subscriptions WHERE user_id = $1',
+        [session.user.id]
+      );
+      return res.json({ used: rows[0]?.storage_used || 0 });
+    }
+    await pool.query(
+      `UPDATE account_subscriptions
+       SET storage_used = COALESCE(storage_used, 0) + $2, updated_at = NOW()
+       WHERE user_id = $1`,
+      [session.user.id, bytes]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[storage-update]', err);
+    res.status(500).json({ error: 'STORAGE_FAILED' });
   }
 });
 
@@ -778,6 +1027,84 @@ app.post('/api/browser/close', requireApproved, requirePlan('enterprise'), async
     res.status(500).json({ error: err.message });
   }
 });
+
+// ─── Auto Reports (scheduled finance summary emails) ─────────────────────
+const cron = require('node-cron');
+const { runReportJob } = require('./reports');
+
+app.get('/api/finance/report-schedule', requireApproved, requirePlan('enterprise'), async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { rows } = await pool.query(
+      `SELECT cadence, last_sent_at FROM report_schedules WHERE user_id = $1`,
+      [userId]
+    );
+    res.json(rows[0] || { cadence: 'disabled', last_sent_at: null });
+  } catch (err) {
+    console.error('[GET /report-schedule]', err);
+    res.status(500).json({ error: 'LOAD_FAILED' });
+  }
+});
+
+app.put('/api/finance/report-schedule', requireApproved, requirePlan('enterprise'), async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { cadence } = req.body || {};
+    if (!['disabled', 'weekly', 'monthly'].includes(cadence)) {
+      return res.status(400).json({ error: 'INVALID_CADENCE' });
+    }
+    await pool.query(
+      `INSERT INTO report_schedules (user_id, cadence)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id) DO UPDATE
+         SET cadence = EXCLUDED.cadence, updated_at = NOW()`,
+      [userId, cadence]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[PUT /report-schedule]', err);
+    res.status(500).json({ error: 'SAVE_FAILED' });
+  }
+});
+
+app.post('/api/finance/report/preview', requireApproved, requirePlan('enterprise'), async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const result = await runReportJob(pool, 'weekly', { userId, force: true });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[POST /report/preview]', err);
+    res.status(500).json({ error: 'PREVIEW_FAILED', message: err.message });
+  }
+});
+
+app.post('/api/admin/report/run', requireAdmin, async (req, res) => {
+  try {
+    const { cadence } = req.body || {};
+    if (!['weekly', 'monthly'].includes(cadence)) {
+      return res.status(400).json({ error: 'INVALID_CADENCE' });
+    }
+    const result = await runReportJob(pool, cadence);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[POST /admin/report/run]', err);
+    res.status(500).json({ error: 'RUN_FAILED', message: err.message });
+  }
+});
+
+// Cron jobs — registered once at server boot. Skipped on Vercel since we
+// don't want serverless cold starts to spawn schedulers.
+if (!process.env.VERCEL) {
+  cron.schedule('0 9 * * 1', () => {
+    runReportJob(pool, 'weekly').catch(err => console.error('[Cron weekly]', err));
+  }, { timezone: 'UTC' });
+
+  cron.schedule('0 9 1 * *', () => {
+    runReportJob(pool, 'monthly').catch(err => console.error('[Cron monthly]', err));
+  }, { timezone: 'UTC' });
+
+  console.log('[Cron] Auto-report jobs registered (weekly Mon, monthly 1st, 09:00 UTC)');
+}
 
 // Start Server - Only if not on Vercel
 if (!process.env.VERCEL) {

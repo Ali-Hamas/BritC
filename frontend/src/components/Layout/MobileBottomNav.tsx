@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Users, PoundSterling, Settings, Shield } from 'lucide-react';
+import { Bot, Users, PoundSterling, Settings, Shield, Newspaper } from 'lucide-react';
 import { TeamService } from '../../lib/team';
 
 interface MobileBottomNavProps {
@@ -12,6 +12,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onT
   const items = [
     { id: 'assistant', label: 'Chat', icon: Bot },
     { id: 'finance', label: 'Finance', icon: PoundSterling },
+    { id: 'news', label: 'News', icon: Newspaper },
     { id: 'team', label: 'Team', icon: Users },
     { id: 'profile', label: 'Profile', icon: Settings },
     ...(isModerator ? [{ id: 'admin', label: 'Admin', icon: Shield }] : []),

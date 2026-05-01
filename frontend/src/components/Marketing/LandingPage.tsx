@@ -1,0 +1,400 @@
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Shield,
+  Globe,
+  Users,
+  ArrowRight,
+  Target,
+  Cpu,
+  Database,
+  CheckCircle2
+} from 'lucide-react';
+import { getApiUrl } from '../../lib/api-config';
+
+interface LandingPageProps {
+  onGetStarted: (intent?: 'free' | 'enterprise') => void;
+  onLogin: () => void;
+}
+
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6 }
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
+  const [seats, setSeats] = useState<{ taken: number; cap: number; remaining: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(getApiUrl('/seats'))
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (!cancelled && data) setSeats(data); })
+      .catch(() => { /* keep null → fall back to default copy */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const remaining = seats?.remaining ?? 1500;
+  const cap = seats?.cap ?? 1500;
+  const taken = seats?.taken ?? 0;
+  const pctTaken = Math.min(100, Math.round((taken / cap) * 100));
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-indigo-500/30 overflow-x-hidden">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0a0a]/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-2xl shadow-indigo-500/20">
+              <img src="/favicon.png" alt="Britsee Logo" className="w-full h-full object-cover" />
+            </div>
+            <span className="text-xl font-black tracking-tighter">BRITSEE</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={onLogin}
+              className="text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+            >
+              Sign In
+            </button>
+            <button 
+              onClick={() => onGetStarted('enterprise')}
+              className="bg-white text-black px-6 py-2.5 rounded-full text-sm font-bold hover:bg-slate-200 transition-all active:scale-95"
+            >
+              Apply for Enterprise
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative pt-48 pb-32 px-6">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8"
+          >
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">Limited Release: {remaining.toLocaleString()} Seats Remaining</span>
+          </motion.div>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-5xl md:text-8xl font-black tracking-tight leading-[0.95] mb-8 bg-gradient-to-b from-white to-white/50 bg-clip-text text-transparent"
+          >
+            AI-Powered Team Execution. <br className="hidden md:block" />
+            Without Noise.
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed font-medium"
+          >
+            Britsee is a controlled AI communication and execution system built for enterprises that demand clarity, alignment, and autonomous growth.
+          </motion.p>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <button 
+              onClick={() => onGetStarted('enterprise')}
+              className="w-full sm:w-auto px-10 py-5 bg-white text-black rounded-full font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+            >
+              Apply for Enterprise <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+            <button 
+              onClick={() => onGetStarted('free')}
+              className="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95"
+            >
+              Try Free
+            </button>
+          </motion.div>
+
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mt-8 text-xs text-slate-600 font-bold tracking-widest uppercase"
+          >
+            Global allocation: {remaining.toLocaleString()} of {cap.toLocaleString()} seats left
+          </motion.p>
+        </div>
+      </section>
+
+      {/* Problem */}
+      <section className="py-32 px-6 border-t border-white/5">
+        <motion.div
+          viewport={{ once: true }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto text-center"
+        >
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-400 mb-6 block">The Problem</span>
+          <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8 leading-[1.05]">
+            Most Teams Don't Lack Tools.
+          </h2>
+          <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
+            They suffer from noise, confusion, and scattered execution across too many platforms. Every new tool adds friction instead of removing it.
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Solution */}
+      <section className="py-32 px-6">
+        <motion.div
+          viewport={{ once: true }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto text-center"
+        >
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-6 block">The Solution</span>
+          <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8 leading-[1.05]">
+            Britsee Fixes the Core Problem.
+          </h2>
+          <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
+            Private, structured communication powered by AI — eliminating chaos and keeping teams aligned on a single source of truth.
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Core Memory Tech */}
+      <section className="py-32 px-6 border-y border-white/5 bg-[#0d0d0d]">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
+          <motion.div 
+            viewport={{ once: true }}
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+              <Database className="text-indigo-400" size={28} />
+            </div>
+            <h3 className="text-3xl font-bold mb-4">LLM Memory</h3>
+            <p className="text-slate-400 text-lg leading-relaxed">
+              Global intelligence guiding decisions and learning continuously from every interaction within your organization.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            viewport={{ once: true }}
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-fuchsia-500/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+              <Shield className="text-fuchsia-400" size={28} />
+            </div>
+            <h3 className="text-3xl font-bold mb-4">Moderator Memory</h3>
+            <p className="text-slate-400 text-lg leading-relaxed">
+              Controls structure, access, and strategic alignment across the team. Ensures the AI stays on mission.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* AI Engines */}
+      <section className="py-32 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-24">
+            <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-8">AI Execution Engines</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto text-xl font-medium">
+              Four specialized cores designed to handle the heavy lifting of business growth.
+            </p>
+          </div>
+
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          >
+            {[
+              {
+                icon: <Target className="text-indigo-400" size={24} />,
+                title: "Growth",
+                desc: "Lead generation and multi-channel outreach automation."
+              },
+              {
+                icon: <Users className="text-fuchsia-400" size={24} />,
+                title: "Operations",
+                desc: "CRM, calendar, and private team collaboration tools."
+              },
+              {
+                icon: <Cpu className="text-emerald-400" size={24} />,
+                title: "Intelligence",
+                desc: "Autonomous AI agents and complex workflow automation."
+              },
+              {
+                icon: <Globe className="text-amber-400" size={24} />,
+                title: "Media",
+                desc: "High-tier video and professional content generation."
+              }
+            ].map((skill, i) => (
+              <motion.div 
+                key={i} 
+                variants={fadeIn}
+                className="group p-10 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all"
+              >
+                <div className="mb-8 w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center">
+                  {skill.icon}
+                </div>
+                <h3 className="text-2xl font-bold mb-4">{skill.title}</h3>
+                <p className="text-slate-500 leading-relaxed font-medium">{skill.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Scarcity */}
+      <section className="py-32 px-6">
+        <motion.div 
+          viewport={{ once: true }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          className="max-w-5xl mx-auto bg-gradient-to-br from-indigo-600/20 to-transparent border border-indigo-500/20 rounded-[4rem] p-12 md:p-24 relative overflow-hidden"
+        >
+          <div className="relative z-10 text-center md:text-left">
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8">Limited Global Access</h2>
+            <p className="text-xl text-slate-400 mb-12 max-w-2xl font-medium leading-relaxed">
+              We are limiting access to {cap.toLocaleString()} enterprise environments worldwide to ensure network stability.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+              <div>
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Seats Taken</div>
+                <div className="text-4xl md:text-5xl font-black text-white">{taken.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Remaining</div>
+                <div className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-300 to-fuchsia-300 bg-clip-text text-transparent">
+                  {remaining.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Global Cap</div>
+                <div className="text-4xl md:text-5xl font-black text-slate-400">{cap.toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-all duration-700"
+                style={{ width: `${pctTaken}%` }}
+              />
+            </div>
+            <p className="mt-3 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+              {pctTaken}% allocated · live count
+            </p>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Pricing */}
+      <section className="py-32 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div className="p-12 rounded-[3.5rem] bg-white/[0.03] border border-white/5 flex flex-col">
+              <h3 className="text-2xl font-bold mb-2">Free Tier</h3>
+              <div className="text-5xl font-black mb-8">£0<span className="text-lg text-slate-500 font-bold ml-2">/month</span></div>
+              <ul className="space-y-6 mb-12 flex-grow">
+                {['Single team', 'Basic AI model', 'Limited memory'].map((feat, i) => (
+                  <li key={i} className="flex items-center gap-4 text-slate-400 font-medium">
+                    <CheckCircle2 className="text-slate-600" size={20} /> {feat}
+                  </li>
+                ))}
+              </ul>
+              <button 
+                onClick={() => onGetStarted('free')}
+                className="w-full py-5 rounded-full bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+              >
+                Start Free
+              </button>
+            </div>
+
+            <div className="p-12 rounded-[3.5rem] bg-indigo-600/10 border border-indigo-500/30 flex flex-col relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-indigo-500 rounded-full text-[10px] font-black uppercase tracking-widest">Recommended</div>
+              <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
+              <div className="text-5xl font-black mb-8">Apply<span className="text-lg text-indigo-300/60 font-bold ml-2">Now</span></div>
+              <ul className="space-y-6 mb-12 flex-grow">
+                {['Unlimited teams', '64GB memory', 'Full AI capabilities', 'Priority 24/7 access'].map((feat, i) => (
+                  <li key={i} className="flex items-center gap-4 text-indigo-100/70 font-medium">
+                    <CheckCircle2 className="text-indigo-500" size={20} /> {feat}
+                  </li>
+                ))}
+              </ul>
+              <button 
+                onClick={() => onGetStarted('enterprise')}
+                className="w-full py-5 rounded-full bg-white text-black font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all shadow-2xl shadow-indigo-500/20"
+              >
+                Apply Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-32 px-6 border-t border-white/5">
+        <motion.div
+          viewport={{ once: true }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto text-center"
+        >
+          <h2 className="text-4xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+            This Is Not Another Tool.
+          </h2>
+          <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
+            It's a new way to run your company — clear, aligned, and AI-powered. Built for teams that take execution seriously.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => onGetStarted('enterprise')}
+              className="w-full sm:w-auto px-10 py-5 bg-white text-black rounded-full font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+            >
+              Apply for Enterprise <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+            <button
+              onClick={() => onGetStarted('free')}
+              className="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95"
+            >
+              Try Free
+            </button>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-24 px-6 border-t border-white/5 text-center text-slate-600 bg-[#050505]">
+        <div className="flex items-center justify-center gap-3 mb-12 grayscale opacity-50">
+          <div className="w-10 h-10 rounded-xl overflow-hidden">
+            <img src="/favicon.png" alt="Britsee Logo" className="w-full h-full object-cover" />
+          </div>
+          <span className="text-2xl font-black tracking-tighter">BRITSEE</span>
+        </div>
+        <p className="text-sm font-bold tracking-widest uppercase">© 2026 Britsync AI. All rights reserved.</p>
+      </footer>
+    </div>
+  );
+};
