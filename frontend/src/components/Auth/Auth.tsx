@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Lock, ArrowRight, Mail, Globe, Users, Loader2, Sparkles, X, CheckCircle2, Gift } from 'lucide-react';
+import { Shield, Lock, ArrowRight, Mail, Globe, Users, Loader2, Sparkles, X, CheckCircle2, Gift, ChevronLeft } from 'lucide-react';
 import { signIn, signUp, signOut, forgetPassword } from '../../lib/auth-client';
 import { getMyApprovalStatus, claimReferralForEmail, recordSignupIntent } from '../../lib/approval';
 
@@ -8,13 +8,15 @@ interface AuthProps {
   onStartOnboarding?: () => void;
   initialMode?: 'login' | 'register';
   intent?: 'free' | 'enterprise' | null;
+  onBackToHome?: () => void;
 }
 
-export const Auth: React.FC<AuthProps> = ({ 
-  onAuthenticated, 
+export const Auth: React.FC<AuthProps> = ({
+  onAuthenticated,
   onStartOnboarding: _onStartOnboarding,
   initialMode = 'login',
-  intent = null
+  intent = null,
+  onBackToHome,
 }) => {
   const [activeMode, setActiveMode] = useState<'login' | 'register'>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
@@ -297,6 +299,17 @@ export const Auth: React.FC<AuthProps> = ({
             {/* gradient border */}
             <div className="absolute -inset-px rounded-[2rem] bg-gradient-to-br from-indigo-500/40 via-fuchsia-500/20 to-transparent opacity-60" />
             <div className="relative rounded-[2rem] bg-[#0a0b14]/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.5)] overflow-hidden">
+              {/* Back to home */}
+              {onBackToHome && (
+                <button
+                  type="button"
+                  onClick={onBackToHome}
+                  className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-slate-300 hover:text-white transition-all"
+                >
+                  <ChevronLeft size={14} /> Home
+                </button>
+              )}
+
               {/* Mobile brand */}
               <div className="lg:hidden pt-8 pb-2 text-center">
                 <div className="inline-flex items-center gap-2">
