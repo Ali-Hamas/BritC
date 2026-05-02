@@ -311,46 +311,88 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       </section>
 
       {/* Pricing */}
-      <section className="py-32 px-6">
+      <section id="pricing" className="py-24 sm:py-32 px-4 sm:px-6 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div className="p-12 rounded-[3.5rem] bg-white/[0.03] border border-white/5 flex flex-col">
-              <h3 className="text-2xl font-bold mb-2">Free Tier</h3>
-              <div className="text-5xl font-black mb-8">£0<span className="text-lg text-slate-500 font-bold ml-2">/month</span></div>
-              <ul className="space-y-6 mb-12 flex-grow">
-                {['Single team', 'Basic AI model', 'Limited memory'].map((feat, i) => (
-                  <li key={i} className="flex items-center gap-4 text-slate-400 font-medium">
-                    <CheckCircle2 className="text-slate-600" size={20} /> {feat}
+          <div className="text-center mb-12 sm:mb-16">
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-3">Pricing</p>
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight mb-4 leading-[1.05] bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+              Simple, transparent plans.
+            </h2>
+            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto font-medium">
+              Start free to try the assistant. Upgrade when you're ready to unlock the full finance suite, lead hunter, and AI commentary.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 max-w-5xl mx-auto">
+            {/* Free */}
+            <div className="p-6 sm:p-10 rounded-3xl sm:rounded-[3rem] bg-white/[0.03] border border-white/5 flex flex-col">
+              <h3 className="text-xl sm:text-2xl font-bold mb-1">Basic</h3>
+              <p className="text-xs sm:text-sm text-slate-500 mb-6">For solo founders trying Britsync out.</p>
+              <div className="flex items-baseline gap-2 mb-8">
+                <span className="text-5xl sm:text-6xl font-black">£0</span>
+                <span className="text-base text-slate-500 font-bold">/month</span>
+              </div>
+              <ul className="space-y-3 sm:space-y-4 mb-10 flex-grow">
+                {[
+                  '1 team chat (owner only)',
+                  'Basic AI assistant',
+                  'Profile & business setup',
+                  'Live financial news feed',
+                  'Personal finance style preference',
+                ].map((feat, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm sm:text-base text-slate-300 font-medium">
+                    <CheckCircle2 className="text-slate-500 mt-0.5 shrink-0" size={18} /> {feat}
                   </li>
                 ))}
               </ul>
-              <button 
+              <button
                 onClick={() => onGetStarted('free')}
-                className="w-full py-5 rounded-full bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                className="w-full py-4 sm:py-5 rounded-full bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
               >
                 Start Free
               </button>
             </div>
 
-            <div className="p-12 rounded-[3.5rem] bg-indigo-600/10 border border-indigo-500/30 flex flex-col relative">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-indigo-500 rounded-full text-[10px] font-black uppercase tracking-widest">Recommended</div>
-              <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
-              <div className="text-5xl font-black mb-8">Apply<span className="text-lg text-indigo-300/60 font-bold ml-2">Now</span></div>
-              <ul className="space-y-6 mb-12 flex-grow">
-                {['Unlimited teams', '64GB memory', 'Full AI capabilities', 'Priority 24/7 access'].map((feat, i) => (
-                  <li key={i} className="flex items-center gap-4 text-indigo-100/70 font-medium">
-                    <CheckCircle2 className="text-indigo-500" size={20} /> {feat}
+            {/* Enterprise */}
+            <div className="p-6 sm:p-10 rounded-3xl sm:rounded-[3rem] bg-gradient-to-br from-indigo-600/15 via-violet-500/5 to-fuchsia-500/10 border border-indigo-500/30 flex flex-col relative shadow-2xl shadow-indigo-500/10">
+              <div className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 px-4 sm:px-6 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-fuchsia-500 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                Recommended
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold mb-1">Enterprise</h3>
+              <p className="text-xs sm:text-sm text-indigo-200/70 mb-6">Full power for growing businesses.</p>
+              <div className="flex items-baseline gap-2 mb-8">
+                <span className="text-5xl sm:text-6xl font-black">£449</span>
+                <span className="text-base text-indigo-200/60 font-bold">/month</span>
+              </div>
+              <ul className="space-y-3 sm:space-y-4 mb-10 flex-grow">
+                {[
+                  'Unlimited team chats',
+                  'Full AI assistant — all skills',
+                  '64 GB file storage',
+                  'Finance dashboard with AI commentary',
+                  'Lead Hunter (LinkedIn, web, YouTube)',
+                  'Browser automation + outreach sender',
+                  'Scenario simulator & forecasts',
+                  'Auto report emails (weekly + monthly)',
+                  'Priority support',
+                ].map((feat, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm sm:text-base text-white font-medium">
+                    <CheckCircle2 className="text-indigo-400 mt-0.5 shrink-0" size={18} /> {feat}
                   </li>
                 ))}
               </ul>
-              <button 
+              <button
                 onClick={() => onGetStarted('enterprise')}
-                className="w-full py-5 rounded-full bg-white text-black font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all shadow-2xl shadow-indigo-500/20"
+                className="w-full py-4 sm:py-5 rounded-full bg-white text-black font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all shadow-2xl shadow-indigo-500/20"
               >
-                Apply Now
+                Apply for Enterprise
               </button>
             </div>
           </div>
+
+          <p className="text-center text-xs sm:text-sm text-slate-500 mt-8 sm:mt-10 font-medium">
+            All plans include secure UK hosting · Cancel anytime · No setup fees
+          </p>
         </div>
       </section>
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, Zap, Shield, Star, Loader2 } from 'lucide-react';
 import { createCheckout } from '../../lib/subscription';
 
@@ -87,79 +88,81 @@ export const PlanSelectionModal: React.FC<PlanSelectionModalProps> = ({ isOpen, 
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="bg-[#0a0e1a] border border-white/10 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200"
+        className="bg-[#0a0e1a] border border-white/10 rounded-[2rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col m-2"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-[#0a0e1a]/95 backdrop-blur-sm border-b border-white/5 px-6 py-4 flex items-center justify-between z-10">
-          <div>
-            <h2 className="text-xl font-bold text-white">Choose Your Plan</h2>
-            <p className="text-sm text-slate-400">Select the plan that fits your business needs</p>
+        <div className="bg-[#0a0e1a]/95 backdrop-blur-sm border-b border-white/5 px-6 py-5 sm:py-6 flex items-center justify-between gap-4 shrink-0">
+          <div className="min-w-0">
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">Choose Your Plan</h2>
+            <p className="text-xs sm:text-sm text-slate-400 font-medium truncate mt-0.5">Select the plan that fits your business needs</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+            className="p-2.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all active:scale-95 shrink-0"
+            aria-label="Close"
           >
-            <X size={20} />
+            <X size={24} />
           </button>
         </div>
 
-        {/* Plans */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        {/* Plans - Scrollable Area */}
+        <div className="p-4 sm:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {PLANS.map(plan => {
             const Icon = plan.icon;
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border p-6 flex flex-col ${
+                className={`relative rounded-3xl border p-6 sm:p-8 flex flex-col transition-all duration-300 ${
                   plan.popular
-                    ? 'border-indigo-500/40 bg-gradient-to-br from-indigo-600/10 via-violet-500/5 to-fuchsia-500/5 shadow-lg shadow-indigo-500/10'
-                    : 'border-white/10 bg-white/[0.02]'
+                    ? 'border-indigo-500/40 bg-white/[0.03] shadow-2xl shadow-indigo-500/10'
+                    : 'border-white/5 bg-white/[0.01]'
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-indigo-500 to-fuchsia-500 rounded-full text-[10px] font-black uppercase tracking-wider text-white">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-500 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/40">
                     Recommended
                   </div>
                 )}
 
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${plan.iconBg}`}>
-                    <Icon className={plan.iconColor} size={20} />
+                <div className="flex items-center gap-4 mb-6">
+                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border ${plan.iconBg} shadow-inner`}>
+                    <Icon className={plan.iconColor} size={24} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                    <p className="text-xs text-slate-400">{plan.description}</p>
+                    <h3 className="text-xl font-black text-white tracking-tight">{plan.name}</h3>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{plan.description}</p>
                   </div>
                 </div>
 
-                <div className="flex items-baseline gap-1 mb-5">
-                  <span className="text-3xl font-black text-white">{plan.price}</span>
-                  <span className="text-sm text-slate-400">{plan.period}</span>
+                <div className="flex items-baseline gap-1 mb-8">
+                  <span className="text-4xl font-black text-white tabular-nums">{plan.price}</span>
+                  <span className="text-sm text-slate-500 font-bold">{plan.period}</span>
                   {plan.current && (
-                    <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-white/5 px-2 py-0.5 rounded">
+                    <span className="ml-auto text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-md">
                       Current
                     </span>
                   )}
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-2 mb-4 flex-1">
+                <ul className="space-y-4 mb-10 flex-1">
                   {plan.features.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-slate-200">
-                      <Check size={14} className="text-emerald-400 mt-0.5 shrink-0" />
+                    <li key={f} className="flex items-start gap-3 text-sm text-slate-300 font-medium">
+                      <Check size={16} className="text-emerald-400 mt-0.5 shrink-0" />
                       <span>{f}</span>
                     </li>
                   ))}
                   {plan.limitations.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-slate-500">
-                      <X size={14} className="text-rose-400/60 mt-0.5 shrink-0" />
+                    <li key={f} className="flex items-start gap-3 text-sm text-slate-600 font-medium line-through decoration-rose-500/30">
+                      <X size={16} className="text-rose-500/40 mt-0.5 shrink-0" />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -171,47 +174,45 @@ export const PlanSelectionModal: React.FC<PlanSelectionModalProps> = ({ isOpen, 
                     type="button"
                     onClick={handleCheckout}
                     disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 transition-all shadow-lg shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed mt-auto"
+                    className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed mt-auto shadow-xl"
                   >
                     {loading ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        Preparing Checkout...
+                        Initializing...
                       </>
                     ) : (
                       <>
-                        <Zap size={16} />
+                        <Zap size={16} className="text-indigo-400" />
                         {plan.cta}
                       </>
                     )}
                   </button>
                 ) : (
-                  <div className="w-full py-3 rounded-xl text-center text-sm font-semibold text-slate-500 bg-white/5 mt-auto">
-                    Your Current Plan
+                  <div className="w-full py-4 rounded-2xl text-center text-xs font-black uppercase tracking-widest text-slate-500 bg-white/[0.03] border border-white/5 mt-auto">
+                    Active Environment
                   </div>
                 )}
               </div>
             );
           })}
         </div>
+      </div>
 
-        {/* Error Message */}
+      {/* Error Message & Footer - Fixed at bottom */}
+      <div className="shrink-0 bg-[#0a0e1a]/95 backdrop-blur-sm border-t border-white/5 p-6 space-y-4">
         {error && (
-          <div className="px-6 pb-6">
-            <div className="flex items-center gap-2 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-sm text-rose-300">
-              <Shield size={16} className="shrink-0" />
-              {error}
-            </div>
+          <div className="flex items-center gap-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs font-bold text-rose-300 animate-in slide-in-from-bottom-2">
+            <Shield size={16} className="shrink-0 text-rose-400" />
+            {error}
           </div>
         )}
-
-        {/* Footer */}
-        <div className="px-6 pb-6 pt-2 border-t border-white/5">
-          <p className="text-xs text-slate-500 text-center">
-            Secure payment via Stripe · Cancel anytime from your dashboard · Billing resets at the end of your cycle
-          </p>
-        </div>
+        <p className="text-[10px] text-slate-600 text-center font-bold uppercase tracking-[0.2em]">
+          Secure payment via Stripe · Global Neural Network Access · 24/7 Priority Support
+        </p>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 };

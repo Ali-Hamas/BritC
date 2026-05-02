@@ -294,10 +294,11 @@ function App() {
       );
     }
     return (
-      <Auth 
-        onAuthenticated={() => {}} 
+      <Auth
+        onAuthenticated={() => {}}
         initialMode={authIntent ? 'register' : 'login'}
         intent={authIntent}
+        onBackToHome={() => { setIsAuthView(false); setAuthIntent(null); }}
       />
     );
   }
