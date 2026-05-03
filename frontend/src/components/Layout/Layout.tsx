@@ -70,6 +70,7 @@ export const Layout: React.FC<LayoutProps> = ({
           profile={profile}
           onMenuClick={toggleSidebar}
           isMenuOpen={isSidebarOpen}
+          onTabChange={onTabChange}
         />
 
         <main className="flex-1 overflow-hidden relative flex flex-col w-full pb-[64px] md:pb-0">

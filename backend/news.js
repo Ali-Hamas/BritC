@@ -6,13 +6,20 @@ const axios = require('axios');
 const { XMLParser } = require('fast-xml-parser');
 
 const FEEDS = [
-  { source: 'BBC',     url: 'https://feeds.bbci.co.uk/news/business/rss.xml' },
-  { source: 'FT',      url: 'https://www.ft.com/companies?format=rss' },
-  { source: 'Reuters', url: 'https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best' },
+  { source: 'BBC',         url: 'https://feeds.bbci.co.uk/news/business/rss.xml' },
+  { source: 'FT',          url: 'https://www.ft.com/companies?format=rss' },
+  { source: 'Guardian',    url: 'https://www.theguardian.com/uk/business/rss' },
+  { source: 'Sky',         url: 'https://feeds.skynews.com/feeds/rss/business.xml' },
+  { source: 'CNBC',        url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html' },
+  { source: 'Yahoo',       url: 'https://finance.yahoo.com/news/rssindex' },
+  { source: 'MarketWatch', url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories' },
+  { source: 'Investing',   url: 'https://www.investing.com/rss/news_25.rss' },
+  { source: 'Telegraph',   url: 'https://www.telegraph.co.uk/business/rss.xml' },
+  { source: 'NPR',         url: 'https://feeds.npr.org/1006/rss.xml' },
 ];
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
-const MAX_ITEMS = 30;
+const MAX_ITEMS = 80;
 
 let cache = { items: null, fetchedAt: 0 };
 
@@ -87,14 +94,14 @@ async function fetchNewsItems() {
   return items.slice(0, MAX_ITEMS);
 }
 
-async function getCachedNews() {
+async function getCachedNews({ force = false } = {}) {
   const now = Date.now();
-  if (cache.items && now - cache.fetchedAt < CACHE_TTL_MS) {
-    return cache.items;
+  if (!force && cache.items && now - cache.fetchedAt < CACHE_TTL_MS) {
+    return { items: cache.items, fetchedAt: cache.fetchedAt, cached: true };
   }
   const items = await fetchNewsItems();
   cache = { items, fetchedAt: now };
-  return items;
+  return { items, fetchedAt: now, cached: false };
 }
 
 module.exports = { FEEDS, fetchNewsItems, getCachedNews };

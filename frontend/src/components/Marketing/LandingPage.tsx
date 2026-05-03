@@ -52,88 +52,89 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-indigo-500/30 overflow-x-hidden">
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0a0a0a]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-2xl shadow-indigo-500/20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-20 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-2xl shadow-indigo-500/20 shrink-0">
               <img src="/favicon.png" alt="Britsee Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="text-xl font-black tracking-tighter">BRITSEE</span>
+            <span className="text-base sm:text-xl font-black tracking-tighter truncate">BRITSEE</span>
           </div>
-          <div className="flex items-center gap-6">
-            <button 
+          <div className="flex items-center gap-2 sm:gap-6 shrink-0">
+            <button
               onClick={onLogin}
-              className="text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+              className="text-xs sm:text-sm font-semibold text-slate-400 hover:text-white transition-colors px-2"
             >
               Sign In
             </button>
-            <button 
+            <button
               onClick={() => onGetStarted('enterprise')}
-              className="bg-white text-black px-6 py-2.5 rounded-full text-sm font-bold hover:bg-slate-200 transition-all active:scale-95"
+              className="bg-white text-black px-3 sm:px-6 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-sm font-bold hover:bg-slate-200 transition-all active:scale-95 whitespace-nowrap"
             >
-              Apply for Enterprise
+              <span className="sm:hidden">Apply</span>
+              <span className="hidden sm:inline">Apply for Enterprise</span>
             </button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-48 pb-32 px-6">
+      <section className="relative pt-28 sm:pt-40 md:pt-48 pb-16 sm:pb-24 md:pb-32 px-4 sm:px-6">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
-        
+
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 border border-white/10 mb-6 sm:mb-8 max-w-full"
           >
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">Limited Release: {remaining.toLocaleString()} Seats Remaining</span>
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shrink-0" />
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] font-bold text-slate-400 truncate">Limited Release: {remaining.toLocaleString()} Seats Remaining</span>
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-5xl md:text-8xl font-black tracking-tight leading-[0.95] mb-8 bg-gradient-to-b from-white to-white/50 bg-clip-text text-transparent"
+            className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tight leading-[1] sm:leading-[0.95] mb-6 sm:mb-8 bg-gradient-to-b from-white to-white/50 bg-clip-text text-transparent"
           >
             AI-Powered Team Execution. <br className="hidden md:block" />
             Without Noise.
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed font-medium"
+            className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed font-medium"
           >
             Britsee is a controlled AI communication and execution system built for enterprises that demand clarity, alignment, and autonomous growth.
           </motion.p>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
           >
-            <button 
+            <button
               onClick={() => onGetStarted('enterprise')}
-              className="w-full sm:w-auto px-10 py-5 bg-white text-black rounded-full font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-6 sm:px-10 py-4 sm:py-5 bg-white text-black rounded-full font-black text-xs sm:text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2 group"
             >
-              Apply for Enterprise <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              Apply for Enterprise <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </button>
-            <button 
+            <button
               onClick={() => onGetStarted('free')}
-              className="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95"
+              className="w-full sm:w-auto px-6 sm:px-10 py-4 sm:py-5 bg-white/5 border border-white/10 text-white rounded-full font-black text-xs sm:text-sm uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95"
             >
               Try Free
             </button>
           </motion.div>
 
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="mt-8 text-xs text-slate-600 font-bold tracking-widest uppercase"
+            className="mt-6 sm:mt-8 text-[10px] sm:text-xs text-slate-600 font-bold tracking-widest uppercase px-4"
           >
             Global allocation: {remaining.toLocaleString()} of {cap.toLocaleString()} seats left
           </motion.p>
@@ -141,70 +142,70 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       </section>
 
       {/* Problem */}
-      <section className="py-32 px-6 border-t border-white/5">
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 border-t border-white/5">
         <motion.div
           viewport={{ once: true }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-400 mb-6 block">The Problem</span>
-          <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8 leading-[1.05]">
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] sm:tracking-[0.3em] text-rose-400 mb-4 sm:mb-6 block">The Problem</span>
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6 sm:mb-8 leading-[1.05]">
             Most Teams Don't Lack Tools.
           </h2>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
+          <p className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
             They suffer from noise, confusion, and scattered execution across too many platforms. Every new tool adds friction instead of removing it.
           </p>
         </motion.div>
       </section>
 
       {/* Solution */}
-      <section className="py-32 px-6">
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6">
         <motion.div
           viewport={{ once: true }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-6 block">The Solution</span>
-          <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8 leading-[1.05]">
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] sm:tracking-[0.3em] text-emerald-400 mb-4 sm:mb-6 block">The Solution</span>
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6 sm:mb-8 leading-[1.05]">
             Britsee Fixes the Core Problem.
           </h2>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
+          <p className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
             Private, structured communication powered by AI — eliminating chaos and keeping teams aligned on a single source of truth.
           </p>
         </motion.div>
       </section>
 
       {/* Core Memory Tech */}
-      <section className="py-32 px-6 border-y border-white/5 bg-[#0d0d0d]">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
-          <motion.div 
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 border-y border-white/5 bg-[#0d0d0d]">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-5 sm:gap-8">
+          <motion.div
             viewport={{ once: true }}
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
-            className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group"
+            className="p-6 sm:p-10 rounded-3xl sm:rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group"
           >
-            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-              <Database className="text-indigo-400" size={28} />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 transition-transform">
+              <Database className="text-indigo-400" size={24} />
             </div>
-            <h3 className="text-3xl font-bold mb-4">LLM Memory</h3>
-            <p className="text-slate-400 text-lg leading-relaxed">
+            <h3 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">LLM Memory</h3>
+            <p className="text-slate-400 text-base sm:text-lg leading-relaxed">
               Global intelligence guiding decisions and learning continuously from every interaction within your organization.
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             viewport={{ once: true }}
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
-            className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group"
+            className="p-6 sm:p-10 rounded-3xl sm:rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group"
           >
-            <div className="w-14 h-14 rounded-2xl bg-fuchsia-500/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-              <Shield className="text-fuchsia-400" size={28} />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-fuchsia-500/10 flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 transition-transform">
+              <Shield className="text-fuchsia-400" size={24} />
             </div>
-            <h3 className="text-3xl font-bold mb-4">Moderator Memory</h3>
-            <p className="text-slate-400 text-lg leading-relaxed">
+            <h3 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Moderator Memory</h3>
+            <p className="text-slate-400 text-base sm:text-lg leading-relaxed">
               Controls structure, access, and strategic alignment across the team. Ensures the AI stays on mission.
             </p>
           </motion.div>
@@ -212,21 +213,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       </section>
 
       {/* AI Engines */}
-      <section className="py-32 px-6">
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-24">
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-8">AI Execution Engines</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto text-xl font-medium">
+          <div className="text-center mb-12 sm:mb-16 md:mb-24">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 sm:mb-8">AI Execution Engines</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto text-base sm:text-xl font-medium">
               Four specialized cores designed to handle the heavy lifting of business growth.
             </p>
           </div>
 
-          <motion.div 
+          <motion.div
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8"
           >
             {[
               {
@@ -250,16 +251,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 desc: "High-tier video and professional content generation."
               }
             ].map((skill, i) => (
-              <motion.div 
-                key={i} 
+              <motion.div
+                key={i}
                 variants={fadeIn}
-                className="group p-10 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all"
+                className="group p-6 sm:p-10 rounded-3xl sm:rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all"
               >
-                <div className="mb-8 w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center">
+                <div className="mb-6 sm:mb-8 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 flex items-center justify-center">
                   {skill.icon}
                 </div>
-                <h3 className="text-2xl font-bold mb-4">{skill.title}</h3>
-                <p className="text-slate-500 leading-relaxed font-medium">{skill.desc}</p>
+                <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">{skill.title}</h3>
+                <p className="text-sm sm:text-base text-slate-500 leading-relaxed font-medium">{skill.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -267,33 +268,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       </section>
 
       {/* Scarcity */}
-      <section className="py-32 px-6">
-        <motion.div 
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6">
+        <motion.div
           viewport={{ once: true }}
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          className="max-w-5xl mx-auto bg-gradient-to-br from-indigo-600/20 to-transparent border border-indigo-500/20 rounded-[4rem] p-12 md:p-24 relative overflow-hidden"
+          className="max-w-5xl mx-auto bg-gradient-to-br from-indigo-600/20 to-transparent border border-indigo-500/20 rounded-3xl sm:rounded-[4rem] p-6 sm:p-12 md:p-24 relative overflow-hidden"
         >
           <div className="relative z-10 text-center md:text-left">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8">Limited Global Access</h2>
-            <p className="text-xl text-slate-400 mb-12 max-w-2xl font-medium leading-relaxed">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6 sm:mb-8">Limited Global Access</h2>
+            <p className="text-base sm:text-xl text-slate-400 mb-8 sm:mb-12 max-w-2xl font-medium leading-relaxed">
               We are limiting access to {cap.toLocaleString()} enterprise environments worldwide to ensure network stability.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            <div className="grid grid-cols-3 gap-4 sm:gap-8 mb-8 sm:mb-10">
               <div>
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Seats Taken</div>
-                <div className="text-4xl md:text-5xl font-black text-white">{taken.toLocaleString()}</div>
+                <div className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 sm:mb-2">Taken</div>
+                <div className="text-2xl sm:text-4xl md:text-5xl font-black text-white tabular-nums">{taken.toLocaleString()}</div>
               </div>
               <div>
-                <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Remaining</div>
-                <div className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-300 to-fuchsia-300 bg-clip-text text-transparent">
+                <div className="text-[9px] sm:text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1 sm:mb-2">Remaining</div>
+                <div className="text-2xl sm:text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-300 to-fuchsia-300 bg-clip-text text-transparent tabular-nums">
                   {remaining.toLocaleString()}
                 </div>
               </div>
               <div>
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Global Cap</div>
-                <div className="text-4xl md:text-5xl font-black text-slate-400">{cap.toLocaleString()}</div>
+                <div className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 sm:mb-2">Cap</div>
+                <div className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-400 tabular-nums">{cap.toLocaleString()}</div>
               </div>
             </div>
 
@@ -303,7 +304,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 style={{ width: `${pctTaken}%` }}
               />
             </div>
-            <p className="mt-3 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+            <p className="mt-3 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500">
               {pctTaken}% allocated · live count
             </p>
           </div>
@@ -397,29 +398,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       </section>
 
       {/* Final CTA */}
-      <section className="py-32 px-6 border-t border-white/5">
+      <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 border-t border-white/5">
         <motion.div
           viewport={{ once: true }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h2 className="text-4xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+          <h2 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tight mb-6 sm:mb-8 leading-[1.05] bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
             This Is Not Another Tool.
           </h2>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
+          <p className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-12 font-medium leading-relaxed">
             It's a new way to run your company — clear, aligned, and AI-powered. Built for teams that take execution seriously.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <button
               onClick={() => onGetStarted('enterprise')}
-              className="w-full sm:w-auto px-10 py-5 bg-white text-black rounded-full font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-6 sm:px-10 py-4 sm:py-5 bg-white text-black rounded-full font-black text-xs sm:text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2 group"
             >
-              Apply for Enterprise <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              Apply for Enterprise <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <button
               onClick={() => onGetStarted('free')}
-              className="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white rounded-full font-black text-sm uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95"
+              className="w-full sm:w-auto px-6 sm:px-10 py-4 sm:py-5 bg-white/5 border border-white/10 text-white rounded-full font-black text-xs sm:text-sm uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95"
             >
               Try Free
             </button>
@@ -428,14 +429,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       </section>
 
       {/* Footer */}
-      <footer className="py-24 px-6 border-t border-white/5 text-center text-slate-600 bg-[#050505]">
-        <div className="flex items-center justify-center gap-3 mb-12 grayscale opacity-50">
-          <div className="w-10 h-10 rounded-xl overflow-hidden">
+      <footer className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 border-t border-white/5 text-center text-slate-600 bg-[#050505]">
+        <div className="flex items-center justify-center gap-3 mb-8 sm:mb-12 grayscale opacity-50">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl overflow-hidden">
             <img src="/favicon.png" alt="Britsee Logo" className="w-full h-full object-cover" />
           </div>
-          <span className="text-2xl font-black tracking-tighter">BRITSEE</span>
+          <span className="text-lg sm:text-2xl font-black tracking-tighter">BRITSEE</span>
         </div>
-        <p className="text-sm font-bold tracking-widest uppercase">© 2026 Britsync AI. All rights reserved.</p>
+        <p className="text-[11px] sm:text-sm font-bold tracking-widest uppercase">© 2026 Britsync AI. All rights reserved.</p>
       </footer>
     </div>
   );

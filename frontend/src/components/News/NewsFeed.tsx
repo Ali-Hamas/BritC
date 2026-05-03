@@ -9,9 +9,16 @@ import {
 import { fetchNews, type NewsItem } from '../../lib/news';
 
 const SOURCE_BADGE: Record<string, string> = {
-  BBC:     'bg-rose-500/10 text-rose-300 border-rose-500/20',
-  FT:      'bg-amber-500/10 text-amber-300 border-amber-500/20',
-  Reuters: 'bg-sky-500/10 text-sky-300 border-sky-500/20',
+  BBC:         'bg-rose-500/10 text-rose-300 border-rose-500/20',
+  FT:          'bg-amber-500/10 text-amber-300 border-amber-500/20',
+  Reuters:     'bg-sky-500/10 text-sky-300 border-sky-500/20',
+  Guardian:    'bg-blue-500/10 text-blue-300 border-blue-500/20',
+  Sky:         'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+  CNBC:        'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+  Yahoo:       'bg-violet-500/10 text-violet-300 border-violet-500/20',
+  MarketWatch: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/20',
+  Investing:   'bg-orange-500/10 text-orange-300 border-orange-500/20',
+  Telegraph:   'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
 };
 
 function relativeTime(iso: string): string {
@@ -40,7 +47,7 @@ export const NewsFeed: React.FC = () => {
     else setLoading(true);
     setError('');
     try {
-      const data = await fetchNews();
+      const data = await fetchNews(isRefresh);
       setItems(data);
       setLoadedAt(Date.now());
     } catch (e: any) {

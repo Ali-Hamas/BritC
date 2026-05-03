@@ -119,14 +119,15 @@ app.get('/api/seats', async (_req, res) => {
 
 // Public news feed — RSS aggregator with 10-min in-memory cache.
 // Lazy-required so a missing fast-xml-parser dep can't crash the auth boot.
-app.get('/api/news', async (_req, res) => {
+app.get('/api/news', async (req, res) => {
   try {
     const { getCachedNews } = require('./news');
-    const items = await getCachedNews();
-    res.json({ items });
+    const force = req.query.force === '1' || req.query.force === 'true';
+    const result = await getCachedNews({ force });
+    res.json(result);
   } catch (err) {
     console.error('[/api/news]', err);
-    res.json({ items: [] });
+    res.json({ items: [], fetchedAt: 0, cached: false });
   }
 });
 
@@ -250,8 +251,18 @@ app.get('/api/account/status', async (req, res) => {
 // Admin: list pending users
 app.get('/api/admin/pending-users', requireAdmin, async (req, res) => {
   try {
+    // Detect whether the optional requested_plan column exists.
+    // It was added in a later migration; tolerate older DBs that don't have it.
+    const colCheck = await pool.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'account_approvals' AND column_name = 'requested_plan'
+       LIMIT 1`
+    );
+    const hasPlan = colCheck.rowCount > 0;
+    const planSelect = hasPlan ? 'a.requested_plan' : `NULL::text AS requested_plan`;
+
     const { rows } = await pool.query(
-      `SELECT a.user_id, a.status, a.created_at, a.requested_plan, u.email, u.name
+      `SELECT a.user_id, a.status, a.created_at, ${planSelect}, u.email, u.name
        FROM account_approvals a
        JOIN "user" u ON u.id = a.user_id
        WHERE a.status = 'pending'

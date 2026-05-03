@@ -9,8 +9,9 @@ export interface NewsItem {
   summary: string;
 }
 
-export async function fetchNews(): Promise<NewsItem[]> {
-  const res = await fetch(getApiUrl('/news'));
+export async function fetchNews(force = false): Promise<NewsItem[]> {
+  const url = getApiUrl('/news') + (force ? '?force=1' : '');
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load news (${res.status})`);
   const data = await res.json();
   return Array.isArray(data?.items) ? data.items : [];
