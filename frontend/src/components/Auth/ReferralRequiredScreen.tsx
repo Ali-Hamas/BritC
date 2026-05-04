@@ -23,6 +23,9 @@ export const ReferralRequiredScreen = ({ email, onSignOut }: { email: string; on
             <Link size={14} className="text-slate-500" />
             <span className="text-sm text-white/80 font-mono">{email}</span>
           </div>
+          <p className="text-sm text-slate-400 leading-relaxed -mt-2">
+            You will receive notification into the above email with a link to start.
+          </p>
           <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-left">
             <AlertTriangle size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
             <div className="text-xs text-amber-200/70 leading-relaxed space-y-1">
