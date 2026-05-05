@@ -150,6 +150,12 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
   // ─── Derived ────────────────────────────────────────────────────────────
   const adminIdSet = useMemo(() => new Set(adminRows.map(a => a.user_id)), [adminRows]);
 
+  const planByUserId = useMemo(() => {
+    const m: Record<string, 'free' | 'enterprise'> = {};
+    for (const s of subscriptionRows) m[s.user_id] = s.plan;
+    return m;
+  }, [subscriptionRows]);
+
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return users;
@@ -680,6 +686,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                 filteredUsers.map(u => {
                   const isAdmin = adminIdSet.has(u.id);
                   const isSuper = TeamService.isSuperAdmin(u.email);
+                  const plan = planByUserId[u.id] || 'free';
                   return (
                     <div key={u.id} className="p-4 space-y-3">
                       <div className="flex items-start gap-3">
@@ -691,6 +698,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                             <p className="font-medium text-white text-sm truncate">{u.email}</p>
                             {isSuper && <Badge label="SUPER" tone="amber" />}
                             {isAdmin && !isSuper && <Badge label="ADMIN" tone="amber" />}
+                            <Badge label={plan === 'enterprise' ? 'ENTERPRISE' : 'FREE'} tone={plan === 'enterprise' ? 'emerald' : 'rose'} />
                           </div>
                           <p className="text-[10px] text-slate-500 font-mono truncate">{u.id}</p>
                           <p className="text-[10px] text-slate-600 mt-0.5">
@@ -699,7 +707,25 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
+                        {plan !== 'enterprise' && (
+                          <ActionBtn
+                            tone="emerald"
+                            icon={Crown}
+                            label="Grant Enterprise"
+                            busy={busyId === u.id}
+                            onClick={() => handleSetPlan(u.id, u.email, 'enterprise')}
+                          />
+                        )}
+                        {plan === 'enterprise' && (
+                          <ActionBtn
+                            tone="slate"
+                            icon={ShieldOff}
+                            label="Set Free"
+                            busy={busyId === u.id}
+                            onClick={() => handleSetPlan(u.id, u.email, 'free')}
+                          />
+                        )}
                         {!isSuper && (isAdmin ? (
                           <ActionBtn
                             tone="slate"
@@ -739,6 +765,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                 <thead className="bg-[#0d1126] text-slate-400 text-[11px] uppercase tracking-widest">
                   <tr>
                     <th className="text-left px-6 py-3 font-bold">User</th>
+                    <th className="text-left px-6 py-3 font-bold">Plan</th>
                     <th className="text-left px-6 py-3 font-bold">User ID</th>
                     <th className="text-left px-6 py-3 font-bold">Joined</th>
                     <th className="text-right px-6 py-3 font-bold">Actions</th>
@@ -748,6 +775,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                   {filteredUsers.map(u => {
                     const isAdmin = adminIdSet.has(u.id);
                     const isSuper = TeamService.isSuperAdmin(u.email);
+                    const plan = planByUserId[u.id] || 'free';
                     return (
                       <tr key={u.id} className="hover:bg-white/[0.02]">
                         <td className="px-6 py-3">
@@ -765,12 +793,39 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                             </div>
                           </div>
                         </td>
+                        <td className="px-6 py-3">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-md border ${
+                            plan === 'enterprise'
+                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                              : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                          }`}>
+                            {plan.toUpperCase()}
+                          </span>
+                        </td>
                         <td className="px-6 py-3 text-[11px] text-slate-500 font-mono truncate max-w-[160px]">{u.id}</td>
                         <td className="px-6 py-3 text-xs text-slate-400">
                           {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                         </td>
                         <td className="px-6 py-3">
-                          <div className="flex items-center gap-2 justify-end">
+                          <div className="flex items-center gap-2 justify-end flex-wrap">
+                            {plan !== 'enterprise' && (
+                              <ActionBtn
+                                tone="emerald"
+                                icon={Crown}
+                                label="Grant Enterprise"
+                                busy={busyId === u.id}
+                                onClick={() => handleSetPlan(u.id, u.email, 'enterprise')}
+                              />
+                            )}
+                            {plan === 'enterprise' && (
+                              <ActionBtn
+                                tone="slate"
+                                icon={ShieldOff}
+                                label="Set Free"
+                                busy={busyId === u.id}
+                                onClick={() => handleSetPlan(u.id, u.email, 'free')}
+                              />
+                            )}
                             {!isSuper && (isAdmin ? (
                               <ActionBtn
                                 tone="slate"
@@ -804,7 +859,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                   })}
                   {filteredUsers.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-10 text-center text-slate-500 text-sm italic">
+                      <td colSpan={5} className="px-6 py-10 text-center text-slate-500 text-sm italic">
                         No users match.
                       </td>
                     </tr>
