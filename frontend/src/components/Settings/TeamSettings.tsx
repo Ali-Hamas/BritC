@@ -126,21 +126,21 @@ const TeamSettings: React.FC = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
       
       {/* Plan Header */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-3xl border border-indigo-500/20 p-8 shadow-2xl shadow-indigo-500/5">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-2xl sm:rounded-3xl border border-indigo-500/20 p-4 sm:p-6 md:p-8 shadow-2xl shadow-indigo-500/5">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-md shadow-lg shadow-indigo-500/20 flex items-center gap-1">
                 <Crown size={10} /> {plan.toUpperCase()} TEAM
               </span>
             </div>
-            <h2 className="text-3xl font-bold text-white tracking-tight">Britsee Unified Workspace</h2>
-            <p className="text-slate-400 text-sm max-w-lg leading-relaxed">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight">Britsee Unified Workspace</h2>
+            <p className="text-slate-400 text-xs sm:text-sm max-w-lg leading-relaxed">
               Your team members automatically inherit your <strong>Pro Plan</strong> benefits. Collaborate on leads, reports, and AI research in real-time.
             </p>
           </div>
-          
-          <div className="flex flex-col gap-3 min-w-[240px]">
+
+          <div className="flex flex-col gap-3 w-full md:w-auto md:min-w-[240px]">
             {/* User Switcher (FOR DEMO) */}
             <div className="flex p-1 bg-black/40 rounded-xl border border-white/5 mb-1">
               <button 
@@ -324,7 +324,7 @@ const TeamSettings: React.FC = () => {
             </button>
           </div>
           
-          <div className="p-0 max-h-[600px] overflow-y-auto">
+          <div className="p-0 max-h-[60vh] sm:max-h-[600px] overflow-auto">
             {activities.length > 0 ? (
               <table className="w-full text-left border-collapse">
                 <thead className="bg-white/[0.02] sticky top-0 backdrop-blur-md">

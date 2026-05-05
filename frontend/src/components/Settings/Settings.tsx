@@ -40,24 +40,24 @@ const Settings: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-20">
-      <header className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-6 max-w-4xl mx-auto pb-20 px-3 sm:px-0">
+      <header className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">System Settings</h1>
-          <p className="text-slate-400 mt-1">Configure your BritSync environment and team.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">System Settings</h1>
+          <p className="text-slate-400 text-sm sm:text-base mt-1">Configure your BritSync environment and team.</p>
         </div>
 
-        <div className="flex bg-slate-900/60 p-1 rounded-xl border border-white/5 backdrop-blur-sm self-start">
+        <div className="flex overflow-x-auto scrollbar-none bg-slate-900/60 p-1 rounded-xl border border-white/5 backdrop-blur-sm self-start max-w-full -mx-1 px-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap shrink-0 ${activeTab === tab.id
                 ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
             >
-              <tab.icon size={16} />
+              <tab.icon size={14} className="sm:w-4 sm:h-4" />
               {tab.label}
             </button>
           ))}
@@ -70,7 +70,7 @@ const Settings: React.FC = () => {
             key="services"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-900/40 rounded-2xl border border-white/5 p-6 space-y-8"
+            className="bg-slate-900/40 rounded-2xl border border-white/5 p-4 sm:p-6 space-y-6 sm:space-y-8"
           >
             <section className="space-y-4">
               <div className="flex items-center gap-3">
@@ -262,7 +262,7 @@ const Settings: React.FC = () => {
             exit={{ opacity: 0, x: 20 }}
             className="space-y-6"
           >
-            <section className="bg-slate-900/40 rounded-2xl border border-white/5 p-6 space-y-4">
+            <section className="bg-slate-900/40 rounded-2xl border border-white/5 p-4 sm:p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
                   <Brain size={20} />
@@ -279,7 +279,7 @@ const Settings: React.FC = () => {
                   value={globalSystemPrompt}
                   onChange={(e) => setGlobalSystemPrompt(e.target.value)}
                   placeholder="You are BritSee, an enterprise-grade Cognitive Alignment Engine..."
-                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-200 focus:border-purple-500/50 outline-none transition-all min-h-[150px] font-mono text-sm leading-relaxed"
+                  className="w-full bg-black/40 border border-white/5 rounded-xl px-3 sm:px-4 py-3 text-slate-200 focus:border-purple-500/50 outline-none transition-all min-h-[100px] sm:min-h-[150px] font-mono text-xs sm:text-sm leading-relaxed"
                 />
                 <div className="flex justify-end mt-2">
                   <button

@@ -42,24 +42,24 @@ export const PinEntryModal: React.FC<PinEntryModalProps> = ({
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="relative w-full max-w-sm bg-[#151520] border border-white/10 rounded-3xl p-8 shadow-2xl"
+            className="relative w-full max-w-sm bg-[#151520] border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl"
           >
             <button
               onClick={onClose}
-              className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-all"
+              className="absolute top-3 right-3 sm:top-6 sm:right-6 p-2 rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-all"
             >
               <X size={18} />
             </button>
 
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-2">
-                <Lock size={32} />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-2">
+                <Lock size={28} className="sm:w-8 sm:h-8" />
               </div>
-              
-              <h2 className="text-2xl font-bold text-white">Join Team</h2>
-              <p className="text-gray-400 text-sm">Enter team PIN to join. Your chats stay private, guided by the owner's strategy.</p>
 
-              <form onSubmit={handleSubmit} className="w-full space-y-6 mt-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">Join Team</h2>
+              <p className="text-gray-400 text-xs sm:text-sm">Enter team PIN to join. Your chats stay private, guided by the owner's strategy.</p>
+
+              <form onSubmit={handleSubmit} className="w-full space-y-4 sm:space-y-6 mt-4">
                 <div className="space-y-2">
                   <input
                     type="text"
@@ -67,7 +67,7 @@ export const PinEntryModal: React.FC<PinEntryModalProps> = ({
                     placeholder="0 0 0 0 0 0"
                     value={pin}
                     onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="w-full bg-[#0d0d14] border-2 border-white/5 rounded-2xl px-6 py-4 text-center text-2xl font-bold tracking-[0.5em] text-white focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-white/10"
+                    className="w-full bg-[#0d0d14] border-2 border-white/5 rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-center text-lg sm:text-2xl font-bold tracking-[0.3em] sm:tracking-[0.5em] text-white focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-white/10"
                     autoFocus
                   />
                   {error && (
@@ -84,7 +84,7 @@ export const PinEntryModal: React.FC<PinEntryModalProps> = ({
                 <button
                   type="submit"
                   disabled={pin.length !== 6 || isJoining}
-                  className="w-full bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 sm:py-4 text-sm sm:text-base rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2"
                 >
                   {isJoining ? (
                     <>

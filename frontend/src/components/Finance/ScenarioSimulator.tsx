@@ -133,7 +133,7 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
   const reset = () => setInputs(styleDefaults);
 
   return (
-    <div className="glass-card p-5 space-y-5">
+    <div className="glass-card p-3 sm:p-5 space-y-4 sm:space-y-5">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <Sliders size={14} className="text-indigo-400" /> Scenario Simulator
@@ -155,7 +155,7 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
         Drag the sliders to model what-if scenarios. Numbers stay in your head — nothing is saved.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
         <Slider
           label="Revenue change"
           value={inputs.revenuePct}
@@ -191,7 +191,7 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         <ResultTile
           label="Projected 30d Profit"
           baseValue={baseKpis.last30Profit}
@@ -211,9 +211,9 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
       </div>
 
       {chartData.length > 0 && (
-        <div className="h-64 sm:h-72">
+        <div className="h-56 sm:h-64 md:h-72 -mx-1">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <BarChart data={chartData} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
               <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
               <YAxis
@@ -234,7 +234,7 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
       )}
 
       {baseForecast && scenarioForecast && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
           {baseForecast.map((b, i) => {
             const s = scenarioForecast[i];
             const baseProfit = b.predictedRevenue - b.predictedExpense;

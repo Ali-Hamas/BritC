@@ -56,16 +56,16 @@ export const EntryForm: React.FC<EntryFormProps> = ({ userId, onClose, onSaved }
     <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
       <form
         onSubmit={submit}
-        className="w-full max-w-md bg-[#0a0b14] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-[#0a0b14] border border-white/10 rounded-2xl shadow-2xl"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-          <h3 className="text-lg font-bold text-white">Add entry</h3>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 sticky top-0 bg-[#0a0b14] z-10">
+          <h3 className="text-base sm:text-lg font-bold text-white">Add entry</h3>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-white">
             <X size={18} />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {/* Type toggle */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-white/5 rounded-xl">
             <button
@@ -92,7 +92,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({ userId, onClose, onSaved }
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                 Date
@@ -162,7 +162,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({ userId, onClose, onSaved }
           )}
         </div>
 
-        <div className="flex gap-2 px-6 py-4 border-t border-white/5 bg-white/[0.02]">
+        <div className="flex gap-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-white/5 bg-white/[0.02] sticky bottom-0">
           <button
             type="button"
             onClick={onClose}

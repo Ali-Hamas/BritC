@@ -126,17 +126,17 @@ export const CsvImport: React.FC<CsvImportProps> = ({ userId, onClose, onImporte
   return (
     <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
       <div className="w-full max-w-3xl bg-[#0a0b14] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5">
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="text-indigo-400" size={18} />
-            <h3 className="text-lg font-bold text-white">Import CSV</h3>
+            <h3 className="text-base sm:text-lg font-bold text-white">Import CSV</h3>
           </div>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-white">
             <X size={18} />
           </button>
         </div>
 
-        <div className="p-6 space-y-4 overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto">
           <div className="text-xs text-slate-400">
             Columns: <code className="text-indigo-300">date</code> (YYYY-MM-DD),{' '}
             <code className="text-indigo-300">type</code> (revenue|expense),{' '}
@@ -145,7 +145,7 @@ export const CsvImport: React.FC<CsvImportProps> = ({ userId, onClose, onImporte
             <code className="text-indigo-300">note</code> (optional). Max {MAX_ROWS} rows.
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <label className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-dashed border-white/10 text-sm text-slate-300 hover:bg-white/10 cursor-pointer">
               <Upload size={14} /> Upload .csv file
               <input
@@ -192,8 +192,8 @@ export const CsvImport: React.FC<CsvImportProps> = ({ userId, onClose, onImporte
                 </span>
               </div>
 
-              <div className="max-h-48 overflow-y-auto rounded-xl border border-white/5">
-                <table className="w-full text-xs">
+              <div className="max-h-48 overflow-auto rounded-xl border border-white/5">
+                <table className="w-full text-xs min-w-[480px]">
                   <thead className="bg-white/[0.03] text-slate-400 sticky top-0">
                     <tr>
                       <th className="text-left px-3 py-2">Date</th>
@@ -243,7 +243,7 @@ export const CsvImport: React.FC<CsvImportProps> = ({ userId, onClose, onImporte
           )}
         </div>
 
-        <div className="flex gap-2 px-6 py-4 border-t border-white/5 bg-white/[0.02]">
+        <div className="flex gap-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-white/5 bg-white/[0.02]">
           <button
             type="button"
             onClick={onClose}

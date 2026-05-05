@@ -248,7 +248,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut, su
                 Choose how aggressive Britsync&apos;s scenario presets and AI narratives should be. Saved on this device only.
              </p>
 
-             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                 {(Object.keys(FINANCE_STYLE_LABELS) as FinanceStyle[]).map((s) => {
                    const Icon = STYLE_ICONS[s];
                    const selected = financeStyle === s;
@@ -287,12 +287,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut, su
           </div>
 
           {/* Danger Zone */}
-          <div className="glass-card p-8 border-rose-500/10">
-             <h3 className="text-sm font-bold text-rose-400 uppercase tracking-widest mb-4">Danger Zone</h3>
-             <p className="text-slate-400 text-sm mb-6">Signing out will clear your current local session data.</p>
-             <button 
+          <div className="glass-card p-4 sm:p-6 md:p-8 border-rose-500/10">
+             <h3 className="text-sm font-bold text-rose-400 uppercase tracking-widest mb-3 sm:mb-4">Danger Zone</h3>
+             <p className="text-slate-400 text-sm mb-4 sm:mb-6">Signing out will clear your current local session data.</p>
+             <button
                 onClick={onSignOut}
-                className="flex items-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl hover:bg-rose-500 hover:text-white transition-all font-bold"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl hover:bg-rose-500 hover:text-white transition-all font-bold text-sm sm:text-base"
              >
                 <LogOut size={18} />
                 Sign Out from Britsync AI
@@ -332,7 +332,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut, su
       {/* Cancel Confirmation Modal */}
       {showCancelConfirm && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowCancelConfirm(false)}>
-            <div className="bg-[#0f1025] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#0f1025] border border-white/10 rounded-2xl p-4 sm:p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
                <div className="flex items-center gap-3 mb-2">
                   <div className="h-10 w-10 bg-rose-500/10 rounded-xl flex items-center justify-center border border-rose-500/20">
                      <AlertCircle className="text-rose-400" size={20} />

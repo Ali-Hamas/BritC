@@ -79,10 +79,10 @@ export const ReportScheduleModal: React.FC<ReportScheduleModalProps> = ({ open, 
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-3xl bg-[#0a0b14] border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.6)] overflow-hidden"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#0a0b14] border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.6)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-white/5 gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
               <Mail className="text-indigo-400" size={18} />
@@ -104,7 +104,7 @@ export const ReportScheduleModal: React.FC<ReportScheduleModalProps> = ({ open, 
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="animate-spin text-slate-500" size={24} />

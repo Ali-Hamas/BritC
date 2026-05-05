@@ -268,7 +268,7 @@ const HistorySidebar = ({
   // Mobile view when sidebar is opened from hamburger menu
   if (isMobile) {
     return (
-      <div className="fixed inset-y-0 left-0 w-72 md:w-80 bg-[#030712] border-r border-white/5 flex flex-col z-50 transform transition-transform duration-300 shadow-2xl">
+      <div className="fixed inset-y-0 left-0 w-[80vw] max-w-[20rem] sm:w-72 md:w-80 bg-[#030712] border-r border-white/5 flex flex-col z-50 transform transition-transform duration-300 shadow-2xl">
         <div className="flex items-center justify-between px-3 py-4 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Bot size={20} className="text-indigo-400" />
@@ -642,7 +642,7 @@ const MessageBubble = ({
       </div>
 
       {/* Content */}
-      <div className={`max-w-[85%] md:max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-0.5 md:gap-1`}>
+      <div className={`max-w-[78%] sm:max-w-[82%] md:max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-0.5 md:gap-1 min-w-0`}>
         <div className={`relative px-3 py-2 md:px-4 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm leading-relaxed ${
           isUser
             ? 'bg-indigo-500 text-white rounded-tr-sm'
@@ -1359,7 +1359,7 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 6, scale: 0.97 }}
                       transition={{ duration: 0.12 }}
-                      className="absolute right-0 bottom-full mb-2 w-64 bg-[#0b1020] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 p-1"
+                      className="absolute right-0 bottom-full mb-2 w-[min(calc(100vw-2rem),16rem)] sm:w-64 bg-[#0b1020] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 p-1"
                     >
                       {CHAT_MODES.map(m => {
                         const Icon = m.icon;

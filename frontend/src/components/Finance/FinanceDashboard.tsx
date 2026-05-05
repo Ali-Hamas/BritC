@@ -250,7 +250,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
       </header>
 
       {/* KPI tiles */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiTile
           label="Revenue (30d)"
           value={gbp(kpis.last30Revenue)}
@@ -371,13 +371,13 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
 
       {/* Charts */}
       {hasData && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 glass-card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white">Revenue vs expenses</h3>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest">Last 12 months</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="md:col-span-2 lg:col-span-2 glass-card p-3 sm:p-5">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
+              <h3 className="text-xs sm:text-sm font-bold text-white">Revenue vs expenses</h3>
+              <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest">Last 12 months</span>
             </div>
-            <div className="h-64 sm:h-72">
+            <div className="h-56 sm:h-64 md:h-72">
               <ResponsiveContainer>
                 <BarChart data={monthly}>
                   <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
@@ -400,10 +400,10 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
             </div>
           </div>
 
-          <div className="glass-card p-5">
-            <h3 className="text-sm font-bold text-white mb-4">Expenses by category (90d)</h3>
+          <div className="glass-card p-3 sm:p-5">
+            <h3 className="text-xs sm:text-sm font-bold text-white mb-3 sm:mb-4">Expenses by category (90d)</h3>
             {categories.length ? (
-              <div className="h-64 sm:h-72">
+              <div className="h-56 sm:h-64 md:h-72">
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie

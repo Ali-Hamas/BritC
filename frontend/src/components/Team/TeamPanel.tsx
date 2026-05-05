@@ -399,7 +399,7 @@ export const TeamPanel = ({
   const ownedTeams = allTeams.filter(t => t.role === 'owner');
 
   return (
-    <div className="h-full overflow-y-auto px-4 sm:px-6 py-6 sm:py-8 pb-32 scrollbar-thin">
+    <div className="h-full overflow-y-auto px-3 sm:px-6 py-4 sm:py-8 pb-32 scrollbar-thin">
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
 
         {/* Team Switcher */}
@@ -415,7 +415,7 @@ export const TeamPanel = ({
                 <ChevronDown size={14} className={`text-slate-400 transition-transform ${showTeamSwitcher ? 'rotate-180' : ''}`} />
               </button>
               {showTeamSwitcher && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-[#0b1020] border border-white/10 rounded-xl shadow-2xl z-30 overflow-hidden">
+                <div className="absolute top-full left-0 mt-2 w-[calc(100vw-2rem)] sm:w-72 max-w-xs bg-[#0b1020] border border-white/10 rounded-xl shadow-2xl z-30 overflow-hidden">
                   <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 border-b border-white/5">Your teams</div>
                   <div className="max-h-72 overflow-y-auto">
                     {allTeams.map(t => (
@@ -537,7 +537,7 @@ export const TeamPanel = ({
         </div>
 
         {/* Owner-only Finance Intelligence */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
