@@ -427,7 +427,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
         {/* ── Overview ───────────────────────────────────────────────── */}
         {tab === 'overview' && (
           <div className="space-y-5 sm:space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <StatCard icon={Users} label="Users" value={users.length} accent="indigo" />
               <StatCard icon={Briefcase} label="Teams" value={teams.length} accent="emerald" />
               <StatCard icon={Crown} label="Admins" value={adminUsers.length} accent="amber" />

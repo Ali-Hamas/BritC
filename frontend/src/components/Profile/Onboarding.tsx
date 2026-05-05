@@ -43,18 +43,18 @@ export const Onboarding = ({ userId, onComplete }: OnboardingProps) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-xl flex items-center justify-center p-6">
-            <div className="w-full max-w-md glass-card relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-                <div className="p-8">
-                    <header className="mb-8 text-center">
-                        <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20">
-                            <Briefcase className="w-8 h-8 text-primary shadow-glow" />
+        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+            <div className="w-full max-w-md glass-card relative overflow-hidden animate-in fade-in zoom-in-95 duration-300 my-4 max-h-[95vh] overflow-y-auto">
+                <div className="p-4 sm:p-6 md:p-8">
+                    <header className="mb-6 sm:mb-8 text-center">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-primary/20">
+                            <Briefcase className="w-7 h-7 sm:w-8 sm:h-8 text-primary shadow-glow" />
                         </div>
-                        <h2 className="text-2xl font-bold grad-text">Create Business Profile</h2>
-                        <p className="text-slate-400 mt-1">Quickly set up your team's business identity.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold grad-text">Create Business Profile</h2>
+                        <p className="text-slate-400 mt-1 text-xs sm:text-sm">Quickly set up your team's business identity.</p>
                     </header>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Business Name</label>
                             <input
@@ -85,7 +85,7 @@ export const Onboarding = ({ userId, onComplete }: OnboardingProps) => {
                                 value={formData.revenueGoal}
                                 onChange={(e) => handleInputChange('revenueGoal', e.target.value)}
                                 placeholder="Describe your primary business goals..."
-                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-24 focus:outline-none focus:border-primary/50 text-white placeholder:text-slate-600 resize-none"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 h-20 sm:h-24 focus:outline-none focus:border-primary/50 text-white placeholder:text-slate-600 resize-none text-sm"
                             />
                         </div>
                         <div>
@@ -103,7 +103,7 @@ export const Onboarding = ({ userId, onComplete }: OnboardingProps) => {
                     <button
                         onClick={finish}
                         disabled={!formData.businessName || !formData.revenueGoal}
-                        className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-4 rounded-xl font-bold hover:scale-[1.02] transition-all active:scale-98 shadow-lg shadow-primary/20 mt-8 disabled:opacity-50 disabled:hover:scale-100"
+                        className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 sm:py-4 rounded-xl font-bold hover:scale-[1.02] transition-all active:scale-98 shadow-lg shadow-primary/20 mt-6 sm:mt-8 disabled:opacity-50 disabled:hover:scale-100 text-sm sm:text-base"
                     >
                         Start Collaborating
                         <ChevronRight className="w-4 h-4" />

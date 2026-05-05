@@ -78,15 +78,15 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
   };
 
   return (
-    <div className="space-y-8">
-      <header className="flex justify-between items-end">
+    <div className="space-y-6 sm:space-y-8">
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Email Sender</h1>
-          <p className="text-slate-400 mt-1 text-sm">Automated outreach campaigns & real-time analytics.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Email Sender</h1>
+          <p className="text-slate-400 mt-1 text-xs sm:text-sm">Automated outreach campaigns & real-time analytics.</p>
         </div>
-        
+
         <div className="flex gap-4">
-           <div className="bg-slate-900/50 border border-white/5 rounded-xl px-4 py-2 flex items-center gap-2">
+           <div className="bg-slate-900/50 border border-white/5 rounded-xl px-3 sm:px-4 py-2 flex items-center gap-2">
               <Users size={16} className="text-slate-500" />
               <span className="text-sm font-semibold text-white">1,240</span>
               <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Leads</span>
@@ -94,10 +94,10 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900/40 rounded-2xl border border-white/5 p-6">
-            <div className="flex justify-between items-center mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+        <div className="md:col-span-2 space-y-4 sm:space-y-6">
+          <div className="bg-slate-900/40 rounded-2xl border border-white/5 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
                <div className="flex items-center gap-3">
                   <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
                     <Mail size={20} />
@@ -138,11 +138,11 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email Body</label>
-                <textarea 
-                  rows={8}
+                <textarea
+                  rows={5}
                   value={campaign.htmlContent}
                   onChange={(e) => setCampaign(prev => ({...prev, htmlContent: e.target.value}))}
-                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-300 outline-none focus:border-indigo-500/50 font-mono text-sm leading-relaxed"
+                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-300 outline-none focus:border-indigo-500/50 font-mono text-xs sm:text-sm leading-relaxed sm:min-h-[160px] md:min-h-[200px]"
                 />
               </div>
 
@@ -169,8 +169,8 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-6">
               <BarChart2 size={20} className="text-indigo-400" />
               <h3 className="font-semibold text-white">Campaign Stats</h3>
@@ -204,7 +204,7 @@ export const SenderView: React.FC<SenderViewProps> = ({ profile }) => {
             </div>
           </div>
 
-          <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6">
+          <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 sm:p-6">
              <div className="flex items-center gap-3 mb-4">
                 <Clock size={16} className="text-slate-500" />
                 <h4 className="text-sm font-semibold text-white">Recent Activity</h4>

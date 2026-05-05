@@ -687,7 +687,7 @@ export const TeamPanel = ({
                       <motion.div 
                         key={block.id}
                         layout
-                        className={`group bg-slate-900/40 border rounded-2xl p-5 transition-all ${
+                        className={`group bg-slate-900/40 border rounded-2xl p-3 sm:p-5 transition-all ${
                           editingBlockId === block.id ? 'border-indigo-500/50 ring-1 ring-indigo-500/20' : 'border-white/5 hover:border-white/10'
                         }`}
                       >
@@ -698,7 +698,7 @@ export const TeamPanel = ({
                               value={editContent}
                               onChange={(e) => setEditContent(e.target.value)}
                               placeholder="Type your directive… or attach a file to import its contents."
-                              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-slate-200 text-sm focus:border-indigo-500/50 outline-none h-40 resize-none placeholder:text-slate-600"
+                              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-slate-200 text-sm focus:border-indigo-500/50 outline-none h-28 sm:h-40 resize-none placeholder:text-slate-600"
                             />
                             <div className="flex justify-between items-center flex-wrap gap-2">
                               <div className="flex items-center gap-1">
@@ -763,7 +763,7 @@ export const TeamPanel = ({
                     {typeBlocks.length === 0 && (
                       <button 
                         onClick={() => handleCreateMemory(type)}
-                        className="border-2 border-dashed border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 text-slate-500 hover:text-slate-300 hover:border-white/10 transition-all"
+                        className="border-2 border-dashed border-white/5 rounded-2xl p-4 sm:p-8 flex flex-col items-center justify-center gap-3 text-slate-500 hover:text-slate-300 hover:border-white/10 transition-all"
                       >
                         <Plus size={24} />
                         <span className="text-xs font-bold uppercase tracking-wider">Add {type}</span>
