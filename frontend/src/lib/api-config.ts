@@ -42,10 +42,16 @@ export const getApiUrl = (path: string): string => {
 
   // Ensure the base doesn't have a trailing slash
   const cleanBase = API_BASE_URL.replace(/\/$/, '');
-  
+
   // Ensure the path starts with a single slash
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  
+  let cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+  // If the base already ends with /api and the path also starts with /api,
+  // strip the duplicate prefix from the path so we don't end up with /api/api/...
+  if (cleanBase.endsWith('/api') && cleanPath.startsWith('/api/')) {
+    cleanPath = cleanPath.slice(4);
+  }
+
   // In development, if we want to use the Vite proxy, we should use relative paths.
   // We can detect this if API_BASE_URL is just '/api'
   if (API_BASE_URL === '/api' || !API_BASE_URL.startsWith('http')) {

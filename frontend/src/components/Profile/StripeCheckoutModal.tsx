@@ -7,7 +7,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import {
-  X, Loader2, Zap, Shield, Lock, CheckCircle2, Sparkles, CreditCard,
+  X, Loader2, Zap, Shield, Lock, CheckCircle2, CreditCard,
 } from 'lucide-react';
 import { createSubscriptionIntent } from '../../lib/subscription';
 
@@ -125,9 +125,12 @@ export const StripeCheckoutModal: React.FC<Props> = ({ open, onClose, onSuccess 
           {/* Left — plan summary */}
           <div className="md:col-span-2 p-4 sm:p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10 space-y-4 sm:space-y-5">
             <div className="flex items-center gap-2.5 pr-12">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
-                <Sparkles size={16} className="text-white sm:hidden" />
-                <Sparkles size={18} className="text-white hidden sm:block" />
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0 overflow-hidden p-1.5">
+                <img
+                  src="/favicon.png"
+                  alt="Britsync"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">
