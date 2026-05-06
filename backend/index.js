@@ -17,7 +17,7 @@ const { auth, pool, sendApprovalEmail, stashSignupReferral, stashSignupIntent } 
 const crypto = require('crypto');
 const { toNodeHandler } = require("better-auth/node");
 const rateLimit = require('express-rate-limit');
-const { createCheckoutSession, createCustomerPortal, constructEvent, stripe, WEBHOOK_SECRET } = require('./stripe');
+const { createCheckoutSession, createSubscriptionIntent, createCustomerPortal, constructEvent, stripe, WEBHOOK_SECRET } = require('./stripe');
 
 
 const app = express();
@@ -334,14 +334,18 @@ app.post('/api/admin/set-plan', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'INVALID_INPUT' });
   }
   try {
+    const status = plan === 'enterprise' ? 'active' : 'canceled';
     await pool.query(
-      `INSERT INTO account_subscriptions (user_id, plan, source, updated_at)
-       VALUES ($1, $2, 'admin', NOW())
+      `INSERT INTO account_subscriptions (user_id, plan, subscription_status, source, updated_at)
+       VALUES ($1, $2, $3, 'admin', NOW())
        ON CONFLICT (user_id)
-       DO UPDATE SET plan = EXCLUDED.plan, source = 'admin', updated_at = NOW()`,
-      [userId, plan]
+       DO UPDATE SET plan = EXCLUDED.plan,
+                     subscription_status = EXCLUDED.subscription_status,
+                     source = 'admin',
+                     updated_at = NOW()`,
+      [userId, plan, status]
     );
-    res.json({ ok: true, userId, plan });
+    res.json({ ok: true, userId, plan, subscriptionStatus: status });
   } catch (err) {
     console.error('[/api/admin/set-plan]', err);
     res.status(500).json({ error: 'SET_PLAN_FAILED' });
@@ -503,6 +507,19 @@ app.post('/api/subscription/create-checkout', async (req, res) => {
   } catch (err) {
     console.error('[create-checkout]', err);
     res.status(500).json({ error: 'CHECKOUT_FAILED' });
+  }
+});
+
+// Embedded Payment Element flow — keeps user on Britsync (no redirect to Stripe)
+app.post('/api/subscription/create-intent', async (req, res) => {
+  try {
+    const session = await getSession(req);
+    if (!session?.user?.id) return res.status(401).json({ error: 'NOT_AUTHENTICATED' });
+    const result = await createSubscriptionIntent(session.user.id, session.user.email);
+    res.json(result);
+  } catch (err) {
+    console.error('[create-intent]', err);
+    res.status(500).json({ error: 'INTENT_FAILED', message: err.message });
   }
 });
 

@@ -36,6 +36,24 @@ export async function createCheckout(): Promise<{ url: string } | { error: strin
   }
 }
 
+export async function createSubscriptionIntent(): Promise<
+  { clientSecret: string; subscriptionId: string; customerId: string } | { error: string }
+> {
+  try {
+    const res = await fetch(getApiUrl('/api/subscription/create-intent'), {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { error: data.error || 'Could not initialize payment. Please try again.' };
+    }
+    return await res.json();
+  } catch (e: any) {
+    return { error: e.message || 'Network error. Please check your connection.' };
+  }
+}
+
 export async function getPortalUrl(): Promise<{ url: string } | null> {
   try {
     const res = await fetch(getApiUrl('/api/subscription/portal'), { credentials: 'include' });

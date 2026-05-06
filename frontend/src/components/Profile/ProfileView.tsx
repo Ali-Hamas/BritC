@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Briefcase, Building2, Shield, LogOut, CreditCard, HardDrive, Zap, AlertCircle, Loader2, ExternalLink, Clock, XCircle, Sliders, ShieldCheck, Scale, TrendingUp } from 'lucide-react';
 import { BusinessProfile } from '../../lib/profiles';
 import type { SubscriptionStatus } from '../../lib/subscription';
-import { formatBytes, getPortalUrl, cancelSubscription, createCheckout, STORAGE_LIMIT } from '../../lib/subscription';
+import { formatBytes, getPortalUrl, cancelSubscription, STORAGE_LIMIT } from '../../lib/subscription';
+import { StripeCheckoutModal } from './StripeCheckoutModal';
 import {
   type FinanceStyle,
   FINANCE_STYLE_LABELS,
@@ -20,10 +21,9 @@ interface ProfileViewProps {
 export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut, subscription }) => {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [financeStyle, setFinanceStyleState] = useState<FinanceStyle>(() =>
     getFinanceStyle(profile?.userId)
   );
@@ -74,16 +74,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut, su
     }
   };
 
-  const handleUpgrade = async () => {
-    setCheckoutLoading(true);
-    setCheckoutError(null);
-    try {
-      const result = await createCheckout();
-      if ('url' in result && result.url) window.location.href = result.url;
-      else if ('error' in result) setCheckoutError(result.error);
-    } finally {
-      setCheckoutLoading(false);
-    }
+  const handleUpgrade = () => setShowCheckout(true);
+  const handleCheckoutSuccess = () => {
+    setShowCheckout(false);
+    setTimeout(() => window.location.reload(), 600);
   };
 
   return (
@@ -191,17 +185,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut, su
                    <div className="space-y-2">
                       <button
                          onClick={handleUpgrade}
-                         disabled={checkoutLoading}
-                         className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+                         className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-fuchsia-500 hover:from-indigo-500 hover:to-fuchsia-400 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20"
                       >
-                         {checkoutLoading ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
-                         {checkoutLoading ? 'Redirecting...' : 'Upgrade to Enterprise — £449/mo'}
+                         <Zap size={18} />
+                         Upgrade to Enterprise — £449/mo
                       </button>
-                      {checkoutError && (
-                         <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5 text-center">
-                            {checkoutError}
-                         </p>
-                      )}
                    </div>
                 ) : (
                    <div className="space-y-2">
@@ -364,6 +352,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onSignOut, su
             </div>
          </div>
       )}
+
+      <StripeCheckoutModal
+         open={showCheckout}
+         onClose={() => setShowCheckout(false)}
+         onSuccess={handleCheckoutSuccess}
+      />
     </div>
   );
 };

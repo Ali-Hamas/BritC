@@ -27,6 +27,9 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '',
   textNodeName: '_text',
+  numberParseOptions: { skipLike: /./ },
+  htmlEntities: true,
+  processEntities: false,
 });
 
 function stripHtml(s) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Check, Zap, Shield, Star, Loader2 } from 'lucide-react';
-import { createCheckout } from '../../lib/subscription';
+import { X, Check, Zap, Shield, Star } from 'lucide-react';
+import { StripeCheckoutModal } from '../Profile/StripeCheckoutModal';
 
 interface PlanSelectionModalProps {
   isOpen: boolean;
@@ -60,30 +60,14 @@ const PLANS = [
 ];
 
 export const PlanSelectionModal: React.FC<PlanSelectionModalProps> = ({ isOpen, onClose }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
 
-  const handleCheckout = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await createCheckout();
-      if (result && 'url' in result && result.url) {
-        window.location.href = result.url;
-      } else if (result && 'error' in result) {
-        if (result.error === 'CHECKOUT_FAILED') {
-          setError('Stripe is not yet configured. Please contact support or try again later.');
-        } else {
-          setError(result.error);
-        }
-      } else {
-        setError('Checkout service is unavailable. Please try again later.');
-      }
-    } catch {
-      setError('Failed to start checkout. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleCheckout = () => setShowCheckout(true);
+
+  const handleCheckoutSuccess = () => {
+    setShowCheckout(false);
+    onClose();
+    setTimeout(() => window.location.reload(), 600);
   };
 
   if (!isOpen) return null;
@@ -173,20 +157,10 @@ export const PlanSelectionModal: React.FC<PlanSelectionModalProps> = ({ isOpen, 
                   <button
                     type="button"
                     onClick={handleCheckout}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed mt-auto shadow-xl"
+                    className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white bg-gradient-to-r from-indigo-600 to-fuchsia-500 hover:from-indigo-500 hover:to-fuchsia-400 border border-white/10 transition-all active:scale-[0.97] mt-auto shadow-xl shadow-indigo-500/20"
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Initializing...
-                      </>
-                    ) : (
-                      <>
-                        <Zap size={16} className="text-indigo-400" />
-                        {plan.cta}
-                      </>
-                    )}
+                    <Zap size={16} className="text-white" />
+                    {plan.cta}
                   </button>
                 ) : (
                   <div className="w-full py-4 rounded-2xl text-center text-xs font-black uppercase tracking-widest text-slate-500 bg-white/[0.03] border border-white/5 mt-auto">
@@ -199,19 +173,19 @@ export const PlanSelectionModal: React.FC<PlanSelectionModalProps> = ({ isOpen, 
         </div>
       </div>
 
-      {/* Error Message & Footer - Fixed at bottom */}
-      <div className="shrink-0 bg-[#0a0e1a]/95 backdrop-blur-sm border-t border-white/5 p-6 space-y-4">
-        {error && (
-          <div className="flex items-center gap-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs font-bold text-rose-300 animate-in slide-in-from-bottom-2">
-            <Shield size={16} className="shrink-0 text-rose-400" />
-            {error}
-          </div>
-        )}
+      {/* Footer - Fixed at bottom */}
+      <div className="shrink-0 bg-[#0a0e1a]/95 backdrop-blur-sm border-t border-white/5 p-6">
         <p className="text-[10px] text-slate-600 text-center font-bold uppercase tracking-[0.2em]">
           Secure payment via Stripe · Global Neural Network Access · 24/7 Priority Support
         </p>
       </div>
       </div>
+
+      <StripeCheckoutModal
+        open={showCheckout}
+        onClose={() => setShowCheckout(false)}
+        onSuccess={handleCheckoutSuccess}
+      />
     </div>,
     document.body
   );
