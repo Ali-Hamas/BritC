@@ -1,141 +1,161 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #030712;
-  --color-foreground: #f8fafc;
-  --color-primary: #6366f1; /* Indigo 500 */
-  --color-primary-foreground: #ffffff;
-  --color-accent: #10b981; /* Emerald 500 */
-  --color-accent-foreground: #ffffff;
-
-  --background-image-glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01));
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  --color-primary: #2563eb; /* Blue */
+  --color-secondary: #dc2626; /* Red */
+  --color-accent: #f97316; /* Orange */
+  
+  --color-slate-900: #000000;
+  --color-slate-800: #1a1a1a;
+  --color-slate-700: #262626;
+  
+  --background-image-glass-gradient: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(220, 38, 38, 0.02));
 }
 
 @utility glass {
   backdrop-filter: blur(20px);
-  background: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.03) 0%,
-      rgba(255, 255, 255, 0.01) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
 }
 
 @utility glass-card {
-  @apply glass rounded-[24px] p-6 transition-all duration-500 overflow-hidden relative border border-white/5;
-
-  &::before {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-indigo-500/[0.05] to-transparent pointer-events-none;
-  }
-
-  &:hover {
-    @apply border-indigo-500/30 shadow-indigo-500/10 -translate-y-1;
-    background: rgba(255, 255, 255, 0.05);
-  }
+  @apply glass rounded-[24px] p-6 transition-all duration-500 overflow-hidden relative;
+  border-color: rgba(37, 99, 235, 0.1);
 }
 
 @utility grad-text {
   background-clip: text;
   color: transparent;
-  background-image: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+  background-image: linear-gradient(135deg, #2563eb 0%, #dc2626 50%, #f97316 100%);
   font-weight: 800;
   letter-spacing: -0.025em;
+}
+
+@utility grad-bg {
+  background-image: linear-gradient(135deg, #2563eb 0%, #dc2626 100%);
+}
+
+@utility grad-bg-warm {
+  background-image: linear-gradient(135deg, #dc2626 0%, #f97316 100%);
+}
+
+@utility grad-bg-cool {
+  background-image: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
 }
 
 html, body, #root {
   height: 100%;
   width: 100%;
+  background-color: #ffffff;
 }
 
 body {
-  background-color: #030712;
-  color: #f1f5f9;
+  background-color: #ffffff;
+  color: #000000;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
-  min-height: 100vh;
-  min-height: 100dvh;
-  overscroll-behavior-y: none;
 }
 
-/* iOS text inputs at <16px font-size trigger an auto-zoom on focus.
-   Locking the minimum font-size prevents the jarring zoom in WebView. */
-@media (max-width: 767px) {
-  input, select, textarea {
-    font-size: 16px !important;
-  }
+/* ─── Aggressive Theme Overrides ─── */
+
+/* Force all dark backgrounds to White */
+[class*="bg-[#030712]"],
+[class*="bg-[#05060d]"],
+[class*="bg-[#0a0b14]"],
+[class*="bg-[#131a2b]"],
+[class*="bg-[#1a1a24]"],
+[class*="bg-[#0b1020]"],
+[class*="bg-[#0d1126]"],
+[class*="bg-[#151520]"],
+.bg-slate-900,
+.bg-slate-950,
+.bg-gray-900,
+.bg-gray-950,
+.bg-zinc-900,
+.bg-zinc-950,
+.bg-black,
+.bg-black\/20,
+.bg-black\/40,
+.bg-black\/10 {
+  background-color: #ffffff !important;
 }
 
-/* Full-height helpers that account for mobile URL bars (dvh) */
-@utility h-screen-dvh {
-  height: 100vh;
-  height: 100dvh;
+/* Sidebar and Header backgrounds */
+aside, nav, header, .bg-white\/\[0\.02\], .bg-white\/5, .bg-white\/10 {
+  background-color: #ffffff !important;
 }
 
-@utility min-h-screen-dvh {
-  min-height: 100vh;
-  min-height: 100dvh;
+/* Force all text to Black or very dark slate */
+.text-white, 
+.text-slate-100, 
+.text-slate-200, 
+.text-slate-300,
+.text-white\/90,
+.text-white\/80,
+.text-white\/70,
+.text-white\/60 {
+  color: #000000 !important;
 }
 
-/* Safe-area insets for iPhone notch / Android gesture bar */
-@utility pt-safe {
-  padding-top: env(safe-area-inset-top);
-}
-@utility pb-safe {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-@utility pl-safe {
-  padding-left: env(safe-area-inset-left);
-}
-@utility pr-safe {
-  padding-right: env(safe-area-inset-right);
+.text-slate-400, .text-slate-500, .text-slate-600 {
+  color: #1a1a1a !important;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+/* Borders */
+[class*="border-white"],
+.border-slate-800,
+.border-slate-700 {
+  border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+/* Exceptions: Keep buttons and accents colored */
+.bg-indigo-500, .bg-indigo-600, .bg-blue-600, .bg-blue-500 {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+.bg-indigo-500 .text-white, .bg-blue-600 .text-white {
+  color: #ffffff !important;
 }
 
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; filter: blur(40px); }
-  50% { opacity: 0.6; filter: blur(60px); }
+.bg-fuchsia-500, .bg-fuchsia-600, .bg-red-600, .bg-rose-500 {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
 }
 
-@utility animate-shake {
-  animation: shake 0.2s ease-in-out infinite;
+.bg-orange-500, .bg-amber-500 {
+  background-color: #f97316 !important;
+  color: #ffffff !important;
 }
 
-@utility animate-float {
-  animation: float 3s ease-in-out infinite;
+/* Chat Bubbles */
+.bg-white\/8, .bg-white\/5 {
+  background-color: #f1f5f9 !important; /* Light gray for assistant bubbles */
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
-@utility animate-pulse-glow {
-  animation: pulse-glow 6s ease-in-out infinite;
+.bg-indigo-500 {
+  background-color: #2563eb !important; /* Blue for user bubbles */
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+/* Code blocks - make them stand out but not black */
+pre, code {
+  background-color: #f8fafc !important;
+  color: #000000 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+.text-emerald-300 {
+  color: #059669 !important; /* Darker emerald for code contrast */
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+/* Scrollbar */
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  border: 2px solid transparent;
+  background-color: #cbd5e1;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+/* Fix for icons that might be white */
+.lucide, svg {
+  /* color: currentColor; */
 }

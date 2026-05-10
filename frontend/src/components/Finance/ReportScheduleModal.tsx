@@ -13,9 +13,9 @@ interface ReportScheduleModalProps {
 }
 
 const OPTIONS: { id: ReportCadence; label: string; desc: string; icon: typeof Mail }[] = [
-  { id: 'weekly',   label: 'Weekly',   desc: 'Every Monday at 09:00 UTC',   icon: Calendar },
-  { id: 'monthly',  label: 'Monthly',  desc: '1st of each month, 09:00 UTC', icon: Clock    },
-  { id: 'disabled', label: 'Off',      desc: 'No automatic reports',         icon: X        },
+  { id: 'weekly',   label: 'Weekly Intelligence',   desc: 'Every Monday, 09:00 UTC dispatch',   icon: Calendar },
+  { id: 'monthly',  label: 'Monthly Strategy',  desc: '1st of each month, full audit', icon: Clock    },
+  { id: 'disabled', label: 'Off-Grid',      desc: 'No automated transmissions',         icon: X        },
 ];
 
 export const ReportScheduleModal: React.FC<ReportScheduleModalProps> = ({ open, onClose }) => {
@@ -75,43 +75,44 @@ export const ReportScheduleModal: React.FC<ReportScheduleModalProps> = ({ open, 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#0a0b14] border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.6)]"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[32px] bg-white border border-slate-200 shadow-2xl animate-in zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-white/5 gap-3">
+        <div className="flex items-center justify-between px-6 py-6 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
-              <Mail className="text-indigo-400" size={18} />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+              <Mail size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Schedule Reports</h3>
-              <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
-                Automatic finance email summaries
+              <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Report Cadence</h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                Automated Strategic Transmissions
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all active:scale-95"
             aria-label="Close"
           >
-            <X size={16} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4">
+        <div className="p-6 sm:p-8 space-y-6">
           {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="animate-spin text-slate-500" size={24} />
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="animate-spin text-blue-600" size={24} />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Schedule...</p>
             </div>
           ) : (
             <>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {OPTIONS.map((opt) => {
                   const Icon = opt.icon;
                   const selected = cadence === opt.id;
@@ -120,30 +121,30 @@ export const ReportScheduleModal: React.FC<ReportScheduleModalProps> = ({ open, 
                       key={opt.id}
                       type="button"
                       onClick={() => setCadence(opt.id)}
-                      className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${
+                      className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all group ${
                         selected
-                          ? 'bg-indigo-500/10 border-indigo-500/40 shadow-[0_0_24px_-12px_rgba(99,102,241,0.6)]'
-                          : 'bg-white/[0.02] border-white/5 hover:border-white/15 hover:bg-white/[0.04]'
+                          ? 'bg-blue-50 border-blue-600 shadow-md scale-[1.02]'
+                          : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       <div
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border-2 transition-colors ${
                           selected
-                            ? 'bg-indigo-500/20 text-indigo-300'
-                            : 'bg-white/5 text-slate-400'
+                            ? 'bg-white border-blue-200 text-blue-600 shadow-sm'
+                            : 'bg-slate-50 border-slate-100 text-slate-400 group-hover:text-slate-600'
                         }`}
                       >
-                        <Icon size={16} />
+                        <Icon size={18} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-sm font-bold ${selected ? 'text-white' : 'text-slate-200'}`}>
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className={`text-sm font-black uppercase tracking-tight ${selected ? 'text-blue-900' : 'text-slate-700'}`}>
                           {opt.label}
                         </div>
-                        <div className="text-[11px] text-slate-500">{opt.desc}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{opt.desc}</div>
                       </div>
                       {selected && (
-                        <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center shrink-0">
-                          <CheckCircle2 size={12} className="text-white" />
+                        <div className="w-6 h-6 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center shrink-0 shadow-sm">
+                          <CheckCircle2 size={12} className="text-white stroke-[3px]" />
                         </div>
                       )}
                     </button>
@@ -152,33 +153,35 @@ export const ReportScheduleModal: React.FC<ReportScheduleModalProps> = ({ open, 
               </div>
 
               {lastSentAt && (
-                <p className="text-[11px] text-slate-500 text-center">
-                  Last report sent {new Date(lastSentAt).toLocaleString('en-GB')}
-                </p>
+                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">
+                    Latest Deployment: {new Date(lastSentAt).toLocaleString('en-GB')}
+                  </p>
+                </div>
               )}
 
               {error && (
-                <div className="px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
+                <div className="px-5 py-4 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-black uppercase tracking-tight shadow-sm">
                   {error}
                 </div>
               )}
 
-              <div className="flex gap-2 pt-1">
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 <button
                   type="button"
                   onClick={handlePreview}
                   disabled={previewing}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-200 text-xs font-bold uppercase tracking-wider disabled:opacity-50 transition-all"
+                  className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
                 >
                   {previewing ? (
-                    <Loader2 className="animate-spin" size={14} />
+                    <Loader2 className="animate-spin" size={16} />
                   ) : previewFlash ? (
                     <>
-                      <CheckCircle2 size={14} className="text-emerald-400" /> Sent
+                      <CheckCircle2 size={16} className="text-emerald-500" /> Dispatched
                     </>
                   ) : (
                     <>
-                      <Send size={14} /> Send preview
+                      <Send size={16} /> Force Preview
                     </>
                   )}
                 </button>
@@ -186,16 +189,16 @@ export const ReportScheduleModal: React.FC<ReportScheduleModalProps> = ({ open, 
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-500/30 disabled:opacity-50 transition-all"
+                  className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {saving ? (
-                    <Loader2 className="animate-spin" size={14} />
+                    <Loader2 className="animate-spin" size={16} />
                   ) : savedFlash ? (
                     <>
-                      <CheckCircle2 size={14} /> Saved
+                      <CheckCircle2 size={16} /> Committed
                     </>
                   ) : (
-                    'Save'
+                    'Save Directive'
                   )}
                 </button>
               </div>

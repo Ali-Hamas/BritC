@@ -21,6 +21,7 @@ import { getApiUrl } from './api-config';
 import { SettingsService } from './settings';
 import { ActivityService } from './activity';
 import { TeamService } from './team';
+import { ext, isExtensionInstalled } from './extension';
 
 
 // ─── Action Types ─────────────────────────────────────────────────────────────
@@ -43,7 +44,15 @@ export type ActionType =
   | 'sync_lead'
   | 'generate_investor_profile'
   | 'get_leads'
-  | 'deep_visual_analysis';
+  | 'deep_visual_analysis'
+  | 'browser_open_tab'
+  | 'browser_navigate'
+  | 'browser_click'
+  | 'browser_type'
+  | 'browser_scroll'
+  | 'browser_screenshot'
+  | 'browser_read_page'
+  | 'browser_close_tab';
 
 export interface AgentAction {
   type: ActionType;
@@ -421,6 +430,157 @@ Include ONLY the email body (no subject line). Keep it under 150 words.`;
           title: '👁️ Deep Visual Perception Active',
           summary: `I am currently processing the visual details of your attachment. Please describe what specific insight you'd like me to extract.`,
           data: { active: true }
+        };
+      }
+
+      // ── Browser: Open Tab ─────────────────────────────────────────────────
+      case 'browser_open_tab': {
+        if (!(await isExtensionInstalled())) {
+          return {
+            type,
+            status: 'error',
+            title: '🔌 Companion Extension Required',
+            summary: 'Install the Britsync Companion Chrome extension to let me control your browser.',
+            error: 'EXTENSION_NOT_FOUND',
+          };
+        }
+        const url = params.url;
+        if (!url) throw new Error('Missing url');
+        const res = await ext.openTab(url, params.active !== false);
+        if (!res.ok) throw new Error(res.error || 'Failed to open tab');
+        return {
+          type,
+          status: 'success',
+          title: '🌐 Tab Opened',
+          summary: `Opened **${url}** in a new tab.`,
+          data: res.result,
+        };
+      }
+
+      // ── Browser: Navigate ─────────────────────────────────────────────────
+      case 'browser_navigate': {
+        if (!(await isExtensionInstalled())) {
+          return { type, status: 'error', title: '🔌 Companion Extension Required', summary: 'Install the Britsync Companion Chrome extension.', error: 'EXTENSION_NOT_FOUND' };
+        }
+        const url = params.url;
+        if (!url) throw new Error('Missing url');
+        const res = await ext.navigate(url, params.tabId);
+        if (!res.ok) throw new Error(res.error || 'Failed to navigate');
+        return {
+          type,
+          status: 'success',
+          title: '➡️ Navigated',
+          summary: `Active tab now at **${url}**.`,
+          data: res.result,
+        };
+      }
+
+      // ── Browser: Click ────────────────────────────────────────────────────
+      case 'browser_click': {
+        if (!(await isExtensionInstalled())) {
+          return { type, status: 'error', title: '🔌 Companion Extension Required', summary: 'Install the Britsync Companion Chrome extension.', error: 'EXTENSION_NOT_FOUND' };
+        }
+        const target = params.text || params.selector || 'element';
+        if (typeof window !== 'undefined' && !window.confirm(`Britsync wants to click "${target}" in your browser. Allow?`)) {
+          return { type, status: 'error', title: '🚫 Click Cancelled', summary: 'You declined the click action.', error: 'USER_CANCELLED' };
+        }
+        const res = await ext.click({ selector: params.selector, text: params.text, tabId: params.tabId });
+        if (!res.ok) throw new Error(res.error || 'Click failed');
+        return {
+          type,
+          status: 'success',
+          title: '🖱️ Clicked',
+          summary: `Clicked **${params.text || params.selector}**.`,
+          data: res.result,
+        };
+      }
+
+      // ── Browser: Type ─────────────────────────────────────────────────────
+      case 'browser_type': {
+        if (!(await isExtensionInstalled())) {
+          return { type, status: 'error', title: '🔌 Companion Extension Required', summary: 'Install the Britsync Companion Chrome extension.', error: 'EXTENSION_NOT_FOUND' };
+        }
+        if (!params.selector || !params.value) throw new Error('Missing selector or value');
+        if (typeof window !== 'undefined' && !window.confirm(`Britsync wants to type "${params.value}" into ${params.selector}. Allow?`)) {
+          return { type, status: 'error', title: '🚫 Type Cancelled', summary: 'You declined the type action.', error: 'USER_CANCELLED' };
+        }
+        const res = await ext.type({ selector: params.selector, value: params.value, tabId: params.tabId });
+        if (!res.ok) throw new Error(res.error || 'Type failed');
+        return {
+          type,
+          status: 'success',
+          title: '⌨️ Typed',
+          summary: `Typed into **${params.selector}**.`,
+          data: res.result,
+        };
+      }
+
+      // ── Browser: Scroll ───────────────────────────────────────────────────
+      case 'browser_scroll': {
+        if (!(await isExtensionInstalled())) {
+          return { type, status: 'error', title: '🔌 Companion Extension Required', summary: 'Install the Britsync Companion Chrome extension.', error: 'EXTENSION_NOT_FOUND' };
+        }
+        const y = typeof params.y === 'number' ? params.y : 600;
+        const res = await ext.scroll(y, params.tabId);
+        if (!res.ok) throw new Error(res.error || 'Scroll failed');
+        return {
+          type,
+          status: 'success',
+          title: '📜 Scrolled',
+          summary: `Scrolled by **${y}px**.`,
+          data: res.result,
+        };
+      }
+
+      // ── Browser: Screenshot ───────────────────────────────────────────────
+      case 'browser_screenshot': {
+        if (!(await isExtensionInstalled())) {
+          return { type, status: 'error', title: '🔌 Companion Extension Required', summary: 'Install the Britsync Companion Chrome extension.', error: 'EXTENSION_NOT_FOUND' };
+        }
+        const res = await ext.screenshot(params.tabId);
+        if (!res.ok) throw new Error(res.error || 'Screenshot failed');
+        return {
+          type,
+          status: 'success',
+          title: '📸 Screenshot Captured',
+          summary: `Captured the active tab.`,
+          data: { dataUrl: res.result?.dataUrl },
+        };
+      }
+
+      // ── Browser: Read Page ────────────────────────────────────────────────
+      case 'browser_read_page': {
+        if (!(await isExtensionInstalled())) {
+          return { type, status: 'error', title: '🔌 Companion Extension Required', summary: 'Install the Britsync Companion Chrome extension.', error: 'EXTENSION_NOT_FOUND' };
+        }
+        const res = await ext.getPageText(params.tabId);
+        if (!res.ok) throw new Error(res.error || 'Read failed');
+        const text = res.result?.text || '';
+        return {
+          type,
+          status: 'success',
+          title: '📖 Page Read',
+          summary: text.length > 200 ? text.slice(0, 200) + '…' : text || 'Page is empty.',
+          data: { text },
+        };
+      }
+
+      // ── Browser: Close Tab ────────────────────────────────────────────────
+      case 'browser_close_tab': {
+        if (!(await isExtensionInstalled())) {
+          return { type, status: 'error', title: '🔌 Companion Extension Required', summary: 'Install the Britsync Companion Chrome extension.', error: 'EXTENSION_NOT_FOUND' };
+        }
+        if (typeof window !== 'undefined' && !window.confirm('Britsync wants to close the active tab. Allow?')) {
+          return { type, status: 'error', title: '🚫 Close Cancelled', summary: 'You declined the close action.', error: 'USER_CANCELLED' };
+        }
+        const res = await ext.closeTab(params.tabId);
+        if (!res.ok) throw new Error(res.error || 'Close failed');
+        return {
+          type,
+          status: 'success',
+          title: '❌ Tab Closed',
+          summary: `Closed tab.`,
+          data: res.result,
         };
       }
 

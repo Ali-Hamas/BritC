@@ -1,42 +1,63 @@
-import React, { useState, useEffect, Component } from 'react';
-import type { ReactNode } from 'react';
-import { Auth } from './components/Auth/Auth';
-import { ResetPassword } from './components/Auth/ResetPassword';
+import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout/Layout';
+import { Chatbot } from './components/Chat/Chatbot';
+import { FinanceDashboard } from './components/Finance/FinanceDashboard';
+import { IntelligenceView } from './components/Intelligence/IntelligenceView';
+import { ProfileView } from './components/Profile/ProfileView';
+import { TeamPanel } from './components/Team/TeamPanel';
+import { AdminPanel } from './components/Admin/AdminPanel';
+import { NewsFeed } from './components/News/NewsFeed';
 import { useSession, signOut } from './lib/auth-client';
-import { ProfileService, BusinessProfile } from './lib/profiles';
-import { TeamService } from './lib/team';
-import { MemoryService } from './lib/memory';
-import { getMyApprovalStatus, type ApprovalStatus } from './lib/approval';
-import { getSubscriptionStatus, type SubscriptionStatus } from './lib/subscription';
-import { UpgradeScreen } from './components/Common/UpgradeScreen';
+import { Auth } from './components/Auth/Auth';
+import { BusinessProfile } from './lib/profiles';
+import { getMyApprovalStatus, checkSessionStale } from './lib/approval';
 import { ReferralRequiredScreen } from './components/Auth/ReferralRequiredScreen';
 import { RejectedScreen } from './components/Auth/RejectedScreen';
+import { getSubscriptionStatus, type SubscriptionStatus } from './lib/subscription';
+import { Bot, AlertTriangle } from 'lucide-react';
 import { LandingPage } from './components/Marketing/LandingPage';
 
-import { Bot } from 'lucide-react';
+// ─── Shared UI Components ───────────────────────────────────────────────────
 
-// Lazy-load components
-const Chatbot = React.lazy(() => import('./components/Chat/Chatbot').then(m => ({ default: m.Chatbot })));
-const ProfileView = React.lazy(() => import('./components/Profile/ProfileView').then(m => ({ default: m.ProfileView })));
-const TeamPanel = React.lazy(() => import('./components/Team/TeamPanel').then(m => ({ default: m.TeamPanel })));
-const FinanceDashboard = React.lazy(() => import('./components/Finance/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
-const AdminPanel = React.lazy(() => import('./components/Admin/AdminPanel').then(m => ({ default: m.AdminPanel })));
-const NewsFeed = React.lazy(() => import('./components/News/NewsFeed').then(m => ({ default: m.NewsFeed })));
+const Spinner = () => (
+  <div className="flex flex-col items-center justify-center p-12 gap-5 font-sans">
+    <div className="relative w-16 h-16">
+      <div className="absolute inset-0 bg-blue-500/10 blur-2xl rounded-full animate-pulse" />
+      <div className="w-16 h-16 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin shadow-sm relative z-10" />
+    </div>
+    <div className="text-center">
+      <p className="text-slate-900 font-black text-xs uppercase tracking-[0.2em]">Neural Net Syncing</p>
+      <div className="flex gap-1 justify-center mt-2">
+        {[1,2,3].map(i => (
+          <div key={i} className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
-// Error boundary
-class ErrorBoundary extends Component<{ children: ReactNode; name: string }, { hasError: boolean; error: string }> {
-  state = { hasError: false, error: '' };
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error: error.message };
-  }
+class ErrorBoundary extends React.Component<{ children: React.ReactNode; name: string }, { hasError: boolean }> {
+  constructor(props: any) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-8 glass-card border-rose-500/30 m-4 flex flex-col items-center text-center">
-          <h2 className="text-rose-400 font-bold text-xl mb-4 grad-text">Intelligence Engine Offline</h2>
-          <p className="text-slate-400 text-sm font-mono bg-black/40 p-4 rounded-xl mb-6 max-w-lg">{this.state.error}</p>
-          <button onClick={() => window.location.reload()} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/20">Re-Initialize Core</button>
+        <div className="p-8 sm:p-12 flex items-center justify-center h-full bg-slate-50 font-sans">
+          <div className="bg-white border-2 border-red-100 rounded-[32px] p-8 sm:p-12 text-center max-w-md shadow-2xl shadow-red-500/5 animate-in zoom-in-95">
+            <div className="w-20 h-20 bg-red-50 border border-red-100 rounded-3xl flex items-center justify-center mx-auto mb-6 text-red-600 shadow-sm">
+              <AlertTriangle size={40} />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-3">Module Runtime Fault</h2>
+            <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
+              The <span className="font-black text-red-600">{this.props.name}</span> module encountered a critical execution exception.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+            >
+              Re-initialize Kernel
+            </button>
+          </div>
         </div>
       );
     }
@@ -44,232 +65,115 @@ class ErrorBoundary extends Component<{ children: ReactNode; name: string }, { h
   }
 }
 
-const Spinner = () => (
-  <div className="flex items-center justify-center h-full w-full">
-    <div className="relative">
-       <div className="absolute inset-0 bg-indigo-500/30 blur-2xl rounded-full animate-pulse" />
-       <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-indigo-500 border-r-2 border-r-transparent relative z-10"></div>
-    </div>
-  </div>
-);
+// ─── Main Application ──────────────────────────────────────────────────────────
 
 function App() {
-  // Route: /reset-password is public — render it before any session gating
-  // so users clicking the email link (likely logged out) can actually reset.
-  if (typeof window !== 'undefined' && window.location.pathname === '/reset-password') {
-    return <ResetPassword />;
-  }
-
-  const { data: session, isPending: loading } = useSession();
-  const [profile, setProfile] = useState<BusinessProfile | null>(null);
-  const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const { data: session, isPending } = useSession();
   const [activeTab, setActiveTab] = useState('assistant');
-  const [timedOut, setTimedOut] = useState(false);
-  const [approval, setApproval] = useState<ApprovalStatus | null>(null);
+  const [profile, setProfile] = useState<BusinessProfile | null>(null);
+  const [approval, setApproval] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [isAuthView, setIsAuthView] = useState(false);
   const [authIntent, setAuthIntent] = useState<'free' | 'enterprise' | null>(null);
-
-  // Free plan locks all paid skills behind UpgradeScreen. Team Chat is
-  // available but TeamPanel itself disables member-add for free users.
-  const isFree = !subscription || subscription.plan === 'free';
-
-  // 1. Initial Handshake Timeout
-  //    If the session request hangs (common in native WebView when the backend
-  //    is unreachable or CORS-blocked), flip `timedOut` after 7s so the user
-  //    can retry instead of staring at the splash forever.
-  const [forceUnlocked, setForceUnlocked] = useState(false);
-  useEffect(() => {
-    if (!loading) return;
-    const timer = setTimeout(() => {
-      setTimedOut(true);
-      // Hard-release the splash so the Auth screen renders even if the
-      // useSession hook is stuck in a pending state.
-      setForceUnlocked(true);
-    }, 7000);
-    return () => clearTimeout(timer);
-  }, [loading]);
-
-  // 2. Profile Sync Logic - FIXES THE LOOP
-  useEffect(() => {
-    if (session?.user) {
-      const uid = session.user.id;
-      // Better-Auth may expose the email under `email`, `emailAddress`, or
-      // nested on `user.email`. Fall back to all known shapes so the moderator
-      // detection (which keys off email) works regardless of session version.
-      const u: any = session?.user || {};
-      const email =
-        u.email ||
-        u.emailAddress ||
-        u.primaryEmail ||
-        u.user?.email ||
-        (session as any).email ||
-        null;
-      // Registered display name — set during signup via signUp.email({name}).
-      // Fall back to the email handle so existing users (pre-name feature) still
-      // see something sensible.
-      const displayName: string =
-        (typeof u.name === 'string' && u.name.trim()) ||
-        (typeof u.displayName === 'string' && u.displayName.trim()) ||
-        (typeof u.fullName === 'string' && u.fullName.trim()) ||
-        (email ? email.split('@')[0] : 'My Business');
-
-      // Push identity into TeamService so sync callers (TeamService._uid,
-      // TeamPanel, Chatbot) always resolve the current user. Also warms
-      // team context + moderator memory so member chats get fresh directives.
-      TeamService.setCurrentIdentity(uid, email);
-      TeamService.refreshAdminCache().catch(() => {});
-      TeamService.getMyTeam(uid).then(ctx => {
-        if (ctx?.team?.id) MemoryService.syncFromTeam(ctx.team.id).catch(() => {});
-      }).catch(() => {});
-
-      const localKey = `britsync_profile_v2_${uid}`;
-      const cached = localStorage.getItem(localKey);
-      
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          setProfile(new BusinessProfile(parsed));
-          setOnboarded(true);
-        } catch { /* ignore */ }
-      }
-
-      // Auto-profile: no onboarding form. If the user has saved profile data,
-      // load it; otherwise auto-create a minimal blank profile derived from
-      // their email so dependent code (Finance, Team, memory) keeps working.
-      // Users can edit business details from the Profile tab when they want
-      // personalized AI replies.
-      ProfileService.getLatestProfile(uid).then(existingProfile => {
-        if (existingProfile && existingProfile.businessName && existingProfile.businessName !== 'BritSync Partner') {
-          localStorage.setItem(localKey, JSON.stringify(existingProfile));
-          setProfile(existingProfile);
-        } else {
-          const blank = new BusinessProfile({
-            businessName: displayName,
-            industry: '',
-            audience: '',
-            revenueGoal: '',
-            userId: uid,
-          });
-          localStorage.setItem(localKey, JSON.stringify(blank));
-          setProfile(blank);
-          // Best-effort persist so Finance / Team queries resolve.
-          ProfileService.saveProfile(blank, uid).catch(() => {});
-        }
-        setOnboarded(true);
-      }).catch((err) => {
-        console.error("Profile Fetch Error:", err);
-        // Even on failure, keep the user out of the onboarding form.
-        const blank = new BusinessProfile({
-          businessName: displayName,
-          userId: uid,
-        });
-        setProfile(blank);
-        setOnboarded(true);
-      });
-    } else if (!loading) {
-      setOnboarded(null);
-      setApproval(null);
-    }
-  }, [session, loading]);
-
-  // Approval gate: probe once per session, then poll every 10s for auto-unlock
-  useEffect(() => {
-    if (!session?.user?.id) { setApproval(null); return; }
-    let cancelled = false;
-    setApproval(null); // reset on session change
-    const check = async () => {
-      try {
-        const status = await getMyApprovalStatus();
-        // 'no_session' means auth cookie didn't reach backend; treat as approved
-        // to avoid blocking valid users on transient network issues.
-        if (!cancelled) setApproval(status === 'no_session' ? 'approved' : status);
-      } catch {
-        if (!cancelled) setApproval('approved');
-      }
-    };
-    check();
-    const interval = setInterval(check, 10000);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, [session?.user?.id]);
-
-  // Subscription probe: fetch plan, storage, billing info
-  useEffect(() => {
-    if (!session?.user?.id) { setSubscription(null); return; }
-    let cancelled = false;
-    getSubscriptionStatus().then(s => {
-      if (!cancelled) setSubscription(s || null);
-    }).catch(() => { if (!cancelled) setSubscription(null); });
-    return () => { cancelled = true; };
-  }, [session?.user?.id]);
+  const [timedOut, setTimedOut] = useState(false);
 
   const handleSignOut = async () => {
-    if (session?.user?.id) {
-       localStorage.removeItem(`britsync_profile_v2_${session.user.id}`);
-    }
-    TeamService.setCurrentIdentity(null, null);
     await signOut();
     setProfile(null);
-    setOnboarded(false);
-    setSubscription(null);
-    // NOTE: do NOT remove britc_chat_sessions / britc_active_session / britsee_active_session.
-    // Chat history lives in Supabase keyed by session_id; wiping these keys orphans the rows
-    // and the user sees an empty sidebar after re-login. They are restored by the next user.
-    window.location.reload();
+    setApproval(null);
+    setActiveTab('assistant');
+    setIsAuthView(false);
+    setAuthIntent(null);
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => { if (isPending) setTimedOut(true); }, 10000);
+    return () => clearTimeout(timer);
+  }, [isPending]);
+
+  useEffect(() => {
+    if (session?.user) {
+      const u: any = session.user;
+      const uid = u.id || u.sub;
+      const displayName = u.name || u.email?.split('@')[0] || 'User';
+
+      (async () => {
+        try {
+          const status = await getMyApprovalStatus();
+          if ((status as string) === 'stale') { await checkSessionStale(); window.location.reload(); return; }
+          setApproval(status);
+
+          if (status === 'approved') {
+            const localKey = `britsync_profile_${uid}`;
+            const cached = localStorage.getItem(localKey);
+            if (cached) {
+              const existingProfile = JSON.parse(cached);
+              existingProfile.userId = uid;
+              localStorage.setItem(localKey, JSON.stringify(existingProfile));
+              setProfile(existingProfile);
+            } else {
+              const blank = new BusinessProfile({
+                businessName: displayName,
+                industry: '',
+                audience: '',
+                revenueGoal: '',
+              });
+              blank.userId = uid;
+              localStorage.setItem(localKey, JSON.stringify(blank));
+              setProfile(blank);
+            }
+            const sub = await getSubscriptionStatus();
+            setSubscription(sub);
+          }
+        } catch (err) {
+          console.error('Core Sync Failure:', err);
+        }
+      })();
+    }
+  }, [session]);
+
   const renderView = () => {
+    const p = { profile, subscription, onSignOut: handleSignOut };
     switch (activeTab) {
-      case 'team':
-        return <TeamPanel profile={profile} userId={session?.user?.id || null} plan={subscription?.plan || 'free'} />;
-      case 'finance':
-        return isFree
-          ? <UpgradeScreen feature="Finance dashboard" />
-          : <FinanceDashboard profile={profile} />;
-      case 'news':
-        return <NewsFeed />;
-      case 'profile':
-        return <ProfileView profile={profile} onSignOut={handleSignOut} subscription={subscription} />;
-      case 'admin':
-        const u: any = session?.user || {};
-        const adminEmail = u.email || u.emailAddress || u.primaryEmail || '';
-        return <AdminPanel userEmail={adminEmail} />;
-      case 'assistant':
-      default:
-        return <Chatbot profile={profile} onSignOut={handleSignOut} />;
+      case 'assistant': return <Chatbot profile={profile} onSignOut={handleSignOut} />;
+      case 'finance': return <FinanceDashboard profile={profile} />;
+      case 'intelligence': return <IntelligenceView profile={profile} />;
+      case 'team': return <TeamPanel profile={profile} userId={session?.user?.id} plan={subscription?.plan} />;
+      case 'news': return <NewsFeed />;
+      case 'profile': return <ProfileView {...p} />;
+      case 'admin': return <AdminPanel userEmail={session?.user?.email} />;
+      default: return <Chatbot profile={profile} onSignOut={handleSignOut} />;
     }
   };
 
-  // ─── Render Stages ───
-
-  if (!forceUnlocked && (loading || (session && onboarded === null))) {
+  if (isPending) {
     return (
-      <div className="min-h-screen bg-[#030712] flex items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.1),transparent_70%)]" />
+      <div className="min-h-screen bg-white flex items-center justify-center p-6 relative overflow-hidden font-sans">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.05),transparent_70%)]" />
         <div className="text-center relative z-10 animate-in fade-in duration-1000">
           {!timedOut ? (
             <div className="space-y-8">
               <div className="relative w-24 h-24 mx-auto">
-                <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full animate-pulse" />
-                <div className="animate-spin rounded-full h-24 w-24 border-t-2 border-indigo-500 border-r-2 border-r-transparent relative z-10 shadow-[0_0_30px_rgba(99,102,241,0.3)]"></div>
+                <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full animate-pulse" />
+                <div className="w-24 h-24 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin shadow-xl relative z-10" />
               </div>
               <div className="space-y-2">
-                <p className="grad-text text-lg font-black tracking-widest uppercase">BRITSYNC</p>
-                <p className="text-slate-500 font-bold text-[10px] tracking-[0.4em] uppercase animate-pulse">Syncing Neural Net</p>
+                <p className="grad-text text-xl font-black tracking-[0.2em] uppercase">BRITSYNC</p>
+                <p className="text-slate-400 font-bold text-[10px] tracking-[0.4em] uppercase animate-pulse">Establishing Secure Uplink</p>
               </div>
             </div>
           ) : (
-            <div className="glass-card border-rose-500/20 p-10 max-w-md shadow-2xl">
-              <div className="w-16 h-16 bg-rose-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 text-rose-400 border border-rose-500/20">
-                 <Bot size={32} />
+            <div className="bg-white border-2 border-red-100 p-10 sm:p-12 max-w-md rounded-[40px] shadow-2xl animate-in zoom-in-95">
+              <div className="w-20 h-20 bg-red-50 border border-red-100 rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-red-600 shadow-sm">
+                 <Bot size={40} />
               </div>
-              <h2 className="text-white font-bold text-2xl mb-2">Connection Interrupted</h2>
-              <p className="text-slate-400 text-sm mb-8 leading-relaxed">The BritSync engine couldn't establish a handshake with the backend server. Please verify your connection.</p>
+              <h2 className="text-slate-900 font-black text-2xl tracking-tight mb-3">Connection Timeout</h2>
+              <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed px-4">The core engine is failing to handshake with global services. Please verify your network vector.</p>
               <button 
                 onClick={() => window.location.reload()}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/20 active:scale-95"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-blue-500/20 active:scale-95"
               >
-                Attempt Force-Sync
+                Force Re-Sync
               </button>
             </div>
           )}
@@ -303,17 +207,16 @@ function App() {
     );
   }
 
-  // Approval check in progress — block with spinner to prevent flicker/login loop
   if (approval === null) {
     return (
-      <div className="min-h-screen bg-[#030712] flex items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.1),transparent_70%)]" />
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden font-sans">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.03),transparent_70%)]" />
         <div className="text-center relative z-10 animate-in fade-in duration-1000">
-          <div className="relative w-24 h-24 mx-auto">
-            <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full animate-pulse" />
-            <div className="animate-spin rounded-full h-24 w-24 border-t-2 border-indigo-500 border-r-2 border-r-transparent relative z-10 shadow-[0_0_30px_rgba(99,102,241,0.3)]"></div>
+          <div className="relative w-20 h-20 mx-auto">
+            <div className="absolute inset-0 bg-blue-500/10 blur-3xl rounded-full animate-pulse" />
+            <div className="w-20 h-20 border-4 border-white border-t-blue-600 rounded-full animate-spin shadow-lg relative z-10" />
           </div>
-          <p className="text-slate-500 font-bold text-[10px] tracking-[0.4em] uppercase mt-8 animate-pulse">Checking Access...</p>
+          <p className="text-slate-400 font-black text-[10px] tracking-[0.3em] uppercase mt-8 animate-pulse">Verifying Credentials...</p>
         </div>
       </div>
     );
@@ -329,7 +232,6 @@ function App() {
     const email = u.email || u.emailAddress || u.primaryEmail || '';
     return <RejectedScreen email={email} onSignOut={handleSignOut} />;
   }
-  // Onboarding form removed — new users auto-get a blank profile and land in Chat.
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab} onSignOut={handleSignOut} profile={profile} subscription={subscription}>
@@ -345,5 +247,3 @@ function App() {
 }
 
 export default App;
-
-

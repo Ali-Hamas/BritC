@@ -1,6 +1,6 @@
 import React from 'react';
 import Papa from 'papaparse';
-import { X, Upload, FileSpreadsheet, Loader2, Sparkles } from 'lucide-react';
+import { X, Upload, FileSpreadsheet, Loader2, Sparkles, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { FinanceService, REVENUE_CATEGORIES, EXPENSE_CATEGORIES } from '../../lib/finance';
 import type { NewEntryInput } from '../../lib/finance';
 
@@ -56,7 +56,6 @@ function normaliseRow(raw: Record<string, string>, idx: number): ParsedRow {
 
   const allowed = entry.type === 'revenue' ? REVENUE_CATEGORIES : EXPENSE_CATEGORIES;
   if (!allowed.includes(entry.category)) {
-    // Accept anything, but normalise unknown categories to the generic "Other".
     entry.category = entry.type === 'revenue' ? 'Other Revenue' : 'Other Expense';
   }
   return { entry };
@@ -124,30 +123,39 @@ export const CsvImport: React.FC<CsvImportProps> = ({ userId, onClose, onImporte
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="w-full max-w-3xl bg-[#0a0b14] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <FileSpreadsheet className="text-indigo-400" size={18} />
-            <h3 className="text-base sm:text-lg font-bold text-white">Import CSV</h3>
+    <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+        <div className="flex items-center justify-between px-6 py-6 border-b border-slate-100 bg-white/80 backdrop-blur-md z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+              <FileSpreadsheet size={20} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Bulk Import Ledger</h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Deploy data via CSV handshake</p>
+            </div>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-white">
-            <X size={18} />
+          <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all">
+            <X size={24} />
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto">
-          <div className="text-xs text-slate-400">
-            Columns: <code className="text-indigo-300">date</code> (YYYY-MM-DD),{' '}
-            <code className="text-indigo-300">type</code> (revenue|expense),{' '}
-            <code className="text-indigo-300">category</code>,{' '}
-            <code className="text-indigo-300">amount</code>,{' '}
-            <code className="text-indigo-300">note</code> (optional). Max {MAX_ROWS} rows.
+        <div className="p-6 sm:p-10 space-y-6 overflow-y-auto bg-slate-50/30">
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
+            <AlertTriangle size={18} className="text-blue-600 mt-0.5 shrink-0" />
+            <div className="text-[10px] text-blue-800 font-bold leading-relaxed uppercase tracking-tight">
+              Schema Protocol: <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-black">date</code> (YYYY-MM-DD),{' '}
+              <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-black">type</code> (revenue|expense),{' '}
+              <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-black">category</code>,{' '}
+              <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-black">amount</code>,{' '}
+              <code className="bg-white px-1.5 py-0.5 rounded border border-blue-200 font-black">note</code>. Capped at {MAX_ROWS} rows.
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2">
-            <label className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-dashed border-white/10 text-sm text-slate-300 hover:bg-white/10 cursor-pointer">
-              <Upload size={14} /> Upload .csv file
+          <div className="flex flex-col sm:flex-row gap-4">
+            <label className="flex-1 flex flex-col items-center justify-center gap-2 py-8 rounded-[24px] bg-white border-2 border-dashed border-slate-200 text-slate-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-all shadow-sm group">
+              <Upload size={24} className="group-hover:-translate-y-1 transition-transform" />
+              <span className="text-xs font-black uppercase tracking-widest">Select .csv Unit</span>
               <input
                 type="file"
                 accept=".csv,text/csv"
@@ -161,81 +169,90 @@ export const CsvImport: React.FC<CsvImportProps> = ({ userId, onClose, onImporte
             <button
               type="button"
               onClick={loadSample}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm hover:bg-indigo-500/20"
+              className="sm:w-64 flex flex-col items-center justify-center gap-2 py-8 rounded-[24px] bg-orange-50 border border-orange-100 text-orange-600 hover:bg-orange-100 transition-all shadow-sm active:scale-95"
             >
-              <Sparkles size={14} /> Try sample data
+              <Sparkles size={24} />
+              <span className="text-xs font-black uppercase tracking-widest">Simulate with Sample</span>
             </button>
           </div>
 
-          <textarea
-            value={csvText}
-            onChange={e => {
-              setCsvText(e.target.value);
-              parse(e.target.value);
-            }}
-            placeholder="…or paste CSV here"
-            className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-mono text-slate-200 outline-none focus:border-indigo-500/60 resize-none"
-          />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Manual Buffer Paste</label>
+            <textarea
+              value={csvText}
+              onChange={e => {
+                setCsvText(e.target.value);
+                parse(e.target.value);
+              }}
+              placeholder="Post raw CSV contents here..."
+              className="w-full h-40 bg-white border border-slate-200 rounded-2xl p-4 text-xs font-mono text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none shadow-inner placeholder:text-slate-200"
+            />
+          </div>
 
           {error && (
-            <div className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+            <div className="px-5 py-4 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-black uppercase tracking-tight shadow-sm">
               {error}
             </div>
           )}
 
           {parsed && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">
-                  <span className="text-emerald-400 font-bold">{validRows.length}</span> valid ·{' '}
-                  <span className="text-rose-400 font-bold">{invalidRows.length}</span> invalid
-                </span>
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Parse Results</h4>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-[10px] font-black shadow-sm">
+                    <CheckCircle2 size={10} /> {validRows.length} VALID
+                  </span>
+                  {invalidRows.length > 0 && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 border border-red-100 rounded-full text-[10px] font-black shadow-sm">
+                      <X size={10} /> {invalidRows.length} FAULT
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="max-h-48 overflow-auto rounded-xl border border-white/5">
-                <table className="w-full text-xs min-w-[480px]">
-                  <thead className="bg-white/[0.03] text-slate-400 sticky top-0">
+              <div className="max-h-64 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-inner">
+                <table className="w-full text-xs min-w-[600px]">
+                  <thead className="bg-slate-50 text-slate-500 font-black uppercase tracking-widest border-b border-slate-100 sticky top-0 z-10">
                     <tr>
-                      <th className="text-left px-3 py-2">Date</th>
-                      <th className="text-left px-3 py-2">Type</th>
-                      <th className="text-left px-3 py-2">Category</th>
-                      <th className="text-right px-3 py-2">£</th>
-                      <th className="text-left px-3 py-2">Status</th>
+                      <th className="text-left px-4 py-3">Date</th>
+                      <th className="text-left px-4 py-3">Vector</th>
+                      <th className="text-left px-4 py-3">Category</th>
+                      <th className="text-right px-4 py-3">Amount (GBP)</th>
+                      <th className="text-left px-4 py-3">Integrity</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {parsed.slice(0, 50).map((r, i) => (
-                      <tr key={i} className="border-t border-white/5">
-                        <td className="px-3 py-1.5 text-slate-300 font-mono">{r.entry.entry_date || '—'}</td>
-                        <td className="px-3 py-1.5">
-                          <span
-                            className={
-                              r.entry.type === 'revenue' ? 'text-emerald-400' : 'text-rose-400'
-                            }
-                          >
+                  <tbody className="divide-y divide-slate-50">
+                    {parsed.slice(0, 100).map((r, i) => (
+                      <tr key={i} className={`hover:bg-slate-50 transition-colors ${r.error ? 'bg-red-50/30' : ''}`}>
+                        <td className="px-4 py-2.5 text-slate-500 font-mono font-bold tabular-nums">{r.entry.entry_date || '—'}</td>
+                        <td className="px-4 py-2.5 uppercase font-black tracking-tight">
+                          <span className={r.entry.type === 'revenue' ? 'text-blue-600' : 'text-red-600'}>
                             {r.entry.type}
                           </span>
                         </td>
-                        <td className="px-3 py-1.5 text-slate-300">{r.entry.category}</td>
-                        <td className="px-3 py-1.5 text-right text-slate-200 font-mono">
-                          {Number(r.entry.amount || 0).toLocaleString()}
+                        <td className="px-4 py-2.5 text-slate-900 font-bold">{r.entry.category}</td>
+                        <td className="px-4 py-2.5 text-right text-slate-900 font-black font-mono tabular-nums">
+                          £{Number(r.entry.amount || 0).toLocaleString()}
                         </td>
-                        <td className="px-3 py-1.5">
+                        <td className="px-4 py-2.5">
                           {r.error ? (
-                            <span className="text-rose-400" title={r.error}>
-                              ✗ {r.error}
+                            <span className="text-red-600 font-bold flex items-center gap-1" title={r.error}>
+                              <AlertTriangle size={12} /> Fault
                             </span>
                           ) : (
-                            <span className="text-emerald-400">✓ ok</span>
+                            <span className="text-emerald-600 font-bold flex items-center gap-1">
+                              <CheckCircle2 size={12} /> Clear
+                            </span>
                           )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                {parsed.length > 50 && (
-                  <div className="text-center text-[11px] text-slate-500 py-2">
-                    …and {parsed.length - 50} more rows
+                {parsed.length > 100 && (
+                  <div className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest py-4 bg-slate-50 border-t border-slate-100">
+                    … Viewing 100 of {parsed.length} items …
                   </div>
                 )}
               </div>
@@ -243,24 +260,24 @@ export const CsvImport: React.FC<CsvImportProps> = ({ userId, onClose, onImporte
           )}
         </div>
 
-        <div className="flex gap-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-white/5 bg-white/[0.02]">
+        <div className="flex gap-4 px-6 sm:px-8 py-6 border-t border-slate-100 bg-white sticky bottom-0">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 text-sm font-semibold"
+            className="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all active:scale-95"
           >
-            Cancel
+            Abort Mission
           </button>
           <button
             type="button"
             disabled={importing || validRows.length === 0}
             onClick={doImport}
-            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/30 disabled:opacity-60 flex items-center justify-center gap-2"
+            className="flex-1 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2"
           >
             {importing ? (
-              <Loader2 className="animate-spin" size={14} />
+              <Loader2 className="animate-spin" size={16} />
             ) : (
-              `Import ${validRows.length} rows`
+              `Establish ${validRows.length} Ledger Vectors`
             )}
           </button>
         </div>

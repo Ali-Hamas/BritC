@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Britsync Companion</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        width: 320px;
+        padding: 18px;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+        background: #0b0d1f;
+        color: #e2e8f0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1, #d946ef);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        font-size: 18px;
+      }
+      h1 { font-size: 14px; margin: 0; font-weight: 700; letter-spacing: 0.02em; }
+      p.tag { font-size: 11px; margin: 2px 0 0; color: #94a3b8; }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        border-radius: 10px;
+        font-size: 12px;
+        color: #34d399;
+        margin-bottom: 12px;
+      }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 6px #34d399; }
+      .row {
+        font-size: 11px;
+        color: #94a3b8;
+        padding: 8px 0;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        justify-content: space-between;
+      }
+      .open {
+        margin-top: 14px;
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #6366f1, #d946ef);
+        color: white;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .open:hover { opacity: 0.9; }
+    </style>
+  </head>
+  <body>
+    <div class="brand">
+      <div class="logo">B</div>
+      <div>
+        <h1>Britsync Companion</h1>
+        <p class="tag">Browser automation for Britsync AI</p>
+      </div>
+    </div>
+
+    <div class="status">
+      <span class="dot"></span>
+      <span>Connected · Ready</span>
+    </div>
+
+    <div class="row"><span>Version</span><span id="version">0.1.0</span></div>
+    <div class="row"><span>Status</span><span>Standby</span></div>
+
+    <a class="open" href="https://britsyncai.com" target="_blank" rel="noopener">Open Britsync AI</a>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

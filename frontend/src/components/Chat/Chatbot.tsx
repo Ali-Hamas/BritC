@@ -15,7 +15,6 @@ import type { FileAttachment } from '../../lib/fileHandling';
 import { ChatHistoryService } from '../../lib/chatHistory';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TeamService } from '../../lib/team';
-import { ActivityService } from '../../lib/activity';
 import { PinEntryModal } from './PinEntryModal';
 import { getApiUrl } from '../../lib/api-config';
 import type { BusinessProfile } from '../../lib/profiles';
@@ -83,52 +82,36 @@ const generateTitle = (firstUserMessage: string): string => {
 const SESSIONS_KEY = 'britc_chat_sessions';
 const ACTIVE_SESSION_KEY = 'britc_active_session';
 
-// Limits for localStorage to avoid QuotaExceededError
-const MAX_LOCAL_SESSIONS = 15; // Reduced from 50
-const MAX_MSG_CONTENT_LOCAL = 50000; // Truncate only extreme messages — AI code responses can be ~10-20KB
-const MAX_ATTACHMENT_SIZE_LOCAL = 500; // Truncate large attachment text in local storage
-const MAX_MESSAGES_PER_SESSION = 25; // Limit messages per session in local storage
+const MAX_LOCAL_SESSIONS = 15;
+const MAX_MSG_CONTENT_LOCAL = 50000;
+const MAX_ATTACHMENT_SIZE_LOCAL = 500;
+const MAX_MESSAGES_PER_SESSION = 25;
 
-/**
- * Sanitizes sessions for local storage by removing/truncating large data
- * (like full file content or base64 images) that quickly fill up the 5MB quota.
- */
 const sanitizeSessions = (sessions: ChatSession[]): ChatSession[] => {
-  // 1. Limit total number of sessions
   const limitedSessions = sessions.slice(0, MAX_LOCAL_SESSIONS);
-
   return limitedSessions.map(session => {
-    // 2. Limit number of messages per session to keep fresh history only
     const limitedMessages = session.messages.slice(-MAX_MESSAGES_PER_SESSION);
-
     return {
       ...session,
       messages: limitedMessages.map(msg => {
         const sanitized = { ...msg };
-        
-        // 3. Truncate extremely long message content
         if (sanitized.content && sanitized.content.length > MAX_MSG_CONTENT_LOCAL) {
           sanitized.content = sanitized.content.substring(0, MAX_MSG_CONTENT_LOCAL) + '... [truncated]';
         }
-
-        // 4. Strip large attachment data and ALWAYS remove base64 previews from local storage
         if (sanitized.attachments) {
           sanitized.attachments = sanitized.attachments.map(attr => ({
             ...attr,
             content: (attr.content && attr.content.length > MAX_ATTACHMENT_SIZE_LOCAL) 
               ? attr.content.substring(0, MAX_ATTACHMENT_SIZE_LOCAL) + '... [truncated]' 
               : attr.content,
-            previewUrl: undefined // CRITICAL: previewUrl usually contains huge base64 strings
+            previewUrl: undefined
           }));
         }
-
-        // 5. Remove large result data like screenshots from browser tools
         if (sanitized.actionResult && sanitized.actionResult.data) {
           const newData = { ...sanitized.actionResult.data };
-          if (newData.screenshot) delete newData.screenshot; // screenshots are huge
+          if (newData.screenshot) delete newData.screenshot;
           sanitized.actionResult = { ...sanitized.actionResult, data: newData };
         }
-
         return sanitized;
       })
     };
@@ -154,21 +137,13 @@ const saveSessions = (sessions: ChatSession[]) => {
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(sanitized));
   } catch (err: any) {
     if (err.name === 'QuotaExceededError' || err.message?.toLowerCase().includes('quota')) {
-      console.warn('BritC: LocalStorage quota exceeded. Emergency pruning...');
-      
-      // If we failed after sanitization, we're still too big. 
-      // Try clearing half the sessions and retrying.
       if (sessions.length > 2) {
-        const emergencyPruned = sessions.slice(0, Math.floor(sessions.length / 2));
-        saveSessions(emergencyPruned);
+        saveSessions(sessions.slice(0, Math.floor(sessions.length / 2)));
       } else if (sessions.length > 1) {
         saveSessions([sessions[0]]);
       } else {
-        console.error('BritC: Storage full even with 1 session. Clearing all to recover.');
         localStorage.removeItem(SESSIONS_KEY);
       }
-    } else {
-      console.error('BritC: Failed to save sessions:', err);
     }
   }
 };
@@ -176,37 +151,16 @@ const saveSessions = (sessions: ChatSession[]) => {
 // ─── History Sidebar ──────────────────────────────────────────────────────────
 
 const HistorySidebar = ({
-  sessions,
-  activeSessionId,
-  onSelectSession,
-  onNewChat,
-  onDeleteSession,
-  collapsed,
-  onToggle,
-  backendStatus,
-  onJoinTeamChat,
-  isMobile,
-  onCloseMobile,
-}: {
-  sessions: ChatSession[];
-  activeSessionId: string;
-  onSelectSession: (id: string) => void;
-  onNewChat: () => void;
-  onDeleteSession: (id: string) => void;
-  collapsed: boolean;
-  onToggle: () => void;
-  backendStatus: 'online' | 'offline' | 'checking';
-  onJoinTeamChat: () => void;
-  isMobile?: boolean;
-  onCloseMobile?: () => void;
-}) => {
+  sessions, activeSessionId, onSelectSession, onNewChat, onDeleteSession,
+  collapsed, onToggle, backendStatus, onJoinTeamChat, isMobile, onCloseMobile,
+}: any) => {
   const [showTeamOptions, setShowTeamOptions] = useState(false);
   const groupedSessions = () => {
     const today: ChatSession[] = [];
     const yesterday: ChatSession[] = [];
     const older: ChatSession[] = [];
     const now = new Date();
-    sessions.forEach(s => {
+    sessions.forEach((s: any) => {
       const diff = (now.getTime() - s.createdAt.getTime()) / (1000 * 60 * 60 * 24);
       if (diff < 1) today.push(s);
       else if (diff < 2) yesterday.push(s);
@@ -221,41 +175,40 @@ const HistorySidebar = ({
     if (items.length === 0) return null;
     return (
       <div className="mb-3">
-        <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest px-3 mb-1">{label}</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-1">{label}</p>
         {items.map(s => (
           <div
             key={s.id}
             onClick={() => onSelectSession(s.id)}
             className={`group flex items-start gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all duration-150 mb-1 ${
               s.id === activeSessionId
-                ? 'bg-white/10 text-white'
-                : 'text-white/60 hover:bg-white/5 hover:text-white'
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            <MessageSquare size={13} className="mt-0.5 flex-shrink-0 opacity-60" />
+            <MessageSquare size={13} className="mt-0.5 flex-shrink-0 text-slate-400 group-hover:text-blue-500" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <p className="text-xs font-medium truncate">{s.title || 'New Chat'}</p>
+                <p className="text-xs font-semibold truncate">{s.title || 'New Chat'}</p>
                 {s.isTeam && (
                   <div className="flex items-center gap-1">
-                    <span className="flex items-center gap-0.5 px-1 py-0.25 rounded-[4px] bg-indigo-500/20 text-indigo-400 text-[8px] font-bold uppercase tracking-wider border border-indigo-500/20">
-                      <Users size={8} />
-                      Team
+                    <span className="flex items-center gap-0.5 px-1 py-0.25 rounded-[4px] bg-blue-100 text-blue-600 text-[8px] font-bold uppercase tracking-wider border border-blue-200">
+                      <Users size={8} /> Team
                     </span>
                     {s.pin && (
-                      <span className="font-mono text-[8px] text-white/50 bg-white/5 px-1 rounded border border-white/10" title="Team PIN">
+                      <span className="font-mono text-[8px] text-slate-500 bg-slate-100 px-1 rounded border border-slate-200" title="Team PIN">
                         #{s.pin}
                       </span>
                     )}
                   </div>
                 )}
               </div>
-              <p className="text-[10px] text-white/40 truncate">{s.preview}</p>
+              <p className="text-[10px] text-slate-500 truncate">{s.preview}</p>
             </div>
             <button
               onClick={e => { e.stopPropagation(); onDeleteSession(s.id); }}
               title="Delete chat"
-              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all flex-shrink-0"
+              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition-all flex-shrink-0"
             >
               <Trash2 size={12} />
             </button>
@@ -265,16 +218,15 @@ const HistorySidebar = ({
     );
   };
 
-  // Mobile view when sidebar is opened from hamburger menu
   if (isMobile) {
     return (
-      <div className="fixed inset-y-0 left-0 w-[80vw] max-w-[20rem] sm:w-72 md:w-80 bg-[#030712] border-r border-white/5 flex flex-col z-50 transform transition-transform duration-300 shadow-2xl">
-        <div className="flex items-center justify-between px-3 py-4 border-b border-white/5">
+      <div className="fixed inset-y-0 left-0 w-[80vw] max-w-[20rem] sm:w-72 md:w-80 bg-white border-r border-slate-200 flex flex-col z-50 transform transition-transform duration-300 shadow-2xl">
+        <div className="flex items-center justify-between px-3 py-4 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-2">
-            <Bot size={20} className="text-indigo-400" />
-            <span className="text-base font-semibold text-white">History</span>
+            <Bot size={20} className="text-blue-600" />
+            <span className="text-base font-black text-slate-900">History</span>
           </div>
-          <button onClick={onCloseMobile} className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all">
+          <button onClick={onCloseMobile} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-all">
             <X size={20} />
           </button>
         </div>
@@ -282,25 +234,23 @@ const HistorySidebar = ({
         <div className="px-3 py-3 space-y-2">
           <button
             onClick={onNewChat}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-sm font-medium"
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-700 hover:bg-blue-100 transition-all text-sm font-bold"
           >
-            <Plus size={16} />
-            New Chat
+            <Plus size={16} /> New Chat
           </button>
           
           <button
             onClick={onJoinTeamChat}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 border border-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all text-sm font-medium"
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-bold"
           >
-            <Users size={16} />
-            Join Team
+            <Users size={16} /> Join Team
           </button>
         </div>
         
         <div className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin">
           {sessions.length === 0 ? (
-            <div className="text-center text-white/20 text-xs px-4 py-8">
-              <Clock size={24} className="mx-auto mb-2 opacity-40" />
+            <div className="text-center text-slate-400 text-xs px-4 py-8 font-medium">
+              <Clock size={24} className="mx-auto mb-2 text-slate-300" />
               No chats yet
             </div>
           ) : (
@@ -315,21 +265,20 @@ const HistorySidebar = ({
     );
   }
   
-  // Collapsed view for desktop
   if (collapsed) {
     return (
-      <div className="hidden md:flex w-10 lg:w-12 flex-col items-center py-3 lg:py-4 gap-2 lg:gap-3 border-r border-white/5 bg-black/10">
-        <button onClick={onToggle} className="p-1.5 md:p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all" title="Expand history">
+      <div className="hidden md:flex w-10 lg:w-12 flex-col items-center py-3 lg:py-4 gap-2 lg:gap-3 border-r border-slate-200 bg-slate-50">
+        <button onClick={onToggle} className="p-1.5 md:p-2 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-all" title="Expand history">
           <ChevronRight size={16} />
         </button>
-        <button onClick={onNewChat} className="p-1.5 md:p-2 rounded-lg hover:bg-indigo-500/20 text-indigo-400 transition-all" title="New chat">
+        <button onClick={onNewChat} className="p-1.5 md:p-2 rounded-lg hover:bg-blue-100 text-blue-600 transition-all" title="New chat">
           <Plus size={16} />
         </button>
-        {sessions.slice(0, 4).map(s => (
+        {sessions.slice(0, 4).map((s: any) => (
           <button
             key={s.id}
             onClick={() => onSelectSession(s.id)}
-            className={`p-1.5 md:p-2 rounded-lg transition-all ${s.id === activeSessionId ? 'bg-white/15 text-white' : 'text-white/30 hover:bg-white/5 hover:text-white'}`}
+            className={`p-1.5 md:p-2 rounded-lg transition-all ${s.id === activeSessionId ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-900'}`}
             title={s.title}
           >
             <MessageSquare size={14} />
@@ -340,34 +289,32 @@ const HistorySidebar = ({
   }
 
   return (
-    <div className="hidden md:flex w-48 lg:w-60 flex-col border-r border-white/5 bg-black/20">
-      {/* Header */}
-      <div className="flex items-center justify-between px-2 md:px-3 py-2 md:py-3 border-b border-white/5">
+    <div className="hidden md:flex w-48 lg:w-60 flex-col border-r border-slate-200 bg-slate-50">
+      <div className="flex items-center justify-between px-2 md:px-3 py-2 md:py-3 border-b border-slate-200 bg-white/50 backdrop-blur">
         <div className="flex items-center gap-2">
-          <Bot size={16} className="text-indigo-400" />
+          <Bot size={16} className="text-blue-600" />
           <div className="flex flex-col">
-            <span className="text-xs md:text-sm font-semibold text-white">Britsync AI</span>
+            <span className="text-xs md:text-sm font-black text-slate-900">Britsync AI</span>
             <div className="flex items-center gap-1">
               <div className={`w-1.5 h-1.5 rounded-full ${
                 backendStatus === 'online' ? 'bg-emerald-500 animate-pulse' : 
-                backendStatus === 'offline' ? 'bg-rose-500' : 'bg-amber-500'
+                backendStatus === 'offline' ? 'bg-red-500' : 'bg-orange-500'
               }`} />
-              <span className="text-[9px] md:text-[10px] text-white/40 font-medium lowercase truncate">
+              <span className="text-[9px] md:text-[10px] text-slate-500 font-bold lowercase truncate">
                 {backendStatus === 'online' ? 'Ready' : backendStatus === 'offline' ? 'Offline' : 'Syncing...'}
               </span>
             </div>
           </div>
         </div>
-        <button onClick={onToggle} className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white transition-all">
+        <button onClick={onToggle} className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-900 transition-all">
           <ChevronLeft size={14} />
         </button>
       </div>
 
-      {/* Actions */}
-      <div className="px-2 md:px-3 py-2 space-y-1.5 md:space-y-2">
+      <div className="px-2 md:px-3 py-3 space-y-1.5 md:space-y-2">
         <button
           onClick={onNewChat}
-          className="w-full flex items-center gap-2 px-2 md:px-3 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-xs md:text-sm font-medium"
+          className="w-full flex items-center gap-2 px-2 md:px-3 py-2 rounded-xl bg-blue-100 border border-blue-200 text-blue-700 hover:bg-blue-200 transition-all text-xs md:text-sm font-bold shadow-sm"
         >
           <Plus size={14} />
           <span className="hidden md:inline">New Chat</span>
@@ -377,15 +324,14 @@ const HistorySidebar = ({
         <div className="relative">
           <button
             onClick={() => setShowTeamOptions(!showTeamOptions)}
-            className={`w-full flex items-center justify-between px-2 md:px-3 py-2 rounded-xl transition-all text-xs md:text-sm font-medium ${
+            className={`w-full flex items-center justify-between px-2 md:px-3 py-2 rounded-xl transition-all text-xs md:text-sm font-bold ${
               showTeamOptions 
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' 
-                : 'bg-white/5 border border-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm' 
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-sm'
             }`}
           >
             <div className="flex items-center gap-2">
-              <Users size={14} />
-              Team
+              <Users size={14} /> Team
             </div>
             <ChevronDown size={12} className={`transition-transform duration-200 ${showTeamOptions ? 'rotate-180' : ''}`} />
           </button>
@@ -396,13 +342,13 @@ const HistorySidebar = ({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full left-0 w-full mt-1 p-1 bg-[#1a1a24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                className="absolute top-full left-0 w-full mt-1 p-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden"
               >
                 <button
                   onClick={() => { onJoinTeamChat(); setShowTeamOptions(false); }}
-                  className="w-full flex items-center gap-2 px-2 md:px-3 py-2 rounded-lg text-xs text-white/70 hover:bg-white/5 hover:text-white transition-all text-left"
+                  className="w-full flex items-center gap-2 px-2 md:px-3 py-2 rounded-lg text-xs text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all text-left font-medium"
                 >
-                  <Lock size={12} className="text-indigo-400" />
+                  <Lock size={12} className="text-blue-500" />
                   Join Team with PIN
                 </button>
               </motion.div>
@@ -411,11 +357,10 @@ const HistorySidebar = ({
         </div>
       </div>
 
-      {/* Sessions */}
       <div className="flex-1 overflow-y-auto px-1 py-1 scrollbar-thin">
         {sessions.length === 0 ? (
-          <div className="text-center text-white/20 text-[10px] md:text-xs px-2 md:px-4 py-4 md:py-6">
-            <Clock size={20} className="mx-auto mb-2 opacity-40" />
+          <div className="text-center text-slate-400 text-[10px] md:text-xs px-2 md:px-4 py-4 md:py-6 font-medium">
+            <Clock size={20} className="mx-auto mb-2 text-slate-300" />
             No chats yet
           </div>
         ) : (
@@ -439,12 +384,11 @@ const BrowserResultCard = ({ data }: { data: Record<string, any>; type?: string 
 
   return (
     <div className="mt-2 space-y-2">
-      {/* Screenshot toggle */}
       {screenshot && (
         <div className="space-y-1">
           <button
             onClick={() => setShowScreenshot(!showScreenshot)}
-            className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-500 font-bold transition-colors"
           >
             <ExternalLink size={11} />
             {showScreenshot ? 'Hide screenshot' : 'Show screenshot'}
@@ -455,13 +399,12 @@ const BrowserResultCard = ({ data }: { data: Record<string, any>; type?: string 
               animate={{ opacity: 1, height: 'auto' }}
               src={screenshot}
               alt="Browser screenshot"
-              className="w-full rounded-xl border border-white/10 max-h-64 object-cover object-top"
+              className="w-full rounded-xl border border-slate-200 max-h-64 object-cover object-top shadow-sm"
             />
           )}
         </div>
       )}
 
-      {/* Result items */}
       {results.length > 0 && (
         <div className="space-y-1.5">
           {results.map((item: any, i: number) => (
@@ -470,19 +413,19 @@ const BrowserResultCard = ({ data }: { data: Record<string, any>; type?: string 
               href={item.url || item.href || '#'}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl px-3 py-2 transition-all group block"
+              className="flex items-start gap-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 transition-all group block shadow-sm"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-white/90 group-hover:text-white truncate">
+                <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
                   {item.title || item.name || item.company || 'No title'}
                 </p>
                 {(item.snippet || item.channel || item.company || item.location) && (
-                  <p className="text-[10px] text-white/40 truncate mt-0.5">
+                  <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
                     {item.snippet || [item.company, item.location].filter(Boolean).join(' · ') || item.channel}
                   </p>
                 )}
               </div>
-              <ExternalLink size={10} className="text-white/20 group-hover:text-indigo-400 flex-shrink-0 mt-0.5 transition-colors" />
+              <ExternalLink size={10} className="text-slate-300 group-hover:text-blue-500 flex-shrink-0 mt-0.5 transition-colors" />
             </a>
           ))}
         </div>
@@ -495,37 +438,35 @@ const BrowserResultCard = ({ data }: { data: Record<string, any>; type?: string 
 
 const ActionResultCard = ({ result }: { result: ActionResult }) => {
   const [expanded, setExpanded] = useState(false);
-
   const isBrowserAction = ['browser_search', 'browser_youtube', 'browser_linkedin_jobs', 'browser_open'].includes(result.type as string);
 
-  const statusColor = (result.status as string) === 'success' ? 'border-emerald-500/30 bg-emerald-500/5' :
-                      (result.status as string) === 'pending'  ? 'border-yellow-500/30 bg-yellow-500/5' :
-                                                     'border-red-500/30 bg-red-500/5';
-  const statusDot   = (result.status as string) === 'success' ? 'bg-emerald-400' :
-                      (result.status as string) === 'pending'  ? 'bg-yellow-400' :
-                                                     'bg-red-400';
+  const statusColor = (result.status as string) === 'success' ? 'border-emerald-200 bg-emerald-50' :
+                      (result.status as string) === 'pending'  ? 'border-orange-200 bg-orange-50' :
+                                                     'border-red-200 bg-red-50';
+  const statusDot   = (result.status as string) === 'success' ? 'bg-emerald-500' :
+                      (result.status as string) === 'pending'  ? 'bg-orange-500' :
+                                                     'bg-red-500';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`mt-3 rounded-2xl border p-4 ${statusColor}`}
+      className={`mt-3 rounded-2xl border p-4 shadow-sm ${statusColor}`}
     >
       <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpanded(!expanded)}>
         <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${statusDot} flex-shrink-0`} />
-          <span className="font-semibold text-white/90 text-sm">{result.title}</span>
+          <span className={`w-2 h-2 rounded-full ${statusDot} flex-shrink-0 shadow-sm`} />
+          <span className="font-bold text-slate-900 text-sm">{result.title}</span>
           {isBrowserAction && (
-            <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-400 text-[9px] font-bold rounded-full border border-indigo-400/20 uppercase tracking-wide">
+            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black rounded-md border border-blue-200 uppercase tracking-wide">
               Browser
             </span>
           )}
         </div>
-        <ChevronRight size={14} className={`text-white/40 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+        <ChevronRight size={14} className={`text-slate-400 transition-transform ${expanded ? 'rotate-90' : ''}`} />
       </div>
-      <p className="text-white/60 text-xs mt-1 ml-4">{result.summary}</p>
+      <p className="text-slate-600 font-medium text-xs mt-1.5 ml-4">{result.summary}</p>
 
-      {/* Auto-expand browser results */}
       {isBrowserAction && result.data && (
         <div className="mt-2 ml-4">
           <BrowserResultCard data={result.data} type={result.type as string} />
@@ -539,20 +480,20 @@ const ActionResultCard = ({ result }: { result: ActionResult }) => {
           className="mt-3 ml-4 space-y-2"
         >
           {(result.type as string) === 'lead_search' && Array.isArray(result.data) && result.data.slice(0, 5).map((lead: any, i: number) => (
-            <div key={i} className="bg-white/5 rounded-xl px-3 py-2 text-xs">
-              <p className="font-medium text-white/90">{lead.name || lead.business_name}</p>
-              {lead.address && <p className="text-white/50">{lead.address}</p>}
-              {lead.phone && <p className="text-emerald-400">{lead.phone}</p>}
+            <div key={i} className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-sm">
+              <p className="font-bold text-slate-900">{lead.name || lead.business_name}</p>
+              {lead.address && <p className="text-slate-500 font-medium">{lead.address}</p>}
+              {lead.phone && <p className="text-blue-600 font-bold mt-0.5">{lead.phone}</p>}
             </div>
           ))}
           {(result.type as string) === 'email_draft' && typeof result.data?.body === 'string' && (
-            <div className="bg-white/5 rounded-xl px-3 py-2 text-xs">
-              <p className="font-semibold text-white/70 mb-1">Subject: {result.data.subject}</p>
-              <p className="text-white/60 whitespace-pre-wrap">{result.data.body}</p>
+            <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-sm">
+              <p className="font-bold text-slate-900 mb-1">Subject: {result.data.subject}</p>
+              <p className="text-slate-600 font-medium whitespace-pre-wrap">{result.data.body}</p>
             </div>
           )}
           {((result.type as string) === 'invoice' || (result.type as string) === 'financial_report') && result.data?.filename && (
-            <button className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 text-xs text-indigo-400 hover:bg-white/10 transition-all">
+            <button className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-blue-600 hover:bg-slate-50 shadow-sm transition-all">
               <ExternalLink size={12} /> Open {result.data.filename}
             </button>
           )}
@@ -562,18 +503,9 @@ const ActionResultCard = ({ result }: { result: ActionResult }) => {
   );
 };
 
-
 // ─── Message Bubble ────────────────────────────────────────────────────────────
 
-const MessageBubble = ({
-  msg,
-  onSpeak,
-  isSpeaking,
-}: {
-  msg: Message;
-  onSpeak?: (id: string, content: string) => void;
-  isSpeaking?: boolean;
-}) => {
+const MessageBubble = ({ msg, onSpeak, isSpeaking }: any) => {
   const isUser = msg.role === 'user';
   const [copied, setCopied] = useState(false);
 
@@ -587,15 +519,11 @@ const MessageBubble = ({
     const parts = text.split(/(\*\*.*?\*\*|`[^`\n]+`|\n)/g);
     return parts.map((part, i) => {
       const k = `${keyPrefix}-${i}`;
-      if (part.startsWith('**') && part.endsWith('**')) return <strong key={k} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
-      if (part.startsWith('`') && part.endsWith('`')) return <code key={k} className="bg-white/10 px-1.5 py-0.5 rounded text-emerald-300 font-mono text-[10px] md:text-[11px]">{part.slice(1, -1)}</code>;
+      if (part.startsWith('**') && part.endsWith('**')) return <strong key={k} className="font-black text-slate-900">{part.slice(2, -2)}</strong>;
+      if (part.startsWith('`') && part.endsWith('`')) return <code key={k} className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-orange-600 font-mono text-[10px] md:text-[11px] font-bold">{part.slice(1, -1)}</code>;
       if (part === '\n') return <br key={k} />;
       return <span key={k}>{part}</span>;
     });
-  };
-
-  const copyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
   };
 
   const renderContent = (text: string) => {
@@ -608,17 +536,14 @@ const MessageBubble = ({
         const lang = blocks[i] || 'code';
         const code = blocks[i + 1] || '';
         out.push(
-          <div key={`c-${i}`} className="my-2 rounded-lg overflow-hidden border border-white/10 bg-black/40">
-            <div className="flex items-center justify-between px-3 py-1.5 bg-white/5 border-b border-white/10">
-              <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{lang}</span>
-              <button
-                onClick={() => copyCode(code)}
-                className="text-[10px] text-slate-400 hover:text-white transition-colors"
-              >
+          <div key={`c-${i}`} className="my-3 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm">
+            <div className="flex items-center justify-between px-3 py-2 bg-slate-100 border-b border-slate-200">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{lang}</span>
+              <button onClick={() => navigator.clipboard.writeText(code)} className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-wider transition-colors">
                 Copy
               </button>
             </div>
-            <pre className="p-3 overflow-x-auto text-[11px] md:text-xs font-mono text-emerald-300 whitespace-pre">
+            <pre className="p-3 overflow-x-auto text-[11px] md:text-xs font-mono font-medium text-slate-800 whitespace-pre">
               <code>{code}</code>
             </pre>
           </div>
@@ -630,82 +555,51 @@ const MessageBubble = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className={`flex gap-2 md:gap-3 group w-full ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
-    >
-      {/* Avatar */}
-      <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-indigo-500' : 'bg-gradient-to-br from-violet-500 to-indigo-600'}`}>
-        {isUser ? <User size={14} className="text-white" /> : <Bot size={14} className="text-white" />}
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className={`flex gap-2 md:gap-3 group w-full ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm ${isUser ? 'bg-blue-600' : 'bg-red-600'}`}>
+        {isUser ? <User size={16} className="text-white" /> : <Bot size={16} className="text-white" />}
       </div>
 
-      {/* Content */}
-      <div className={`max-w-[78%] sm:max-w-[82%] md:max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-0.5 md:gap-1 min-w-0`}>
-        <div className={`relative px-3 py-2 md:px-4 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm leading-relaxed ${
-          isUser
-            ? 'bg-indigo-500 text-white rounded-tr-sm'
-            : 'bg-white/8 border border-white/10 text-white/90 rounded-tl-sm'
+      <div className={`max-w-[85%] md:max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1 min-w-0`}>
+        <div className={`relative px-4 py-3 md:px-5 md:py-4 rounded-2xl text-sm md:text-[15px] leading-relaxed font-medium shadow-sm ${
+          isUser ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
         }`}>
           {renderContent(msg.content)}
 
-          {/* Attachments */}
           {msg.attachments && msg.attachments.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {msg.attachments.map(a => (
-                <div key={a.id} className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2 py-1 text-[10px] md:text-xs">
-                  {a.type.startsWith('image/') ? <Image size={11} className="text-blue-300" /> : <File size={11} className="text-orange-300" />}
-                  <span className="text-white/70 truncate max-w-[80px] md:max-w-[120px]">{a.name}</span>
-                  {a.type.startsWith('image/') && a.previewUrl && (
-                    <img src={a.previewUrl} alt={a.name} className="mt-1.5 w-full max-w-[150px] md:max-w-[200px] rounded-lg" />
-                  )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {msg.attachments.map((a: any) => (
+                <div key={a.id} className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold border shadow-sm ${isUser ? 'bg-blue-700 border-blue-500 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+                  {a.type.startsWith('image/') ? <Image size={12} className={isUser ? 'text-blue-200' : 'text-orange-500'} /> : <File size={12} className={isUser ? 'text-blue-200' : 'text-blue-500'} />}
+                  <span className="truncate max-w-[120px] md:max-w-[200px]">{a.name}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Copy button - always visible on touch devices, hover on desktop */}
-          <button
-            onClick={handleCopy}
-            className={`absolute -top-2 ${isUser ? '-left-6 md:-left-8' : '-right-6 md:-right-8'} opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 md:p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all touch-manipulation`}
-            aria-label="Copy message"
-          >
-            <Copy size={11} />
+          <button onClick={handleCopy} className={`absolute -top-2 ${isUser ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 shadow-sm transition-all`} aria-label="Copy">
+            <Copy size={12} />
           </button>
 
-          {/* Read-aloud button (assistant messages only) */}
           {!isUser && onSpeak && (
-            <button
-              onClick={() => onSpeak(msg.id, msg.content)}
-              className={`absolute -top-2 -right-14 md:-right-16 opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 md:p-1.5 rounded-lg ${
-                isSpeaking
-                  ? 'bg-indigo-500/30 text-indigo-200'
-                  : 'bg-white/10 hover:bg-white/20 text-white/60 hover:text-white'
-              } transition-all touch-manipulation`}
-              aria-label={isSpeaking ? 'Stop reading' : 'Read aloud'}
-              title={isSpeaking ? 'Stop' : 'Read aloud'}
-            >
-              {isSpeaking ? <VolumeX size={11} /> : <Volume2 size={11} />}
+            <button onClick={() => onSpeak(msg.id, msg.content)} className={`absolute -top-2 -right-16 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg border shadow-sm transition-all ${isSpeaking ? 'bg-orange-100 border-orange-200 text-orange-600' : 'bg-white border-slate-200 text-slate-500 hover:text-orange-600'}`}>
+              {isSpeaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
             </button>
           )}
         </div>
 
-        {/* Action Result */}
         {msg.isActionRunning && (
-          <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-xs text-white/50 px-1 md:px-2">
-            <Loader2 size={12} className="animate-spin text-indigo-400" />
-            <span>Executing...</span>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 px-2 mt-1">
+            <Loader2 size={14} className="animate-spin text-blue-500" />
+            <span>Executing action...</span>
           </div>
         )}
         {msg.actionResult && <ActionResultCard result={msg.actionResult} />}
 
-        {/* Timestamp */}
-        <span className="text-[9px] md:text-[10px] text-white/20 px-1">
+        <span className="text-[10px] font-bold text-slate-400 px-2 uppercase tracking-widest mt-0.5">
           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {copied && <span className="ml-2 text-emerald-600">Copied!</span>}
         </span>
-
-        {copied && <span className="text-[9px] md:text-[10px] text-emerald-400 px-1">Copied!</span>}
       </div>
     </motion.div>
   );
@@ -715,22 +609,14 @@ const MessageBubble = ({
 
 export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOut?: () => void }) => {
   const [sessions, setSessions] = useState<ChatSession[]>(loadSessions);
-  const [activeSessionId, setActiveSessionId] = useState<string>(() => {
-    return localStorage.getItem(ACTIVE_SESSION_KEY) || '';
-  });
+  const [activeSessionId, setActiveSessionId] = useState<string>(() => localStorage.getItem(ACTIVE_SESSION_KEY) || '');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinError, setPinError] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  const [confirmModal, setConfirmModal] = useState<{
-    open: boolean;
-    title: string;
-    message: string;
-    confirmLabel: string;
-    onConfirm: () => void;
-  }>({ open: false, title: '', message: '', confirmLabel: 'Delete', onConfirm: () => {} });
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', confirmLabel: 'Delete', onConfirm: () => {} });
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages: Message[] = activeSession?.messages || [];
@@ -742,8 +628,7 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
       const uniqued = uniquifyMessages(newMsgs);
       const firstUser = uniqued.find(m => m.role === 'user');
       return {
-        ...s,
-        messages: uniqued,
+        ...s, messages: uniqued,
         title: firstUser ? generateTitle(firstUser.content) : s.title,
         preview: uniqued[uniqued.length - 1]?.content?.slice(0, 60) || '',
       };
@@ -762,58 +647,39 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
   const inputBeforeListenRef = useRef<string>('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Persist sessions
   useEffect(() => { saveSessions(sessions); }, [sessions]);
   useEffect(() => { localStorage.setItem(ACTIVE_SESSION_KEY, activeSessionId); }, [activeSessionId]);
 
-  // Health check for backend
   useEffect(() => {
     const checkHealth = async () => {
       try {
         const res = await fetch(getApiUrl('/health'));
-        if (res.ok) setBackendStatus('online');
-        else setBackendStatus('offline');
-      } catch {
-        setBackendStatus('offline');
-      }
+        setBackendStatus(res.ok ? 'online' : 'offline');
+      } catch { setBackendStatus('offline'); }
     };
     checkHealth();
-    const interval = setInterval(checkHealth, 30000); // Check every 30s
+    const interval = setInterval(checkHealth, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const createNewSession = useCallback(() => {
     const id = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const newSession: ChatSession = {
-      id,
-      title: 'New Chat',
-      preview: '',
-      createdAt: new Date(),
-      messages: [],
-    };
-    setSessions(prev => [newSession, ...prev]);
+    setSessions(prev => [{ id, title: 'New Chat', preview: '', createdAt: new Date(), messages: [] }, ...prev]);
     setActiveSessionId(id);
     ChatHistoryService.startNewSession(id);
   }, []);
 
-  // Create initial session if none
   useEffect(() => {
-    if (sessions.length === 0) {
-      createNewSession();
-    } else if (!activeSessionId || !sessions.find(s => s.id === activeSessionId)) {
-      setActiveSessionId(sessions[0].id);
-    }
+    if (sessions.length === 0) createNewSession();
+    else if (!activeSessionId || !sessions.find(s => s.id === activeSessionId)) setActiveSessionId(sessions[0].id);
   }, [activeSessionId, createNewSession, sessions]);
 
-  // Show welcome message for empty active session
   useEffect(() => {
     if (activeSessionId && activeSession && activeSession.messages.length === 0) {
       setMessages([{
-        id: 'init_' + activeSessionId,
-        role: 'assistant',
+        id: 'init_' + activeSessionId, role: 'assistant',
         content: activeSession?.isTeam 
           ? `Welcome to your **Team Collaboration Hub**! 👥\n\nThis is a shared session (PIN: **${activeSession.pin}**). Every message you send here is synchronized with your team. How can we work together today?`
           : `Hello! I'm **Britsync AI**. 🚀\n\nI'm here to help you with research, marketing, and business automation. How can I assist you today?`,
@@ -823,53 +689,33 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSessionId]);
 
-  // Auto-scroll
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isLoading]);
 
-  // Reset mode when switching sessions
-  useEffect(() => {
-    setChatMode('default');
-    setShowModeMenu(false);
-  }, [activeSessionId]);
+  useEffect(() => { setChatMode('default'); setShowModeMenu(false); }, [activeSessionId]);
 
   const joinTeamChatByPin = async (pin: string) => {
-    setIsJoining(true);
-    setPinError('');
+    setIsJoining(true); setPinError('');
     try {
       const displayName = window.prompt("Enter your display name for the team:", "Member") || 'Member';
       await TeamService.joinTeamByPin(pin, displayName);
-      
-      const teamCtx = await TeamService.getMyTeam(TeamService._uid()!);
-      const ownerName = teamCtx?.team?.title || 'the owner';
-      
-      alert(`Joined team — your chats are private, guided by ${ownerName}'s strategy.`);
+      alert(`Joined team — your chats are private, guided by the owner's strategy.`);
       setShowPinModal(false);
       createNewSession();
-    } catch (err: any) {
-      setPinError(err.message || 'Invalid PIN or error joining team.');
-    } finally {
-      setIsJoining(false);
-    }
+    } catch (err: any) { setPinError(err.message || 'Invalid PIN or error joining team.'); } 
+    finally { setIsJoining(false); }
   };
 
   const deleteSession = (id: string) => {
     const target = sessions.find(s => s.id === id);
-    const title = target?.title || 'this chat';
     setConfirmModal({
-      open: true,
-      title: `Delete "${title}"?`,
-      message: 'This will permanently remove this chat and all of its messages. This action cannot be undone.',
+      open: true, title: `Delete "${target?.title || 'this chat'}"?`,
+      message: 'This will permanently remove this chat and all of its messages.',
       confirmLabel: 'Delete chat',
       onConfirm: () => {
         setSessions(prev => {
           const remaining = prev.filter(s => s.id !== id);
-          if (id === activeSessionId && remaining.length > 0) {
-            setActiveSessionId(remaining[0].id);
-          } else if (remaining.length === 0) {
-            createNewSession();
-          }
+          if (id === activeSessionId && remaining.length > 0) setActiveSessionId(remaining[0].id);
+          else if (remaining.length === 0) createNewSession();
           return remaining;
         });
         setConfirmModal(c => ({ ...c, open: false }));
@@ -878,34 +724,22 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
   };
 
   const handleFileClick = () => fileInputRef.current?.click();
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+    const files = e.target.files; if (!files) return;
     const newAttachments: FileAttachment[] = [];
     for (let i = 0; i < files.length; i++) {
-      const processed = await FileHandlingService.processFile(files[i]);
-      newAttachments.push(processed);
+      newAttachments.push(await FileHandlingService.processFile(files[i]));
     }
     setAttachments(prev => [...prev, ...newAttachments]);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
-
-  const removeAttachment = (id: string) => {
-    setAttachments(prev => prev.filter(a => a.id !== id));
-  };
+  const removeAttachment = (id: string) => setAttachments(prev => prev.filter(a => a.id !== id));
 
   const handleShareChat = () => {
     if (!activeSessionId) return;
     const shareUrl = `${window.location.origin}/chat/share/${activeSessionId}`;
     navigator.clipboard.writeText(shareUrl);
     alert('Shareable link copied to clipboard!\n\n' + shareUrl);
-    
-    // Log sharing activity
-    const currentUser = TeamService.getCurrentMember();
-    if (currentUser) {
-      ActivityService.logActivity(currentUser.name, 'Shared Chat', `Generated a shareable link for: ${activeSession?.title || 'New Chat'}`, 'browser');
-    }
   };
 
   const handleSend = async (text?: string) => {
@@ -913,49 +747,27 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
     if (!rawText || isLoading) return;
 
     const activeMode = CHAT_MODES.find(m => m.id === chatMode);
-    const messageText = activeMode && activeMode.prefix
-      ? `${activeMode.prefix}${rawText}`
-      : rawText;
+    const messageText = activeMode && activeMode.prefix ? `${activeMode.prefix}${rawText}` : rawText;
 
     let fullContent = messageText;
     if (attachments.length > 0) {
-      const fileContext = attachments
-        .filter(a => a.content)
-        .map(a => `[Attached File: ${a.name}]\n${a.content}`)
-        .join('\n\n');
+      const fileContext = attachments.filter(a => a.content).map(a => `[Attached File: ${a.name}]\n${a.content}`).join('\n\n');
       if (fileContext) fullContent = `${messageText}\n\nContext from files:\n${fileContext}`;
     }
 
-    const userMsg: Message = {
-      id: `u_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      role: 'user',
-      content: fullContent,
-      attachments: attachments.length > 0 ? attachments : undefined,
-      timestamp: new Date()
-    };
+    const userMsg: Message = { id: `u_${Date.now()}`, role: 'user', content: fullContent, attachments: attachments.length > 0 ? attachments : undefined, timestamp: new Date() };
 
     setMessages(prev => uniquifyMessages([...prev, userMsg]));
-    setInput('');
-    setAttachments([]);
-    setChatMode('default');
-    setShowModeMenu(false);
-    setIsLoading(true);
+    setInput(''); setAttachments([]); setChatMode('default'); setShowModeMenu(false); setIsLoading(true);
 
-    const currentUser = TeamService.getCurrentMember();
-    const isOwner = currentUser?.role === 'owner';
+    const isOwner = TeamService.getCurrentMember()?.role === 'owner';
     const isTeamMode = !isOwner;
-    
-    // Save user message to Supabase
     ChatHistoryService.saveMessage({ role: 'user', content: fullContent, attachments: userMsg.attachments });
 
-    const britcId = `b_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
+    const britcId = `b_${Date.now()}`;
     try {
-      // SME Growth Partner: Fetch live pulse and bottlenecks
       const userId = TeamService._uid();
-      let businessPulse = "";
-      let bottlenecksText = "";
-      
+      let businessPulse = "", bottlenecksText = "";
       if (userId) {
         businessPulse = await GrowthService.getBusinessPulse(profile, userId, isTeamMode);
         const bns = await GrowthService.detectBottlenecks(profile, userId);
@@ -963,528 +775,267 @@ export const Chatbot = ({ profile }: { profile: BusinessProfile | null; onSignOu
       }
 
       let response = "";
-      const lower = fullContent.toLowerCase();
-      // Stricter triggers — must be a clear booking intent, not a stray word like "call".
-      // Old broad list hijacked every message that mentioned "call" or "meeting".
-      const bookingPhrases = [
-        'book a call', 'book a meeting', 'book an appointment', 'book a discovery',
-        'schedule a call', 'schedule a meeting', 'schedule an appointment',
-        'set up a call', 'set up a meeting',
-        'arrange a call', 'arrange a meeting',
-        'discovery call', 'discovery meeting',
-        'talk to someone', 'talk to a human',
-        'speak to someone', 'speak to a human',
-        'i want to book', 'i would like to book',
-      ];
+      const isBookingRequest = ['book a', 'schedule a', 'arrange a', 'discovery call'].some(p => fullContent.toLowerCase().includes(p));
       
-      // Use the backend appointment agent ONLY for clear booking intent.
-      const isBookingRequest = bookingPhrases.some(p => lower.includes(p));
-      // Don't latch on every "?" — that catches every reply. Continue the booking
-      // flow only if the user previously asked to book AND the last assistant message
-      // looks like a booking step (asking for date/time/availability).
-      const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
-      const userEverAskedToBook = messages.some(m => m.role === 'user' && bookingPhrases.some(p => m.content.toLowerCase().includes(p)));
-      const alreadyInFlow = userEverAskedToBook && !!lastAssistant && /(\bdate\b|\btime\b|\bavailable\b|\bcalendar\b|\bappointment\b|\bbooking\b)/i.test(lastAssistant.content);
-
-      if (isBookingRequest || alreadyInFlow) {
+      if (isBookingRequest) {
         try {
           const res = await fetch('/api/bot/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              chatInput: fullContent, 
-              sessionId: activeSessionId || 'dashboard-user',
-              metadata: { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText }
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatInput: fullContent, sessionId: activeSessionId || 'dashboard-user', metadata: { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText } })
           });
-          
           if (!res.ok) throw new Error('Backend offline');
-          
-          const data = await res.json();
-          response = data.output;
+          response = (await res.json()).output;
         } catch (err) {
-          console.warn('Britsee Backend Offline - Falling back to local brain:', err);
-          // Fallback to standard AI if backend is down
-          response = await AIService.chat(
-            [...messages, userMsg].map((m: any) => ({ role: m.role, content: m.content, attachments: m.attachments })),
-            { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText }
-          );
+          response = await AIService.chat([...messages, userMsg].map((m: any) => ({ role: m.role, content: m.content, attachments: m.attachments })), { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText });
         }
       } else {
-        // Standard AI Service (Groq) with Vision Support
-        response = await AIService.chat(
-          [...messages, userMsg].map((m: any) => ({ role: m.role, content: m.content, attachments: m.attachments })),
-          { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText }
-        );
+        response = await AIService.chat([...messages, userMsg].map((m: any) => ({ role: m.role, content: m.content, attachments: m.attachments })), { isOwner, isTeamMode, businessPulse, bottlenecks: bottlenecksText });
       }
 
       const { cleanText, action } = parseAction(response);
 
       if (action) {
-        const britcMsg: Message = {
-          id: britcId, role: 'assistant', content: cleanText, timestamp: new Date(), isActionRunning: true,
-        };
-        setMessages(prev => [...prev, britcMsg]);
+        setMessages(prev => [...prev, { id: britcId, role: 'assistant', content: cleanText, timestamp: new Date(), isActionRunning: true }]);
         ChatHistoryService.saveMessage({ role: 'assistant', content: cleanText });
         setIsLoading(false);
-
         try {
           const result = await executeAction(action, profile);
-          setMessages(prev => prev.map(m =>
-            m.id === britcId ? { ...m, isActionRunning: false, actionResult: result } : m
-          ));
+          setMessages(prev => prev.map(m => m.id === britcId ? { ...m, isActionRunning: false, actionResult: result } : m));
         } catch (execErr: any) {
-          setMessages(prev => prev.map(m =>
-            m.id === britcId ? {
-              ...m, isActionRunning: false,
-              actionResult: { type: action.type, status: 'error', title: '⚠️ Execution Failed', summary: `Failed: ${execErr.message}` }
-            } : m
-          ));
+          setMessages(prev => prev.map(m => m.id === britcId ? { ...m, isActionRunning: false, actionResult: { type: action.type, status: 'error', title: '⚠️ Execution Failed', summary: `Failed: ${execErr.message}` } } : m));
         }
       } else {
-        const britcMsg: Message = { id: britcId, role: 'assistant', content: cleanText, timestamp: new Date() };
-        setMessages(prev => [...prev, britcMsg]);
+        setMessages(prev => [...prev, { id: britcId, role: 'assistant', content: cleanText, timestamp: new Date() }]);
         ChatHistoryService.saveMessage({ role: 'assistant', content: cleanText });
         setIsLoading(false);
       }
     } catch (err: any) {
-      setMessages(prev => [...prev, {
-        id: britcId, role: 'assistant',
-        content: `⚠️ Connection error: ${err.message || 'Failed to reach Qwen Cloud'}.\n\nPlease check your API key in **Settings**.`,
-        timestamp: new Date(),
-      }]);
+      setMessages(prev => [...prev, { id: britcId, role: 'assistant', content: `⚠️ Error: ${err.message}`, timestamp: new Date() }]);
       setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-  };
-
   // ─── Voice handlers ─────────────────────────────────────────────────────────
   const toggleListening = () => {
-    if (isListening) {
-      VoiceService.stopListening();
-      setIsListening(false);
-      return;
-    }
-    setVoiceError(null);
-    inputBeforeListenRef.current = input;
+    if (isListening) { VoiceService.stopListening(); setIsListening(false); return; }
+    setVoiceError(null); inputBeforeListenRef.current = input;
     const ok = VoiceService.startListening({
       onResult: (transcript, isFinal) => {
-        const merged = (inputBeforeListenRef.current
-          ? inputBeforeListenRef.current.trimEnd() + ' '
-          : '') + transcript;
-        setInput(merged);
-        if (isFinal) {
-          inputBeforeListenRef.current = merged;
-        }
+        const merged = (inputBeforeListenRef.current ? inputBeforeListenRef.current.trimEnd() + ' ' : '') + transcript;
+        setInput(merged); if (isFinal) inputBeforeListenRef.current = merged;
       },
-      onError: (msg) => {
-        setVoiceError(msg);
-        setIsListening(false);
-      },
+      onError: (msg) => { setVoiceError(msg); setIsListening(false); },
       onEnd: () => setIsListening(false),
     });
     if (ok) setIsListening(true);
   };
 
   const speakMessage = (msgId: string, content: string) => {
-    if (speakingMsgId === msgId) {
-      VoiceService.cancelSpeak();
-      setSpeakingMsgId(null);
-      return;
-    }
-    VoiceService.speak(content, {
-      onEnd: () => setSpeakingMsgId(null),
-      onError: () => setSpeakingMsgId(null),
-    });
+    if (speakingMsgId === msgId) { VoiceService.cancelSpeak(); setSpeakingMsgId(null); return; }
+    VoiceService.speak(content, { onEnd: () => setSpeakingMsgId(null), onError: () => setSpeakingMsgId(null) });
     setSpeakingMsgId(msgId);
   };
 
   const toggleAutoSpeak = () => {
     setAutoSpeak(v => {
-      const next = !v;
-      localStorage.setItem('britsee_auto_speak', next ? '1' : '0');
-      if (!next) {
-        VoiceService.cancelSpeak();
-        setSpeakingMsgId(null);
-      }
+      const next = !v; localStorage.setItem('britsee_auto_speak', next ? '1' : '0');
+      if (!next) { VoiceService.cancelSpeak(); setSpeakingMsgId(null); }
       return next;
     });
   };
 
-  // Stop voice on unmount
-  useEffect(() => {
-    return () => {
-      VoiceService.stopListening();
-      VoiceService.cancelSpeak();
-    };
-  }, []);
-
-  // Auto-read newest assistant message when toggle is on
+  useEffect(() => { return () => { VoiceService.stopListening(); VoiceService.cancelSpeak(); }; }, []);
   const lastSpokenIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!autoSpeak || isLoading) return;
     const last = messages[messages.length - 1];
-    if (!last || last.role !== 'assistant' || last.isActionRunning) return;
-    if (lastSpokenIdRef.current === last.id) return;
-    if (!last.content?.trim()) return;
+    if (!last || last.role !== 'assistant' || last.isActionRunning || lastSpokenIdRef.current === last.id || !last.content?.trim()) return;
     lastSpokenIdRef.current = last.id;
-    VoiceService.speak(last.content, {
-      onEnd: () => setSpeakingMsgId(null),
-      onError: () => setSpeakingMsgId(null),
-    });
+    VoiceService.speak(last.content, { onEnd: () => setSpeakingMsgId(null), onError: () => setSpeakingMsgId(null) });
     setSpeakingMsgId(last.id);
   }, [messages, autoSpeak, isLoading]);
 
   return (
-    <div className="flex h-full w-full bg-[#030712] overflow-hidden relative">
-      {/* Mobile Overlay */}
-      {showMobileSidebar && (
-        <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setShowMobileSidebar(false)}
-        />
-      )}
+    <div className="flex h-full w-full bg-[#f8fafc] overflow-hidden relative font-sans text-slate-900">
+      {showMobileSidebar && <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden" onClick={() => setShowMobileSidebar(false)} />}
       
-      {/* ─── History Sidebar (Left) ─── */}
-        <HistorySidebar
-          sessions={sessions}
-          activeSessionId={activeSessionId}
-          onSelectSession={(id) => { setActiveSessionId(id); setShowMobileSidebar(false); }}
-          onNewChat={() => { createNewSession(); setShowMobileSidebar(false); }}
-          onDeleteSession={deleteSession}
-          collapsed={isSidebarCollapsed}
-          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          backendStatus={backendStatus}
-          onJoinTeamChat={() => { setShowPinModal(true); setShowMobileSidebar(false); }}
-          isMobile={showMobileSidebar}
-          onCloseMobile={() => setShowMobileSidebar(false)}
-        />
+      <HistorySidebar
+        sessions={sessions} activeSessionId={activeSessionId}
+        onSelectSession={(id: string) => { setActiveSessionId(id); setShowMobileSidebar(false); }}
+        onNewChat={() => { createNewSession(); setShowMobileSidebar(false); }}
+        onDeleteSession={deleteSession} collapsed={isSidebarCollapsed}
+        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} backendStatus={backendStatus}
+        onJoinTeamChat={() => { setShowPinModal(true); setShowMobileSidebar(false); }}
+        isMobile={showMobileSidebar} onCloseMobile={() => setShowMobileSidebar(false)}
+      />
 
-      {/* ─── Main Chat Area ─── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#030712] h-full">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc] h-full relative">
         {/* Header */}
-        <div className="flex flex-col border-b border-white/5 bg-white/[0.02] backdrop-blur-md flex-shrink-0">
+        <div className="flex flex-col border-b border-slate-200 bg-white/80 backdrop-blur-xl flex-shrink-0 shadow-sm z-10">
           {TeamService.getCachedContext()?.team && (
-            <div className="px-3 py-1.5 bg-indigo-500/10 flex items-center justify-center gap-2 border-b border-white/5">
-              <Zap size={10} className="text-indigo-400 animate-pulse" />
-              <span className="text-[9px] md:text-[10px] font-black text-indigo-400 uppercase tracking-widest truncate">
+            <div className="px-3 py-1.5 bg-blue-50 flex items-center justify-center gap-2 border-b border-blue-100">
+              <Zap size={12} className="text-blue-600 animate-pulse" />
+              <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest truncate">
                 Team Mode: {TeamService.getCachedContext()?.team?.title || 'Owner'}
               </span>
             </div>
           )}
-          <div className="flex items-center justify-between px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4">
-            <div className="flex items-center gap-2 md:gap-3">
-              {/* Mobile Menu Button */}
-              <button 
-                onClick={() => setShowMobileSidebar(true)}
-                className="md:hidden p-1.5 rounded-lg hover:bg-white/10 text-white/60 transition-colors"
-              >
+          <div className="flex items-center justify-between gap-2 px-2 sm:px-3 md:px-6 py-2 sm:py-3 md:py-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <button onClick={() => setShowMobileSidebar(true)} className="md:hidden p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0" title="Chat history">
                 <Menu size={18} />
               </button>
-              <div className="w-8 h-8 md:w-9 md:h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <div className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-red-600 to-orange-500 rounded-xl items-center justify-center shadow-lg shadow-red-500/20 shrink-0">
                 <Bot size={18} className="text-white" />
               </div>
-              <div className="min-w-0">
-                <h2 className="font-bold text-white text-xs md:text-sm truncate max-w-[100px] sm:max-w-[140px] md:max-w-[200px] lg:max-w-none">{activeSession?.title || 'Britsync AI'}</h2>
-                <p className="text-[10px] md:text-[11px] text-emerald-400 flex items-center gap-1">
-                  <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="truncate">AI Active</span>
+              <div className="min-w-0 flex-1">
+                <h2 className="font-black text-slate-900 text-sm md:text-base tracking-tight truncate">{activeSession?.title || 'Britsync AI'}</h2>
+                <p className="text-[10px] md:text-[11px] text-emerald-600 font-bold uppercase tracking-wider flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] shrink-0" />
+                  <span>AI Active</span>
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1 md:gap-2">
-              <button
-                onClick={handleShareChat}
-                className="flex items-center gap-1.5 p-2 sm:px-2 md:px-3 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs font-bold"
-                title="Share"
-              >
-                <Share2 size={14} /> <span className="hidden sm:inline">Share</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <button onClick={handleShareChat} className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all text-xs font-bold shadow-sm" title="Share">
+                <Share2 size={14} /> <span className="hidden md:inline">Share</span>
               </button>
-              <button
-                onClick={createNewSession}
-                className="p-2 md:px-3 md:py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all text-xs font-bold"
-                title="New Chat"
-              >
-                <Plus size={14} className="md:mr-1 inline" />
-                <span className="hidden md:inline">New</span>
+              <button onClick={createNewSession} className="px-2.5 sm:px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all text-xs font-bold shadow-md shadow-blue-600/20 flex items-center gap-1.5" title="New Chat">
+                <Plus size={16} /> <span className="hidden md:inline">New</span>
               </button>
-              <button
-                onClick={() => setConfirmModal({
-                  open: true,
-                  title: 'Clear this conversation?',
-                  message: 'All messages in the current chat will be permanently deleted. This cannot be undone.',
-                  confirmLabel: 'Clear messages',
-                  onConfirm: () => {
-                    setMessages([]);
-                    ChatHistoryService.clearMessages();
-                    setConfirmModal(c => ({ ...c, open: false }));
-                  },
-                })}
-                className="p-2 rounded-xl hover:bg-rose-500/10 text-white/20 hover:text-rose-400 transition-all"
-              >
-                <Trash2 size={14} />
+              <button onClick={() => setConfirmModal({ open: true, title: 'Clear conversation?', message: 'All messages will be deleted permanently.', confirmLabel: 'Clear messages', onConfirm: () => { setMessages([]); ChatHistoryService.clearMessages(); setConfirmModal(c => ({ ...c, open: false })); } })} className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm" title="Clear chat">
+                <Trash2 size={16} />
               </button>
             </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8 space-y-4 md:space-y-6 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-2 sm:px-3 md:px-6 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-6 md:space-y-8 scrollbar-thin scrollbar-thumb-slate-300">
           <AnimatePresence initial={false}>
-            {messages.map(msg => (
-              <MessageBubble
-                key={msg.id}
-                msg={msg}
-                onSpeak={speakMessage}
-                isSpeaking={speakingMsgId === msg.id}
-              />
-            ))}
+            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} onSpeak={speakMessage} isSpeaking={speakingMsgId === msg.id} />)}
           </AnimatePresence>
 
           {isLoading && (
-            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2 md:gap-3">
-              <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/10">
-                <Bot size={14} className="text-white" />
+            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-red-600 to-orange-500 flex items-center justify-center shadow-md">
+                <Bot size={20} className="text-white" />
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-3 md:px-4 py-2 md:py-3 backdrop-blur-sm">
-                <div className="flex items-center gap-1 md:gap-1.5">
-                  {[0, 1, 2].map(i => (
-                    <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3], scale: [0.9, 1.1, 0.9] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-                      className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
-                  ))}
-                </div>
+              <div className="bg-white border border-slate-200 shadow-sm rounded-2xl rounded-tl-sm px-5 py-4 flex items-center gap-1.5">
+                {[0, 1, 2].map(i => <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }} className="w-2 h-2 bg-red-500 rounded-full" />)}
               </div>
             </motion.div>
           )}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
 
-        {/* (Mode chips removed — replaced by Kimi-style dropdown next to input) */}
-
-        {/* Attachment Preview */}
+        {/* Attachments Preview */}
         {attachments.length > 0 && (
-          <div className="px-3 md:px-4 lg:px-6 pb-2 md:pb-3 flex flex-wrap gap-2">
+          <div className="px-4 md:px-6 pb-2 flex flex-wrap gap-2">
             {attachments.map(a => (
-              <div key={a.id} className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-[11px] text-indigo-200">
-                {a.type.startsWith('image/') ? <Image size={12} /> : <File size={12} />}
-                <span className="truncate max-w-[80px] md:max-w-[100px] lg:max-w-[150px] font-medium">{a.name}</span>
-                <button onClick={() => removeAttachment(a.id)} className="ml-1 hover:text-white transition-colors">
-                  <X size={12} />
-                </button>
+              <div key={a.id} className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 text-xs font-bold text-blue-800 shadow-sm">
+                {a.type.startsWith('image/') ? <Image size={14} className="text-blue-500" /> : <File size={14} className="text-blue-500" />}
+                <span className="truncate max-w-[150px]">{a.name}</span>
+                <button onClick={() => removeAttachment(a.id)} className="ml-1 text-blue-400 hover:text-red-500 hover:bg-red-50 p-0.5 rounded transition-all"><X size={14} /></button>
               </div>
             ))}
           </div>
         )}
 
-        {/* Voice status / error banner */}
         {(isListening || voiceError) && (
-          <div className="px-3 md:px-6 pb-1">
-            <div className={`text-[11px] flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
-              voiceError
-                ? 'bg-red-500/10 border-red-500/30 text-red-300'
-                : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300 animate-pulse'
-            }`}>
-              {voiceError ? <MicOff size={12} /> : <Mic size={12} />}
-              <span>{voiceError || 'Listening… speak now'}</span>
-              {voiceError && (
-                <button onClick={() => setVoiceError(null)} className="ml-auto text-red-300/60 hover:text-red-200">
-                  <X size={12} />
-                </button>
-              )}
+          <div className="px-4 md:px-6 pb-2">
+            <div className={`text-xs font-bold flex items-center gap-2 px-4 py-2.5 rounded-xl border shadow-sm ${voiceError ? 'bg-red-50 border-red-200 text-red-700' : 'bg-orange-50 border-orange-200 text-orange-700 animate-pulse'}`}>
+              {voiceError ? <MicOff size={14} /> : <Mic size={14} />}
+              <span>{voiceError || 'Listening… speak clearly now'}</span>
+              {voiceError && <button onClick={() => setVoiceError(null)} className="ml-auto text-red-400 hover:text-red-700"><X size={14} /></button>}
             </div>
           </div>
         )}
 
         {/* Input Area */}
-        <div
-          className="px-2 md:px-4 lg:px-6 pb-3 md:pb-6 lg:pb-8 flex-shrink-0"
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
-        >
-          <div className="max-w-4xl mx-auto flex items-center gap-1 md:gap-2 bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-2 md:px-4 py-2 md:py-3 lg:py-4 focus-within:border-indigo-500/40 focus-within:ring-2 md:focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all backdrop-blur-md shadow-2xl">
-            <button
-              onClick={handleFileClick}
-              className="text-white/30 hover:text-indigo-400 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg"
-              title="Attach file"
-              aria-label="Attach file"
-            >
-              <Paperclip size={18} />
-            </button>
-            <input
-              ref={inputRef}
+        <div className="px-2 sm:px-3 md:px-6 pb-3 sm:pb-6 flex-shrink-0 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc] to-transparent pt-3 sm:pt-4">
+          <div className="max-w-4xl mx-auto flex items-end gap-1.5 sm:gap-2 bg-white border-2 border-slate-200 rounded-2xl p-1.5 sm:p-2 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all shadow-lg">
+            <div className="flex flex-col justify-end pb-1 pl-1">
+              <button onClick={handleFileClick} className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center transition-colors border border-slate-100" title="Attach file">
+                <Paperclip size={18} />
+              </button>
+            </div>
+            
+            <textarea
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                chatMode === 'default'
-                  ? 'Ask Britsync AI...'
-                  : `${CHAT_MODES.find(m => m.id === chatMode)?.label}: type your request...`
-              }
-              className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none px-1 md:px-2 min-w-0 py-2"
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder={chatMode === 'default' ? 'Ask Britsync AI anything...' : `${CHAT_MODES.find(m => m.id === chatMode)?.label}: type request...`}
+              className="flex-1 bg-transparent text-[15px] font-medium text-slate-900 placeholder:text-slate-400 outline-none px-3 py-3.5 min-h-[52px] max-h-[200px] resize-none"
+              rows={1}
+              style={{ height: input ? 'auto' : '52px' }}
             />
 
-            {/* Mode selector (Kimi-style) */}
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={() => setShowModeMenu(v => !v)}
-                className={`flex items-center gap-1.5 px-2.5 md:px-3 py-2 rounded-lg border text-[11px] md:text-xs font-semibold transition-all whitespace-nowrap ${
-                  chatMode === 'default'
-                    ? 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
-                    : 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25'
-                }`}
-                title="Choose chat mode"
-              >
-                {(() => {
-                  const m = CHAT_MODES.find(x => x.id === chatMode)!;
-                  const Icon = m.icon;
-                  return <Icon size={12} />;
-                })()}
-                <span className="hidden sm:inline">
-                  {CHAT_MODES.find(m => m.id === chatMode)?.label}
-                </span>
-                <ChevronDown size={12} className={`transition-transform ${showModeMenu ? 'rotate-180' : ''}`} />
+            <div className="flex items-center gap-2 pb-1 pr-1">
+              <div className="relative">
+                <button onClick={() => setShowModeMenu(!showModeMenu)} className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${chatMode === 'default' ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100' : 'bg-orange-100 border-orange-200 text-orange-700 hover:bg-orange-200'}`}>
+                  {(() => { const m = CHAT_MODES.find(x => x.id === chatMode)!; const Icon = m.icon; return <Icon size={14} />; })()}
+                  <span className="hidden sm:inline">{CHAT_MODES.find(m => m.id === chatMode)?.label}</span>
+                  <ChevronDown size={14} className={showModeMenu ? 'rotate-180' : ''} />
+                </button>
+                <AnimatePresence>
+                  {showModeMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowModeMenu(false)} />
+                      <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute right-0 bottom-full mb-3 w-[280px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden">
+                        {CHAT_MODES.map(m => {
+                          const Icon = m.icon; const active = m.id === chatMode;
+                          return (
+                            <button key={m.id} onClick={() => { setChatMode(m.id); setShowModeMenu(false); }} className={`w-full flex items-start gap-3 p-3 rounded-xl text-left transition-colors ${active ? 'bg-blue-50 border border-blue-100' : 'hover:bg-slate-50 border border-transparent'}`}>
+                              <Icon size={18} className={`mt-0.5 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
+                              <div>
+                                <span className={`text-sm font-bold block ${active ? 'text-blue-900' : 'text-slate-700'}`}>{m.label}</span>
+                                <span className="text-[10px] font-medium text-slate-500 leading-tight block mt-0.5">{m.description}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <button onClick={toggleListening} disabled={isLoading} className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all border shadow-sm ${isListening ? 'bg-red-100 text-red-600 border-red-200 animate-pulse' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'}`}>
+                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+              
+              <button onClick={toggleAutoSpeak} className={`hidden sm:flex w-10 h-10 rounded-xl items-center justify-center transition-all border shadow-sm ${autoSpeak ? 'bg-orange-100 text-orange-600 border-orange-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-600'}`}>
+                {autoSpeak ? <Volume2 size={18} /> : <VolumeX size={18} />}
               </button>
 
-              <AnimatePresence>
-                {showModeMenu && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowModeMenu(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute right-0 bottom-full mb-2 w-[min(calc(100vw-2rem),16rem)] sm:w-64 bg-[#0b1020] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 p-1"
-                    >
-                      {CHAT_MODES.map(m => {
-                        const Icon = m.icon;
-                        const active = m.id === chatMode;
-                        return (
-                          <button
-                            key={m.id}
-                            onClick={() => {
-                              setChatMode(m.id);
-                              setShowModeMenu(false);
-                              inputRef.current?.focus();
-                            }}
-                            className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                              active
-                                ? 'bg-indigo-500/15 text-white'
-                                : 'text-white/80 hover:bg-white/5'
-                            }`}
-                          >
-                            <Icon size={14} className={`mt-0.5 flex-shrink-0 ${active ? 'text-indigo-400' : 'text-white/50'}`} />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-semibold">{m.label}</span>
-                                {active && <span className="text-[9px] text-indigo-300 font-bold uppercase tracking-widest">Active</span>}
-                              </div>
-                              <p className="text-[10px] text-white/40 mt-0.5 leading-snug">{m.description}</p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+              <button onClick={() => handleSend()} disabled={!input.trim() || isLoading} className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-600 disabled:bg-slate-200 flex items-center justify-center text-white disabled:text-slate-400 transition-all hover:bg-blue-700 active:scale-95 shadow-lg shadow-blue-600/30 disabled:shadow-none">
+                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-0.5" />}
+              </button>
             </div>
-
-            <button
-              onClick={toggleListening}
-              disabled={isLoading}
-              className={`w-10 h-10 rounded-lg md:rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0 ${
-                isListening
-                  ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
-              }`}
-              title={isListening ? 'Stop listening' : 'Voice input'}
-              aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
-            >
-              {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-            </button>
-
-            <button
-              onClick={toggleAutoSpeak}
-              className={`hidden sm:flex w-10 h-10 rounded-lg md:rounded-xl items-center justify-center transition-all active:scale-95 flex-shrink-0 ${
-                autoSpeak
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                  : 'bg-white/5 text-white/40 hover:text-white border border-white/10'
-              }`}
-              title={autoSpeak ? 'Auto-read replies: ON' : 'Auto-read replies: OFF'}
-              aria-label="Toggle auto-read"
-            >
-              {autoSpeak ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            </button>
-
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isLoading}
-              className="w-10 h-10 rounded-lg md:rounded-xl bg-indigo-600 disabled:bg-white/5 flex items-center justify-center text-white disabled:text-white/10 transition-all hover:bg-indigo-500 active:scale-95 shadow-lg shadow-indigo-600/20 disabled:shadow-none flex-shrink-0"
-              aria-label="Send message"
-            >
-              {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-            </button>
           </div>
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,image/*" />
         </div>
       </div>
 
-      <PinEntryModal
-        isOpen={showPinModal}
-        onClose={() => { setShowPinModal(false); setPinError(''); }}
-        onJoin={joinTeamChatByPin}
-        isJoining={isJoining}
-        error={pinError}
-      />
+      <PinEntryModal isOpen={showPinModal} onClose={() => { setShowPinModal(false); setPinError(''); }} onJoin={joinTeamChatByPin} isJoining={isJoining} error={pinError} />
 
       <AnimatePresence>
         {confirmModal.open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-            onClick={() => setConfirmModal(c => ({ ...c, open: false }))}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.15 }}
-              onClick={e => e.stopPropagation()}
-              className="w-full max-w-md bg-[#0b1020] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-            >
-              <div className="p-5 md:p-6">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/20 flex items-center justify-center flex-shrink-0">
-                    <Trash2 size={18} className="text-rose-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base md:text-lg font-bold text-white leading-tight">{confirmModal.title}</h3>
-                    <p className="text-xs md:text-sm text-white/60 mt-1.5 leading-relaxed">{confirmModal.message}</p>
-                  </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmModal(c => ({ ...c, open: false }))}>
+            <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }} onClick={e => e.stopPropagation()} className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl shadow-2xl p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
+                  <Trash2 size={24} className="text-red-600" />
                 </div>
-                <div className="flex items-center justify-end gap-2 mt-5">
-                  <button
-                    onClick={() => setConfirmModal(c => ({ ...c, open: false }))}
-                    className="px-4 py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmModal.onConfirm}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors flex items-center gap-2"
-                  >
-                    <Trash2 size={14} />
-                    {confirmModal.confirmLabel}
-                  </button>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 leading-tight">{confirmModal.title}</h3>
+                  <p className="text-xs font-medium text-slate-500 mt-1 leading-relaxed">{confirmModal.message}</p>
                 </div>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setConfirmModal(c => ({ ...c, open: false }))} className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-sm transition-colors">Cancel</button>
+                <button onClick={confirmModal.onConfirm} className="flex-1 py-3 rounded-xl bg-red-600 text-white hover:bg-red-700 font-bold text-sm shadow-lg shadow-red-600/20 transition-colors">Delete</button>
               </div>
             </motion.div>
           </motion.div>

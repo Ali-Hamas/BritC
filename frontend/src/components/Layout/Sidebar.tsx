@@ -51,23 +51,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
   }, []);
 
   return (
-    <aside className="w-full md:w-64 lg:w-72 bg-[#030712] border-r border-white/5 flex flex-col h-full z-50 overflow-y-auto">
-      <div className="p-4 md:p-6 flex items-center justify-between">
+    <aside className="w-full md:w-64 lg:w-72 bg-white border-r border-slate-200 flex flex-col h-full z-50 shadow-sm min-h-0">
+      <div className="p-4 md:p-5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 group cursor-pointer">
-          <div className="h-10 w-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+          <div className="h-10 w-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
             <img src="/favicon.png" alt="Britsync AI" className="h-full w-full object-cover" />
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">Britsync AI</span>
+          <span className="text-xl font-bold grad-text tracking-tight">Britsync AI</span>
         </div>
         <button 
           onClick={onClose} 
-          className="md:hidden p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+          className="md:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
         >
           <X size={20} />
         </button>
       </div>
 
-      <nav className="flex-1 px-3 md:px-4 space-y-1.5 md:space-y-2">
+      <nav className="flex-1 min-h-0 overflow-y-auto px-3 md:px-4 space-y-1 md:space-y-1.5 py-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -76,29 +76,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`w-full flex items-center justify-between px-3 md:px-4 py-3 rounded-xl transition-all duration-200 group ${
-                isActive 
-                  ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/10' 
-                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+              className={`w-full flex items-center justify-between px-3 md:px-4 py-2.5 rounded-xl transition-all duration-200 group ${
+                isActive
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon size={18} className={isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'} />
+                <Icon size={18} className={isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-blue-600'} />
                 <span className="font-medium text-sm">{item.label}</span>
               </div>
-              {isActive && <ChevronRight size={14} className="animate-pulse" />}
+              {isActive && <ChevronRight size={14} className="animate-pulse text-blue-500" />}
             </button>
           );
         })}
       </nav>
 
       {activeMembers.length > 0 && (
-        <div className="px-4 md:px-6 py-4 border-t border-white/5">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="px-4 md:px-5 py-3 border-t border-slate-200 shrink-0 max-h-32 overflow-y-auto hidden lg:block">
+          <div className="flex items-center gap-2 mb-2">
              <Users size={12} className="text-slate-500" />
              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Team</span>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {activeMembers.map((member, i) => (
               <div key={i} className="flex items-start gap-2 group">
                 <div className="relative mt-1">
@@ -106,8 +106,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
                   <div className="absolute inset-0 h-2 w-2 bg-emerald-500 rounded-full animate-ping opacity-20" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-slate-300 truncate">{member.name}</p>
-                  <p className="text-[9px] text-slate-500 truncate group-hover:text-indigo-400 transition-colors uppercase tracking-tight font-medium">
+                  <p className="text-[11px] font-semibold text-slate-900 truncate">{member.name}</p>
+                  <p className="text-[9px] text-slate-500 truncate group-hover:text-blue-600 transition-colors uppercase tracking-tight font-medium">
                     {member.lastAction}
                   </p>
                 </div>
@@ -117,11 +117,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
         </div>
       )}
 
-      <div className="p-4 md:p-6 border-t border-white/5 space-y-3 md:space-y-4">
+      <div className="p-3 md:p-4 border-t border-slate-200 space-y-2 shrink-0">
         {isFree && (
           <button
             onClick={() => setShowUpgradeModal(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-500/20"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 grad-bg hover:opacity-90 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-500/30"
           >
             <Zap size={16} />
             Upgrade to Enterprise
@@ -129,12 +129,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
         )}
         <button
           onClick={onSignOut}
-          className="w-full flex items-center gap-3 px-3 md:px-4 py-3 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200 group font-medium text-sm"
+          className="w-full flex items-center gap-3 px-3 md:px-4 py-2.5 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group font-medium text-sm"
         >
-          <LogOut size={18} className="text-slate-500 group-hover:text-rose-400" />
+          <LogOut size={18} className="text-slate-500 group-hover:text-red-600" />
           <span>Sign Out</span>
         </button>
-        <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest opacity-50 font-bold">Britsync AI v1.0</p>
+        <p className="text-[10px] text-slate-400 text-center uppercase tracking-widest font-bold">Britsync AI v1.0</p>
       </div>
       <PlanSelectionModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </aside>

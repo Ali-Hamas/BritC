@@ -182,19 +182,23 @@ const auth = betterAuth({
                         _pendingIntents.delete(email);
 
                         // Referred users skip approval AND get enterprise plan.
-                        // Direct signups require a referral link — they land on
-                        // referral_required status and free plan until they
+                        // Social signups (Google/GitHub) are auto-approved on the
+                        // free plan since the OAuth provider already verified them.
+                        // Direct email signups require a referral link — they land
+                        // on referral_required status and free plan until they
                         // register with a valid referral link.
-                        const approvalStatus = claimed ? 'approved' : 'referral_required';
-                        const decidedAt = claimed ? 'NOW()' : 'NULL';
+                        const isSocial = !!(user.image || user.emailVerified);
+                        const approvalStatus = claimed ? 'approved' : (isSocial ? 'approved' : 'referral_required');
+                        const decidedAt = (claimed || isSocial) ? 'NOW()' : 'NULL';
                         const plan = claimed ? 'enterprise' : 'free';
-                        const planSource = claimed ? 'referral' : 'signup';
+                        const planSource = claimed ? 'referral' : (isSocial ? 'social' : 'signup');
+                        const decidedBy = claimed ? 'referral' : (isSocial ? 'social' : null);
 
                         await client.query(
                             `INSERT INTO account_approvals (user_id, status, decided_at, decided_by, requested_plan)
                              VALUES ($1, $2, ${decidedAt}, $3, $4)
                              ON CONFLICT (user_id) DO NOTHING`,
-                            [user.id, approvalStatus, claimed ? 'referral' : null, requestedPlan]
+                            [user.id, approvalStatus, decidedBy, requestedPlan]
                         );
                         await client.query(
                             `INSERT INTO account_subscriptions (user_id, plan, source)
@@ -225,6 +229,24 @@ const auth = betterAuth({
         },
         // Token lifetime — 1 hour is the standard for password resets.
         resetPasswordTokenExpiresIn: 60 * 60,
+    },
+    socialProviders: {
+        ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+            ? {
+                  google: {
+                      clientId: process.env.GOOGLE_CLIENT_ID,
+                      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+                  },
+              }
+            : {}),
+        ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+            ? {
+                  github: {
+                      clientId: process.env.GITHUB_CLIENT_ID,
+                      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+                  },
+              }
+            : {}),
     },
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5010",
     secret: process.env.BETTER_AUTH_SECRET || "britsync_secret_32_chars_long_random_string_2024",

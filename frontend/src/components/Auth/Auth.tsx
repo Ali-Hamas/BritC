@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Lock, ArrowRight, Mail, Globe, Users, Loader2, Sparkles, X, CheckCircle2, Gift, ChevronLeft } from 'lucide-react';
-import { signIn, signUp, signOut, forgetPassword } from '../../lib/auth-client';
+import { signIn, signUp, signOut, forgetPassword, authClient } from '../../lib/auth-client';
 import { getMyApprovalStatus, claimReferralForEmail, recordSignupIntent } from '../../lib/approval';
 
 interface AuthProps {
@@ -28,9 +28,7 @@ export const Auth: React.FC<AuthProps> = ({
   const [name, setName] = useState('');
 
   // Referral token from URL (?ref=...). When present, the new account skips
-  // admin approval and lands on the enterprise plan automatically. We capture
-  // it once on mount, switch the form to register mode, and stash the token
-  // until signup so the backend can claim it atomically with user creation.
+  // admin approval and lands on the enterprise plan automatically.
   const [referral, setReferral] = useState<string | null>(null);
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -119,15 +117,10 @@ export const Auth: React.FC<AuthProps> = ({
     setError('');
 
     try {
-      // 1. Record intent (free/enterprise) first
       if (intent) {
         await recordSignupIntent(email, intent);
       }
 
-      // 2. If we hold a referral token, hand it to the backend BEFORE signup so
-      // the user-create hook can match it. The backend validates the token
-      // is unused; if invalid we surface a clear error rather than silently
-      // creating a pending account.
       let referralAccepted = false;
       if (referral) {
         referralAccepted = await claimReferralForEmail(email, referral);
@@ -146,8 +139,6 @@ export const Auth: React.FC<AuthProps> = ({
       if (authError) throw new Error(authError.message || 'Registration failed');
 
       if (referralAccepted) {
-        // Referred users are auto-approved + on enterprise. Better-Auth
-        // already auto-signed them in; let the parent app re-check session.
         onAuthenticated({});
         return;
       }
@@ -161,44 +152,56 @@ export const Auth: React.FC<AuthProps> = ({
     }
   };
 
-  const switchMode = () => {
-    setActiveMode(activeMode === 'login' ? 'register' : 'login');
+  const handleSocial = async (provider: 'google' | 'github') => {
+    setIsLoading(true);
     setError('');
+    try {
+      if (intent && email) {
+        try { await recordSignupIntent(email, intent); } catch { /* non-blocking */ }
+      }
+      await authClient.signIn.social({
+        provider,
+        callbackURL: `${window.location.origin}/`,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `${provider} sign-in failed`);
+      setIsLoading(false);
+    }
   };
 
   if (pendingState) {
     const isRejected = pendingState === 'rejected';
     return (
-      <div className="min-h-screen bg-[#05060d] text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-gradient-to-br from-indigo-600/30 via-violet-500/10 to-transparent rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-gradient-to-tr from-fuchsia-600/20 via-indigo-500/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-blue-500/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-red-500/10 rounded-full blur-3xl" />
         </div>
         <div className="relative z-10 w-full max-w-md">
-          <div className="rounded-[2rem] bg-[#0a0b14]/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.5)] p-8 sm:p-10 text-center space-y-5">
-            <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${
+          <div className="rounded-[2.5rem] bg-white border border-slate-200 shadow-2xl p-8 sm:p-12 text-center space-y-6">
+            <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center shadow-sm ${
               isRejected
-                ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400'
-                : 'bg-amber-500/10 border border-amber-500/30 text-amber-400'
+                ? 'bg-red-50 border border-red-100 text-red-500'
+                : 'bg-orange-50 border border-orange-100 text-orange-500'
             }`}>
-              {isRejected ? <X size={32} /> : <Shield size={32} />}
+              {isRejected ? <X size={40} /> : <Shield size={40} />}
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight">
-                {isRejected ? 'Application not approved' : 'Account under review'}
+              <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                {isRejected ? 'Application Declined' : 'Entry Pending Review'}
               </h2>
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
                 {isRejected
-                  ? 'Your account application was not approved. If you believe this was a mistake, please contact support.'
-                  : 'Your account has been created and is awaiting admin approval. You will receive an email once a decision is made.'}
+                  ? 'Your workspace application was not approved. For inquiries, please contact platform administration.'
+                  : 'Your account is currently under strategic review. You will receive an activation email once access is granted.'}
               </p>
             </div>
             <button
               type="button"
               onClick={() => { setPendingState(null); setActiveMode('login'); setEmail(''); setPassword(''); }}
-              className="w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 transition-all"
+              className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
             >
-              Back to sign in
+              Return to Login
             </button>
           </div>
         </div>
@@ -207,274 +210,275 @@ export const Auth: React.FC<AuthProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#05060d] text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
-      {/* Animated gradient blobs */}
+    <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
+      {/* Background elements */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-gradient-to-br from-indigo-600/30 via-violet-500/10 to-transparent rounded-full blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
-        <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-gradient-to-tr from-fuchsia-600/20 via-indigo-500/10 to-transparent rounded-full blur-3xl animate-[pulse_10s_ease-in-out_infinite]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-indigo-500/5 rounded-full blur-3xl" />
-        {/* subtle grid */}
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-          }}
-        />
+        <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-blue-500/[0.03] rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-red-500/[0.03] rounded-full blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.4]" style={{ backgroundImage: 'radial-gradient(#e2e8f0 1px, transparent 1px)', backgroundSize: '40px 48px' }} />
       </div>
 
-      <div className="relative z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+      <div className="relative z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         {/* Left: Brand */}
-        <div className="hidden lg:flex flex-col gap-10 pr-4">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 blur-xl opacity-60" />
-              <div className="relative w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl">
-                <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
-              </div>
+        <div className="hidden lg:flex flex-col gap-12 pr-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-[20px] overflow-hidden flex items-center justify-center shadow-xl shadow-blue-500/10 border border-slate-100">
+              <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight">
-                Britsync <span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">AI</span>
+              <h1 className="text-4xl font-black tracking-tight text-slate-900">
+                Britsync <span className="text-blue-600">AI</span>
               </h1>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500 font-semibold mt-0.5">
-                AI Workspace for UK Agencies
+              <p className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-400 mt-1">
+                Strategic Workspace Unit
               </p>
             </div>
           </div>
 
-          <p className="text-slate-400 text-lg leading-relaxed max-w-md">
-            Your autonomous team member for lead generation, outreach, research and booking — all in one clean workspace.
+          <p className="text-slate-500 text-xl font-medium leading-relaxed max-w-md">
+            The premium growth partner for UK digital agencies. Lead generation, market intelligence, and automated outreach in one unified hub.
           </p>
 
-          <div className="space-y-5">
+          <div className="space-y-6">
             {[
               {
                 Icon: Globe,
-                color: 'from-emerald-400 to-teal-400',
-                title: 'Global AI Intelligence',
-                desc: 'High-tier models with real-time web browsing and scraping.',
+                iconColor: 'text-blue-600',
+                bgColor: 'bg-blue-50',
+                title: 'Market Intelligence',
+                desc: 'Real-time financial signals and global news vectors.',
               },
               {
                 Icon: Users,
-                color: 'from-indigo-400 to-violet-400',
-                title: 'Unified Team Workspace',
-                desc: 'Share PIN-based team chats. Everyone sees everything in real time.',
+                iconColor: 'text-red-600',
+                bgColor: 'bg-red-50',
+                title: 'Team Alignment',
+                desc: 'PIN-secured workspaces with shared strategic memory.',
               },
               {
                 Icon: Shield,
-                color: 'from-fuchsia-400 to-pink-400',
-                title: 'Secure by Default',
-                desc: 'Encrypted auth with session cookies. Your data stays yours.',
+                iconColor: 'text-orange-600',
+                bgColor: 'bg-orange-50',
+                title: 'Platform Integrity',
+                desc: 'Enterprise-grade security for your proprietary growth data.',
               },
-            ].map(({ Icon, color, title, desc }) => (
-              <div key={title} className="group flex items-start gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all">
-                <div className={`shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
-                  <Icon className="text-white" size={20} />
+            ].map(({ Icon, iconColor, bgColor, title, desc }) => (
+              <div key={title} className="flex items-start gap-5 group">
+                <div className={`shrink-0 w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shadow-sm border border-transparent group-hover:border-slate-200 transition-all`}>
+                  <Icon className={iconColor} size={22} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-100">{title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+                  <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">{title}</h3>
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed mt-0.5">{desc}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center gap-3 pt-2">
-            <div className="flex -space-x-2.5">
-              {['from-indigo-500 to-violet-500', 'from-fuchsia-500 to-pink-500', 'from-emerald-500 to-teal-500', 'from-amber-500 to-orange-500'].map((g, i) => (
-                <div key={i} className={`w-9 h-9 rounded-xl border-2 border-[#05060d] bg-gradient-to-br ${g} shadow-lg`} />
+          <div className="flex items-center gap-4 pt-4">
+             <div className="flex -space-x-3">
+              {[1,2,3,4].map((i) => (
+                <div key={i} className={`w-10 h-10 rounded-full border-2 border-white bg-slate-200 shadow-sm`} />
               ))}
             </div>
-            <div className="text-xs text-slate-500">
-              <span className="text-slate-300 font-semibold">Trusted</span> by UK agencies and solo operators
+            <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+              Trusted by <span className="text-slate-900 font-black">500+</span> Elite Operators
             </div>
           </div>
         </div>
 
         {/* Right: Auth card */}
         <div className="w-full max-w-md mx-auto">
-          <div className="relative">
-            {/* gradient border */}
-            <div className="absolute -inset-px rounded-[2rem] bg-gradient-to-br from-indigo-500/40 via-fuchsia-500/20 to-transparent opacity-60" />
-            <div className="relative rounded-[2rem] bg-[#0a0b14]/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.5)] overflow-hidden">
-              {/* Back to home */}
-              {onBackToHome && (
-                <button
-                  type="button"
-                  onClick={onBackToHome}
-                  className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-slate-300 hover:text-white transition-all"
-                >
-                  <ChevronLeft size={14} /> Home
-                </button>
-              )}
+          {/* Back to home — sits above the card so it never overlaps tabs */}
+          {onBackToHome && (
+            <div className="mb-4 flex justify-start">
+              <button
+                type="button"
+                onClick={onBackToHome}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm transition-all active:scale-95"
+              >
+                <ChevronLeft size={14} /> Home
+              </button>
+            </div>
+          )}
 
+          <div className="relative bg-white border border-slate-200 rounded-[2.5rem] shadow-2xl shadow-blue-500/10 p-2 overflow-hidden">
               {/* Mobile brand */}
-              <div className="lg:hidden pt-8 pb-2 text-center">
-                <div className="inline-flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
+              <div className="lg:hidden pt-8 pb-4 text-center">
+                <div className="inline-flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg border border-slate-100 flex items-center justify-center">
                     <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
                   </div>
-                  <h2 className="text-xl font-black tracking-tight">Britsync AI</h2>
+                  <h2 className="text-2xl font-black tracking-tight text-slate-900">Britsync AI</h2>
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="relative flex px-6 pt-6">
-                <div className="relative flex w-full bg-white/[0.03] rounded-2xl p-1 border border-white/5">
+              <div className="p-6 sm:p-10 space-y-8">
+                {/* Tabs */}
+                <div className="relative flex bg-slate-50 rounded-2xl p-1.5 border border-slate-100">
                   <button
                     onClick={() => { setActiveMode('login'); setError(''); }}
-                    className={`relative z-10 flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                      activeMode === 'login' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                    className={`relative z-10 flex-1 py-3 text-xs font-black uppercase tracking-[0.15em] transition-colors ${
+                      activeMode === 'login' ? 'text-white' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => { setActiveMode('register'); setError(''); }}
-                    className={`relative z-10 flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                      activeMode === 'register' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                    className={`relative z-10 flex-1 py-3 text-xs font-black uppercase tracking-[0.15em] transition-colors ${
+                      activeMode === 'register' ? 'text-white' : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
-                    Create Account
+                    Register
                   </button>
                   <div
-                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30 transition-all duration-300 ${
-                      activeMode === 'login' ? 'left-1' : 'left-[calc(50%+0px)]'
+                    className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20 transition-all duration-500 ease-out ${
+                      activeMode === 'login' ? 'left-1.5' : 'left-[calc(50%+3px)]'
                     }`}
                   />
                 </div>
-              </div>
 
-              {/* Form */}
-              <form
-                key={activeMode}
-                onSubmit={activeMode === 'login' ? handleLogin : handleRegister}
-                className="p-6 sm:p-8 space-y-4"
-              >
-                <div className="space-y-1">
-                  <h3 className="text-xl font-bold tracking-tight">
-                    {activeMode === 'login' ? 'Welcome back' : 'Create your account'}
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    {activeMode === 'login'
-                      ? 'Sign in to access your workspace.'
-                      : 'Start building with your AI teammate in seconds.'}
-                  </p>
-                </div>
-
-                {activeMode === 'register' && referral && (
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <Gift size={18} className="text-emerald-400 mt-0.5 shrink-0" />
-                    <div className="text-xs text-emerald-200 leading-relaxed">
-                      <strong className="font-bold text-emerald-300">Invite link detected.</strong>{' '}
-                      Your account will be activated instantly with full Enterprise access — no admin approval needed.
-                    </div>
-                  </div>
-                )}
-
-                {activeMode === 'register' && (
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Full name</label>
-                    <div className="relative">
-                      <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
-                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 text-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@company.com"
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
-                    {activeMode === 'login' && (
-                      <button
-                        type="button"
-                        onClick={openForgot}
-                        className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 uppercase tracking-wider"
-                      >
-                        Forgot?
-                      </button>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                    <input
-                      type="password"
-                      required
-                      minLength={activeMode === 'register' ? 8 : undefined}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={activeMode === 'register' ? 'At least 8 characters' : '••••••••'}
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 font-mono text-sm"
-                    />
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full relative group inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 shadow-lg shadow-indigo-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                <form
+                  key={activeMode}
+                  onSubmit={activeMode === 'login' ? handleLogin : handleRegister}
+                  className="space-y-6"
                 >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin" size={18} />
-                  ) : (
-                    <>
-                      {activeMode === 'login' ? 'Sign in' : 'Create account'}
-                      <ArrowRight className="group-hover:translate-x-0.5 transition-transform" size={16} />
-                    </>
-                  )}
-                </button>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                      {activeMode === 'login' ? 'Welcome Back' : 'Join the Network'}
+                    </h3>
+                    <p className="text-sm text-slate-500 font-medium">
+                      {activeMode === 'login'
+                        ? 'Access your strategic growth assets.'
+                        : 'Deploy your autonomous AI team today.'}
+                    </p>
+                  </div>
 
-                <div className="text-center text-xs text-slate-500 pt-1">
-                  {activeMode === 'login' ? (
-                    <>Don't have an account?{' '}
-                      <button type="button" onClick={switchMode} className="text-indigo-400 hover:text-indigo-300 font-semibold">
-                        Create one
-                      </button>
-                    </>
-                  ) : (
-                    <>Already have an account?{' '}
-                      <button type="button" onClick={switchMode} className="text-indigo-400 hover:text-indigo-300 font-semibold">
-                        Sign in
-                      </button>
-                    </>
+                  {activeMode === 'register' && referral && (
+                    <div className="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 shadow-sm animate-pulse">
+                      <Gift size={20} className="text-emerald-600 mt-0.5 shrink-0" />
+                      <div className="text-[11px] text-emerald-800 font-bold leading-relaxed uppercase tracking-tight">
+                        <strong className="font-black text-emerald-900">Invite Code Valid.</strong><br/>
+                        Activation will be instantaneous with Enterprise clearance.
+                      </div>
+                    </div>
                   )}
+
+                  <div className="space-y-5">
+                    {activeMode === 'register' && (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Legal Name</label>
+                        <div className="relative group">
+                          <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                          <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Operator Name"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300 text-sm shadow-inner"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                        <input
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="operator@agency.co.uk"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300 text-sm shadow-inner"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between px-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Secret Key</label>
+                        {activeMode === 'login' && (
+                          <button
+                            type="button"
+                            onClick={openForgot}
+                            className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest"
+                          >
+                            Lost Key?
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                        <input
+                          type="password"
+                          required
+                          minLength={activeMode === 'register' ? 8 : undefined}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder={activeMode === 'register' ? '8+ Characters' : '••••••••'}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300 font-mono text-sm shadow-inner"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="px-5 py-4 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-black uppercase tracking-tight shadow-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full group inline-flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 disabled:opacity-50 transition-all active:scale-95"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      <>
+                        {activeMode === 'login' ? 'Authenticate' : 'Establish Account'}
+                        <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
+                      </>
+                    )}
+                  </button>
+
+                  <div className="relative flex items-center gap-4 py-2">
+                    <div className="flex-1 h-px bg-slate-100" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Social Mesh</span>
+                    <div className="flex-1 h-px bg-slate-100" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleSocial('google')}
+                      disabled={isLoading}
+                      className="inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .55 4.1 1.62l3.05-3.05C17.2 1.7 14.78.75 12 .75 7.36.75 3.35 3.42 1.4 7.3l3.55 2.76C5.92 7.16 8.7 5 12 5z"/><path fill="#4285F4" d="M23.5 12.27c0-.78-.07-1.53-.2-2.27H12v4.51h6.47c-.28 1.5-1.13 2.78-2.4 3.62l3.7 2.87c2.16-2 3.4-4.94 3.4-8.73z"/><path fill="#FBBC05" d="M5 14.06c-.25-.75-.4-1.55-.4-2.31s.15-1.56.4-2.31L1.4 6.7C.5 8.5 0 10.4 0 12.5s.5 4 1.4 5.8l3.55-2.74z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.7-2.87c-1.04.7-2.4 1.1-4.23 1.1-3.3 0-6.08-2.16-7.07-5.06L1.4 17.05C3.36 20.6 7.36 24 12 24z"/></svg>
+                      Google
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSocial('github')}
+                      disabled={isLoading}
+                      className="inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.18-1.49 3.14-1.18 3.14-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+                      GitHub
+                    </button>
+                  </div>
+                </form>
+
+                <div className="text-center px-4 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-[2.5rem] -mx-10 -mb-10 flex items-center justify-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Secure Protocol v1.0.4 Active</span>
                 </div>
-              </form>
-
-              <div className="px-6 sm:px-8 py-4 border-t border-white/5 bg-white/[0.01] flex items-center gap-2 text-[10px] text-slate-500 font-semibold uppercase tracking-widest">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-                Secure session · Encrypted in transit
               </div>
-            </div>
           </div>
         </div>
       </div>
@@ -482,35 +486,35 @@ export const Auth: React.FC<AuthProps> = ({
       {/* Forgot-password modal */}
       {showForgot && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={closeForgot}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md rounded-3xl bg-[#0a0b14] border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.6)] p-7"
+            className="relative w-full max-w-md rounded-[2.5rem] bg-white border border-slate-200 shadow-2xl p-8 sm:p-12 animate-in zoom-in-95 duration-300"
           >
             <button
               type="button"
               onClick={closeForgot}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
               aria-label="Close"
             >
-              <X size={16} />
+              <X size={20} />
             </button>
 
             {!forgotSent ? (
-              <form onSubmit={handleForgot} className="space-y-5">
-                <div className="space-y-1">
-                  <h3 className="text-xl font-bold tracking-tight">Reset your password</h3>
-                  <p className="text-sm text-slate-500">
-                    Enter the email on your account and we'll send you a reset link.
+              <form onSubmit={handleForgot} className="space-y-8">
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight text-center">Reset Key</h3>
+                  <p className="text-sm text-slate-500 font-medium text-center">
+                    Initiate access recovery via registered email.
                   </p>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Vector</label>
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
                     <input
                       type="email"
                       required
@@ -518,13 +522,13 @@ export const Auth: React.FC<AuthProps> = ({
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
                       placeholder="you@company.com"
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 text-sm"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300 text-sm shadow-inner"
                     />
                   </div>
                 </div>
 
                 {forgotError && (
-                  <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
+                  <div className="px-5 py-4 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-black uppercase tracking-tight">
                     {forgotError}
                   </div>
                 )}
@@ -532,35 +536,35 @@ export const Auth: React.FC<AuthProps> = ({
                 <button
                   type="submit"
                   disabled={forgotLoading || !forgotEmail}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 shadow-lg shadow-indigo-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                  className="w-full inline-flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 disabled:opacity-50 transition-all active:scale-95"
                 >
                   {forgotLoading ? (
-                    <Loader2 className="animate-spin" size={18} />
+                    <Loader2 className="animate-spin" size={20} />
                   ) : (
                     <>
-                      Send reset link
-                      <ArrowRight size={16} />
+                      Dispatch Link
+                      <ArrowRight size={18} />
                     </>
                   )}
                 </button>
               </form>
             ) : (
-              <div className="text-center space-y-5 py-2">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-                  <CheckCircle2 className="text-emerald-400" size={28} />
+              <div className="text-center space-y-8 py-4">
+                <div className="w-20 h-20 mx-auto rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+                  <CheckCircle2 className="text-emerald-500" size={40} />
                 </div>
-                <div className="space-y-1.5">
-                  <h3 className="text-xl font-bold tracking-tight">Check your inbox</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">
-                    If an account exists for <span className="text-slate-200 font-semibold">{forgotEmail}</span>, we've sent a reset link. It expires in 1 hour.
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Transmission Sent</h3>
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                    Check <span className="text-blue-600 font-black">{forgotEmail}</span> for recovery directives. Link expires in 60 minutes.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={closeForgot}
-                  className="w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 transition-all"
+                  className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
                 >
-                  Got it
+                  Confirm Awareness
                 </button>
               </div>
             )}

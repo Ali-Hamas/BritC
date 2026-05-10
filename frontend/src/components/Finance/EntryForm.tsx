@@ -53,69 +53,69 @@ export const EntryForm: React.FC<EntryFormProps> = ({ userId, onClose, onSaved }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <form
         onSubmit={submit}
-        className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-[#0a0b14] border border-white/10 rounded-2xl shadow-2xl"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white border border-slate-200 rounded-[32px] shadow-2xl animate-in zoom-in-95 duration-300"
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 sticky top-0 bg-[#0a0b14] z-10">
-          <h3 className="text-base sm:text-lg font-bold text-white">Add entry</h3>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-white">
-            <X size={18} />
+        <div className="flex items-center justify-between px-6 py-6 border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+          <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">New Ledger Entry</h3>
+          <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all">
+            <X size={20} />
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4">
+        <div className="p-6 sm:p-8 space-y-6">
           {/* Type toggle */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-white/5 rounded-xl">
+          <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-50 border border-slate-100 rounded-[20px] shadow-inner">
             <button
               type="button"
               onClick={() => setForm(f => ({ ...f, type: 'revenue' }))}
-              className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+              className={`py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                 form.type === 'revenue'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-blue-600 border border-blue-100 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Revenue
+              Revenue Signal
             </button>
             <button
               type="button"
               onClick={() => setForm(f => ({ ...f, type: 'expense' }))}
-              className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+              className={`py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                 form.type === 'expense'
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-red-600 border border-red-100 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Expense
+              Expense Factor
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                Date
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Post Date
               </label>
               <input
                 type="date"
                 value={form.entry_date}
                 onChange={e => setForm(f => ({ ...f, entry_date: e.target.value }))}
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white outline-none focus:border-indigo-500/60 text-sm"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner"
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                Category
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Classification
               </label>
               <select
                 value={form.category}
                 onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white outline-none focus:border-indigo-500/60 text-sm"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner appearance-none"
               >
                 {categories.map(c => (
-                  <option key={c} value={c} className="bg-slate-900">
+                  <option key={c} value={c}>
                     {c}
                   </option>
                 ))}
@@ -123,12 +123,12 @@ export const EntryForm: React.FC<EntryFormProps> = ({ userId, onClose, onSaved }
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-              Amount (£)
+          <div className="space-y-2">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              Magnitude (GBP)
             </label>
-            <div className="relative">
-              <PoundSterling className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <div className="relative group">
+              <PoundSterling className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
               <input
                 type="number"
                 step="0.01"
@@ -136,46 +136,46 @@ export const EntryForm: React.FC<EntryFormProps> = ({ userId, onClose, onSaved }
                 value={form.amount || ''}
                 onChange={e => setForm(f => ({ ...f, amount: Number(e.target.value) }))}
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-3 py-2.5 text-white outline-none focus:border-indigo-500/60 font-mono"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-black font-mono text-xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner placeholder:text-slate-200"
                 placeholder="0.00"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-              Note (optional)
+          <div className="space-y-2">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              Audit Directive (Optional)
             </label>
             <input
               type="text"
               value={form.note || ''}
               onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white outline-none focus:border-indigo-500/60 text-sm"
-              placeholder="e.g. Client A March retainer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner placeholder:text-slate-300 text-sm"
+              placeholder="e.g. Q1 Growth Retainer"
             />
           </div>
 
           {error && (
-            <div className="px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+            <div className="px-5 py-4 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-black uppercase tracking-tight shadow-sm">
               {error}
             </div>
           )}
         </div>
 
-        <div className="flex gap-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-white/5 bg-white/[0.02] sticky bottom-0">
+        <div className="flex gap-4 px-6 sm:px-8 py-6 border-t border-slate-100 bg-slate-50/50 sticky bottom-0">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 text-sm font-semibold"
+            className="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all active:scale-95"
           >
-            Cancel
+            Abort
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/30 disabled:opacity-60 flex items-center justify-center gap-2"
+            className="flex-1 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            {saving ? <Loader2 className="animate-spin" size={14} /> : 'Save entry'}
+            {saving ? <Loader2 className="animate-spin" size={16} /> : 'Commit Entry'}
           </button>
         </div>
       </form>

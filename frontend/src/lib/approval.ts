@@ -23,6 +23,12 @@ export async function getMyApprovalStatus(): Promise<ApprovalStatus> {
   }
 }
 
+export async function checkSessionStale(): Promise<void> {
+  try {
+    await fetch(getApiUrl('/account/session-stale'), { credentials: 'include' });
+  } catch { /* best effort — caller reloads regardless */ }
+}
+
 export async function adminListPending(): Promise<PendingUser[]> {
   const res = await fetch(getApiUrl('/admin/pending-users'), { credentials: 'include' });
   if (!res.ok) throw new Error(`Failed to load pending users (${res.status})`);

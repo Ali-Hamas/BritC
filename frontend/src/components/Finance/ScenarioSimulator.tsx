@@ -69,8 +69,8 @@ interface SliderProps {
 const Slider: React.FC<SliderProps> = ({ label, value, min, max, step = 1, suffix = '', onChange }) => (
   <div className="space-y-2">
     <div className="flex items-center justify-between">
-      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</label>
-      <span className="text-sm font-mono font-bold text-white">
+      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
+      <span className="text-sm font-black font-mono text-slate-900">
         {value > 0 ? '+' : ''}{value}{suffix}
       </span>
     </div>
@@ -81,7 +81,7 @@ const Slider: React.FC<SliderProps> = ({ label, value, min, max, step = 1, suffi
       step={step}
       value={value}
       onChange={e => onChange(Number(e.target.value))}
-      className="w-full accent-indigo-500"
+      className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600 shadow-inner border border-slate-200"
     />
   </div>
 );
@@ -133,31 +133,32 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
   const reset = () => setInputs(styleDefaults);
 
   return (
-    <div className="glass-card p-3 sm:p-5 space-y-4 sm:space-y-5">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Sliders size={14} className="text-indigo-400" /> Scenario Simulator
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/20">
-            {FINANCE_STYLE_LABELS[style]} preset
+    <div className="bg-white border border-slate-200 rounded-[24px] p-5 sm:p-8 space-y-6 shadow-sm">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl shadow-sm"><Sliders size={18} className="text-blue-600" /></div>
+          <h3 className="text-base font-black text-slate-900 uppercase tracking-widest">Scenario Simulator</h3>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md bg-orange-50 text-orange-600 border border-orange-200 shadow-sm">
+            {FINANCE_STYLE_LABELS[style]} Configuration
           </span>
-        </h3>
+        </div>
         {dirty && (
           <button
             onClick={reset}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all shadow-sm active:scale-95"
           >
-            <RotateCcw size={12} /> Reset
+            <RotateCcw size={12} /> Reset System
           </button>
         )}
       </div>
 
-      <p className="text-xs text-slate-500 -mt-2">
-        Drag the sliders to model what-if scenarios. Numbers stay in your head — nothing is saved.
+      <p className="text-xs text-slate-500 font-medium leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+        Simulate strategic pivots by modulating financial vectors. Model your potential workspace outcome without altering persistent ledger records.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
         <Slider
-          label="Revenue change"
+          label="Revenue Acceleration"
           value={inputs.revenuePct}
           min={-50}
           max={200}
@@ -165,7 +166,7 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
           onChange={n => setInputs(s => ({ ...s, revenuePct: n }))}
         />
         <Slider
-          label="Expense change"
+          label="Expense Scaling"
           value={inputs.expensePct}
           min={-50}
           max={200}
@@ -173,15 +174,15 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
           onChange={n => setInputs(s => ({ ...s, expensePct: n }))}
         />
         <Slider
-          label="New hires"
+          label="Headcount Expansion"
           value={inputs.newHeadcount}
           min={0}
           max={10}
-          suffix={inputs.newHeadcount === 1 ? ' person' : ' people'}
+          suffix={inputs.newHeadcount === 1 ? ' unit' : ' units'}
           onChange={n => setInputs(s => ({ ...s, newHeadcount: n }))}
         />
         <Slider
-          label="Salary per hire (£/mo)"
+          label="Unit Unit Cost (£/mo)"
           value={inputs.salaryPerHire}
           min={1500}
           max={10000}
@@ -191,7 +192,7 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <ResultTile
           label="Projected 30d Profit"
           baseValue={baseKpis.last30Profit}
@@ -211,48 +212,53 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
       </div>
 
       {chartData.length > 0 && (
-        <div className="h-56 sm:h-64 md:h-72 -mx-1">
+        <div className="h-64 sm:h-72 md:h-80 bg-slate-50/50 p-4 rounded-3xl border border-slate-100 shadow-inner">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 5, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <XAxis dataKey="label" stroke="#94a3b8" fontSize={10} fontWeight={800} axisLine={false} tickLine={false} />
               <YAxis
-                stroke="#64748b"
-                fontSize={11}
+                stroke="#94a3b8"
+                fontSize={10}
+                fontWeight={800}
+                axisLine={false}
+                tickLine={false}
                 tickFormatter={v => '£' + (v / 1000).toFixed(0) + 'k'}
               />
               <Tooltip
-                contentStyle={{ background: '#0a0b14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
+                cursor={{fill: '#f1f5f9'}}
+                contentStyle={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, fontSize: 12, fontWeight: 700, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                 formatter={(v) => '£' + Math.round(v as number).toLocaleString('en-GB')}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="baseProfit" name="Baseline profit" fill="#475569" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="scenarioProfit" name="Scenario profit" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              <Legend iconType="circle" wrapperStyle={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', paddingTop: 20 }} />
+              <Bar dataKey="baseProfit" name="Base Delta" fill="#94a3b8" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="scenarioProfit" name="Scenario Delta" fill="#2563eb" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
       {baseForecast && scenarioForecast && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {baseForecast.map((b, i) => {
             const s = scenarioForecast[i];
             const baseProfit = b.predictedRevenue - b.predictedExpense;
             const scenProfit = s.predictedRevenue - s.predictedExpense;
             const days = [30, 60, 90][i];
             return (
-              <div key={b.point} className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  {days}-day projection
+              <div key={b.point} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-blue-300 transition-all">
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between mb-3">
+                  <span>{days}-Day Delta</span>
+                  <div className={`w-2 h-2 rounded-full ${scenProfit >= baseProfit ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
                 </div>
-                <div className="mt-2 space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Baseline</span>
-                    <span className="text-slate-300 font-mono">{gbp(baseProfit)}</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-500 font-bold uppercase tracking-tight">Base</span>
+                    <span className="text-slate-900 font-black font-mono">{gbp(baseProfit)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Scenario</span>
-                    <span className={`font-mono font-bold ${scenProfit >= baseProfit ? 'text-emerald-300' : 'text-rose-300'}`}>
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                    <span className="text-slate-900 font-black text-xs uppercase tracking-tight">Scenario</span>
+                    <span className={`text-lg font-black font-mono tracking-tight ${scenProfit >= baseProfit ? 'text-blue-600' : 'text-red-600'}`}>
                       {gbp(scenProfit)}
                     </span>
                   </div>
@@ -264,9 +270,11 @@ export const ScenarioSimulator: React.FC<{ entries: FinanceEntry[]; userId?: str
       )}
 
       {dirty && (
-        <p className="text-[11px] text-slate-500 italic">
-          Profit shift vs baseline: {profitDeltaPct > 0 ? '+' : ''}{profitDeltaPct}%
-        </p>
+        <div className="flex items-center justify-center p-3 bg-blue-50 border border-blue-100 rounded-xl shadow-sm">
+          <p className="text-[11px] text-blue-700 font-black uppercase tracking-widest">
+            Net Profit variance vs baseline: {profitDeltaPct > 0 ? '+' : ''}{profitDeltaPct}%
+          </p>
+        </div>
       )}
     </div>
   );
@@ -282,25 +290,22 @@ const ResultTile: React.FC<{
   const positive = inverse ? delta < 0 : delta > 0;
   const flat = delta === 0;
   return (
-    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
-      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</div>
-      <div className="mt-2 flex items-baseline justify-between gap-2">
-        <span className="text-lg font-black text-white tracking-tight">{gbp(scenarioValue)}</span>
-        {!flat && (
-          <span className={`text-[11px] font-semibold flex items-center gap-1 ${positive ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {positive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-            {gbp(Math.abs(delta))}
-          </span>
-        )}
-      </div>
-      <div className="text-[11px] text-slate-500 mt-1">
-        Baseline {gbp(baseValue)}
+    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm group hover:border-blue-200 transition-all">
+      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">{label}</div>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-xl font-black text-slate-900 tracking-tight font-mono">{gbp(scenarioValue)}</span>
+          {!flat && (
+            <div className={`flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm border ${positive ? 'text-emerald-700 bg-emerald-50 border-emerald-100' : 'text-red-700 bg-red-50 border-red-100'}`}>
+              {positive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+              {gbp(Math.abs(delta))}
+            </div>
+          )}
+        </div>
+        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">
+          Base Signal: {gbp(baseValue)}
+        </div>
       </div>
     </div>
   );
 };
-
-
-
-
-

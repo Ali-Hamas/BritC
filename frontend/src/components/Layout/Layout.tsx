@@ -27,12 +27,12 @@ export const Layout: React.FC<LayoutProps> = ({
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
-    <div className="flex h-screen-dvh w-full max-w-full bg-[#030712] text-slate-200 overflow-hidden font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="flex h-screen h-dvh w-full max-w-full bg-[#f8fafc] text-slate-800 overflow-hidden font-sans selection:bg-blue-500/30 selection:text-blue-900">
       {/* Dynamic Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" />
-         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full animate-pulse delay-700" />
-         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] contrast-150 brightness-100" />
+         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/15 blur-[120px] rounded-full animate-pulse" />
+         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-red-500/10 blur-[120px] rounded-full animate-pulse delay-700" />
+         <div className="absolute top-[40%] left-[40%] w-[30%] h-[30%] bg-orange-500/8 blur-[120px] rounded-full animate-pulse delay-500" />
       </div>
 
       {/* Mobile Sidebar Overlay */}

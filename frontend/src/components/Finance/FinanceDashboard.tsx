@@ -10,11 +10,11 @@ import {
   Sparkles,
   Loader2,
   AlertTriangle,
-  Info,
   Trash2,
   BarChart3,
   CheckCircle,
   Mail,
+  RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GrowthService, type GrowthInsight } from '../../lib/growth';
@@ -56,7 +56,7 @@ import { ReportScheduleModal } from './ReportScheduleModal';
 import { exportFinancePdf } from './FinanceExportPdf';
 import { useSession } from '../../lib/auth-client';
 
-const PIE_COLORS = ['#6366f1', '#f97316', '#ec4899', '#10b981', '#eab308', '#94a3b8'];
+const PIE_COLORS = ['#2563eb', '#dc2626', '#f97316', '#3b82f6', '#ef4444', '#94a3b8'];
 
 const gbp = (n: number | null | undefined) =>
   n == null ? '—' : '£' + Math.round(n).toLocaleString('en-GB');
@@ -68,20 +68,20 @@ const KpiTile: React.FC<{
   deltaDir?: 'up' | 'down' | 'neutral';
   icon: React.ReactNode;
 }> = ({ label, value, delta, deltaDir, icon }) => (
-  <div className="glass-card p-5 flex flex-col gap-2 min-h-[110px]">
+  <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm p-5 flex flex-col gap-2 min-h-[110px] hover:shadow-md transition-all group hover:border-blue-200">
     <div className="flex items-center justify-between">
-      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
-      <div className="text-slate-500">{icon}</div>
+      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+      <div className="text-slate-400 group-hover:text-blue-500 transition-colors">{icon}</div>
     </div>
-    <div className="text-2xl font-black text-white tracking-tight">{value}</div>
+    <div className="text-2xl font-black text-slate-900 tracking-tight">{value}</div>
     {delta && (
       <div
-        className={`text-[11px] font-semibold flex items-center gap-1 ${
+        className={`text-[11px] font-bold flex items-center gap-1 ${
           deltaDir === 'up'
-            ? 'text-emerald-400'
+            ? 'text-emerald-600'
             : deltaDir === 'down'
-            ? 'text-rose-400'
-            : 'text-slate-400'
+            ? 'text-red-600'
+            : 'text-slate-500'
         }`}
       >
         {deltaDir === 'up' && <TrendingUp size={12} />}
@@ -199,7 +199,7 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
 
   if (!userId) {
     return (
-      <div className="glass-card p-8 text-center text-slate-400">
+      <div className="bg-white border border-slate-200 rounded-[24px] p-8 text-center text-slate-500 font-bold">
         Please sign in to use Finance Intelligence.
       </div>
     );
@@ -208,43 +208,43 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
   const hasData = entries.length > 0;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 px-4 sm:px-6 py-6 overflow-y-auto">
+    <div className="space-y-6 animate-in fade-in duration-500 px-4 sm:px-6 py-6 overflow-y-auto bg-slate-50 min-h-full font-sans">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white flex items-center gap-2">
-            <PoundSterling className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-400 shrink-0" />
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
+            <PoundSterling className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 shrink-0" />
             Finance Intelligence
           </h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1">
+          <p className="text-slate-500 font-medium text-xs sm:text-sm mt-1">
             Real numbers from your entries · GBP · {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/30"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-black uppercase tracking-wider transition-all shadow-lg shadow-blue-500/20 active:scale-95"
           >
             <Plus size={14} /> Add entry
           </button>
           <button
             onClick={() => setShowCsv(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold hover:bg-white/10"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border-2 border-slate-200 text-slate-700 text-sm font-black uppercase tracking-wider hover:bg-slate-50 transition-all shadow-sm active:scale-95"
           >
-            <FileSpreadsheet size={14} /> CSV Import
+            <FileSpreadsheet size={14} className="text-blue-500" /> Import
           </button>
           <button
             onClick={handleExportPdf}
             disabled={!hasData}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold hover:bg-white/10 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border-2 border-slate-200 text-slate-700 text-sm font-black uppercase tracking-wider hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-50"
           >
-            <FileDown size={14} /> Export PDF
+            <FileDown size={14} className="text-red-500" /> Export
           </button>
           <button
             onClick={() => setShowSchedule(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold hover:bg-white/10"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border-2 border-slate-200 text-slate-700 text-sm font-black uppercase tracking-wider hover:bg-slate-50 transition-all shadow-sm active:scale-95"
           >
-            <Mail size={14} /> Schedule Reports
+            <Mail size={14} className="text-orange-500" /> Reports
           </button>
         </div>
       </header>
@@ -288,56 +288,60 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
 
       {/* Live Business Pulse & Growth Bottlenecks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="glass-card p-4 sm:p-6 relative overflow-hidden group">
+        <div className="bg-white border border-slate-200 rounded-[24px] p-4 sm:p-6 relative overflow-hidden group hover:shadow-md transition-all hover:border-blue-200 shadow-sm">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
-            <TrendingUp size={80} />
+            <TrendingUp size={80} className="text-blue-500" />
           </div>
-          <div className="flex items-center gap-3 mb-6">
-            <BarChart3 className="text-emerald-400" size={20} />
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">Live Business Pulse</h2>
+          <div className="flex items-center gap-3 mb-6 relative z-10">
+            <div className="p-2 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
+              <BarChart3 className="text-blue-600" size={20} />
+            </div>
+            <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest">Live Business Pulse</h2>
           </div>
-          <div className="space-y-4">
-            <div className="p-4 bg-black/40 border border-white/5 rounded-2xl">
-              <pre className="text-xs text-emerald-400/90 font-mono whitespace-pre-wrap leading-relaxed">
+          <div className="space-y-4 relative z-10">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl shadow-inner">
+              <pre className="text-xs text-blue-700 font-bold font-mono whitespace-pre-wrap leading-relaxed">
                 {pulseText || 'Calibrating neural pulse...'}
               </pre>
             </div>
-            <p className="text-[10px] text-slate-500 italic">
-              This data is automatically injected into all team AI interactions to ground responses in financial reality.
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">
+              This data grounds all team AI interactions in real-time financial signal.
             </p>
           </div>
         </div>
 
-        <div className="glass-card p-4 sm:p-6">
-          <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <AlertTriangle className="text-amber-400" size={20} />
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">Growth Bottlenecks</h2>
+        <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm p-4 sm:p-6 hover:shadow-md transition-all hover:border-orange-200">
+          <div className="flex items-center gap-3 mb-6 relative z-10">
+            <div className="p-2 bg-orange-50 rounded-lg border border-orange-100 shadow-sm">
+              <AlertTriangle className="text-orange-500" size={20} />
+            </div>
+            <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest">Growth Bottlenecks</h2>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 relative z-10">
             {insights.length > 0 ? insights.map((insight, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className={`p-4 rounded-2xl border ${
-                  insight.type === 'warning' ? 'bg-amber-500/5 border-amber-500/20' : 'bg-indigo-500/5 border-indigo-500/20'
+                className={`p-4 rounded-2xl border shadow-sm ${
+                  insight.type === 'warning' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${
-                    insight.type === 'warning' ? 'bg-amber-500/20 text-amber-500' : 'bg-indigo-500/20 text-indigo-400'
+                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-sm ${
+                    insight.type === 'warning' ? 'bg-orange-200 text-orange-800' : 'bg-blue-200 text-blue-800'
                   }`}>
                     {insight.impact} IMPACT
                   </span>
-                  <h4 className="text-sm font-bold text-white">{insight.title}</h4>
+                  <h4 className="text-sm font-black text-slate-900">{insight.title}</h4>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">{insight.description}</p>
+                <p className="text-xs text-slate-600 font-medium leading-relaxed mt-1.5">{insight.description}</p>
               </motion.div>
             )) : (
-              <div className="p-8 text-center border-2 border-dashed border-white/5 rounded-2xl">
+              <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
                 <CheckCircle size={24} className="text-emerald-500 mx-auto mb-2 opacity-50" />
-                <p className="text-xs text-slate-500 font-medium">No immediate bottlenecks detected. System stable.</p>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">System stable. No blockers.</p>
               </div>
             )}
           </div>
@@ -345,23 +349,25 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
       </div>
 
       {!hasData && !loading && (
-        <div className="glass-card p-8 text-center space-y-3">
-          <Sparkles className="w-8 h-8 text-indigo-400 mx-auto" />
-          <h3 className="text-lg font-bold text-white">No finance entries yet</h3>
-          <p className="text-slate-400 text-sm max-w-md mx-auto">
+        <div className="bg-white border border-slate-200 rounded-[24px] p-12 text-center space-y-4 shadow-sm">
+          <div className="w-16 h-16 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+            <Sparkles className="w-8 h-8 text-blue-500" />
+          </div>
+          <h3 className="text-xl font-black text-slate-900">No finance entries yet</h3>
+          <p className="text-slate-500 font-medium text-sm max-w-md mx-auto leading-relaxed">
             Add revenue and expenses manually or import a CSV. Once you have at least 7 days
             of data, you'll see deterministic forecasts and AI commentary here.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
             <button
               onClick={() => setShowForm(true)}
-              className="px-4 py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-semibold"
+              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
             >
-              Add your first entry
+              Add first entry
             </button>
             <button
               onClick={() => setShowCsv(true)}
-              className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-semibold"
+              className="px-6 py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-black uppercase tracking-wider text-xs shadow-sm active:scale-95 transition-all"
             >
               Try sample CSV
             </button>
@@ -372,67 +378,84 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
       {/* Charts */}
       {hasData && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <div className="md:col-span-2 lg:col-span-2 glass-card p-3 sm:p-5">
-            <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
-              <h3 className="text-xs sm:text-sm font-bold text-white">Revenue vs expenses</h3>
-              <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest">Last 12 months</span>
+          <div className="md:col-span-2 lg:col-span-2 bg-white border border-slate-200 rounded-[24px] shadow-sm p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Revenue vs Expenses</h3>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded border border-slate-100">Last 12 months</span>
             </div>
-            <div className="h-56 sm:h-64 md:h-72">
+            <div className="h-64 sm:h-72 md:h-80">
               <ResponsiveContainer>
                 <BarChart data={monthly}>
-                  <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
-                  <XAxis dataKey="label" stroke="#64748b" fontSize={10} />
-                  <YAxis stroke="#64748b" fontSize={10} tickFormatter={v => `£${(v / 1000).toFixed(0)}k`} />
+                  <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" stroke="#94a3b8" fontSize={10} fontWeight={700} axisLine={false} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={10} fontWeight={700} axisLine={false} tickLine={false} tickFormatter={v => `£${(v / 1000).toFixed(0)}k`} />
                   <Tooltip
+                    cursor={{fill: '#f8fafc'}}
                     contentStyle={{
-                      background: '#0a0b14',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 8,
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 12,
                       fontSize: 12,
+                      fontWeight: 700,
+                      color: '#0f172a',
+                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
                     }}
                     formatter={(v: any) => gbp(Number(v))}
                   />
-                  <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Bar dataKey="revenue" name="Revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expense" name="Expense" fill="#ec4899" radius={[4, 4, 0, 0]} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', paddingTop: 20 }} />
+                  <Bar dataKey="revenue" name="Revenue" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="expense" name="Expense" fill="#dc2626" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="glass-card p-3 sm:p-5">
-            <h3 className="text-xs sm:text-sm font-bold text-white mb-3 sm:mb-4">Expenses by category (90d)</h3>
+          <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm p-4 sm:p-6">
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Expense Breakdown (90d)</h3>
             {categories.length ? (
-              <div className="h-56 sm:h-64 md:h-72">
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={categories.slice(0, 6)}
-                      dataKey="amount"
-                      nameKey="category"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={2}
-                    >
-                      {categories.slice(0, 6).map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: '#0a0b14',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                      formatter={(v: any, _n: any, e: any) => [gbp(Number(v)), e?.payload?.category]}
-                    />
-                    <Legend wrapperStyle={{ fontSize: 10 }} />
-                  </PieChart>
-                </ResponsiveContainer>
+              <div className="h-64 sm:h-72 md:h-80 flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={categories.slice(0, 6)}
+                        dataKey="amount"
+                        nameKey="category"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={4}
+                      >
+                        {categories.slice(0, 6).map((_, i) => (
+                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="white" strokeWidth={2} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          background: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: 12,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+                        }}
+                        formatter={(v: any, _n: any, e: any) => [gbp(Number(v)), e?.payload?.category]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  {categories.slice(0, 4).map((c, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                      <span className="text-[10px] font-bold text-slate-600 truncate uppercase tracking-tight">{c.category}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="text-slate-500 text-sm text-center py-8">No expenses in the last 90 days.</div>
+              <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-2xl border border-slate-100 border-dashed p-8">
+                <p className="text-slate-400 font-bold text-xs text-center uppercase tracking-widest">No expenses tracked</p>
+              </div>
             )}
           </div>
         </div>
@@ -440,34 +463,36 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
 
       {/* Forecast panel */}
       {hasData && (
-        <div className="glass-card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <TrendingUp size={14} className="text-indigo-400" /> 30/60/90-day projection
-            </h3>
-            <span className="text-[10px] text-amber-400/90 uppercase tracking-widest flex items-center gap-1">
-              <Info size={10} /> AI estimate
+        <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-50 rounded-lg border border-blue-100"><TrendingUp size={16} className="text-blue-600" /></div>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Growth Projections</h3>
+            </div>
+            <span className="text-[10px] font-black text-orange-600 bg-orange-50 border border-orange-100 px-2 py-1 rounded-md uppercase tracking-[0.2em] shadow-sm">
+              AI Forecast
             </span>
           </div>
           {forecastPoints ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {forecastPoints.map(f => (
-                <div key={f.point} className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    By {new Date(f.point).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                <div key={f.point} className="p-5 rounded-[20px] bg-slate-50 border border-slate-200 hover:border-blue-200 transition-all shadow-sm">
+                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center justify-between">
+                    <span>Target Date</span>
+                    <span className="text-slate-900">{new Date(f.point).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
                   </div>
-                  <div className="mt-2 space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Revenue</span>
-                      <span className="text-emerald-300 font-mono">{gbp(f.predictedRevenue)}</span>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 font-bold text-xs uppercase tracking-tight">Revenue</span>
+                      <span className="text-slate-900 font-black font-mono">{gbp(f.predictedRevenue)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Expense</span>
-                      <span className="text-rose-300 font-mono">{gbp(f.predictedExpense)}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 font-bold text-xs uppercase tracking-tight">Expense</span>
+                      <span className="text-red-600 font-black font-mono">{gbp(f.predictedExpense)}</span>
                     </div>
-                    <div className="flex justify-between pt-1 border-t border-white/5">
-                      <span className="text-slate-300 font-semibold">Profit</span>
-                      <span className="text-white font-mono font-bold">
+                    <div className="flex justify-between items-center pt-2 mt-1 border-t border-slate-200">
+                      <span className="text-blue-600 font-black text-xs uppercase tracking-widest">Est. Profit</span>
+                      <span className="text-blue-700 font-black font-mono text-lg">
                         {gbp(f.predictedRevenue - f.predictedExpense)}
                       </span>
                     </div>
@@ -476,8 +501,8 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
               ))}
             </div>
           ) : (
-            <div className="text-slate-500 text-sm text-center py-6">
-              Add at least 7 days of entries to enable forecasts.
+            <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-8 text-center">
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">7 days of data required for forecast</p>
             </div>
           )}
         </div>
@@ -488,104 +513,105 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
 
       {/* AI commentary */}
       {hasData && (
-        <div className="glass-card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Sparkles size={14} className="text-fuchsia-400" /> AI commentary
-            </h3>
+        <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-all">
+            <Sparkles size={80} className="text-orange-500" />
+          </div>
+          <div className="flex items-center justify-between mb-6 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-50 border border-orange-100 rounded-lg shadow-sm"><Sparkles size={16} className="text-orange-500" /></div>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Neural Narrative</h3>
+            </div>
             <button
               onClick={generateNarrative}
               disabled={narrLoading}
-              className="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold hover:bg-indigo-500/20 disabled:opacity-60 flex items-center gap-2"
+              className="px-4 py-2 rounded-xl bg-orange-50 border border-orange-200 text-orange-700 text-xs font-black uppercase tracking-wider hover:bg-orange-100 transition-all shadow-sm active:scale-95 disabled:opacity-50 flex items-center gap-2"
             >
-              {narrLoading ? <Loader2 className="animate-spin" size={12} /> : <Sparkles size={12} />}
-              {narrative ? 'Regenerate' : 'Generate'}
+              {narrLoading ? <Loader2 className="animate-spin" size={14} /> : <RefreshCw size={14} />}
+              {narrative ? 'Refresh AI' : 'Analyze Now'}
             </button>
           </div>
           {narrError && (
-            <div className="px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs mb-3">
-              {narrError}
+            <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-xs font-bold mb-4 shadow-sm flex items-center gap-3">
+              <AlertTriangle size={16} /> {narrError}
             </div>
           )}
           {narrative ? (
-            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{narrative}</div>
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-slate-700 text-[15px] leading-relaxed font-medium relative z-10 shadow-inner italic">
+              {narrative}
+            </div>
           ) : (
-            <p className="text-slate-500 text-sm">
-              Click "Generate" to get a plain-English read of your numbers.
-            </p>
+            <div className="text-center py-10 bg-slate-50 border border-slate-100 border-dashed rounded-2xl">
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Run AI analysis for strategic insights</p>
+            </div>
           )}
         </div>
       )}
 
       {/* Entries list */}
       {hasData && (
-        <div className="glass-card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-white">Recent Entries</h3>
-            <span className="text-[11px] text-slate-500">
-              {anomalies.length > 0 && (
-                <span className="text-amber-400">{anomalies.length} unusual</span>
-              )}
-            </span>
+        <div className="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 overflow-hidden">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest px-1">Ledger Activity</h3>
+            {anomalies.length > 0 && (
+              <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-md shadow-sm animate-pulse">
+                {anomalies.length} Unusual Patterns Found
+              </span>
+            )}
           </div>
           
           {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto -mx-5">
-            <table className="w-full text-sm min-w-[600px]">
-              <thead className="text-slate-500 text-[10px] uppercase tracking-widest border-b border-white/5">
+          <div className="hidden md:block overflow-x-auto -mx-6">
+            <table className="w-full text-sm min-w-[700px]">
+              <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.15em] border-y border-slate-100">
                 <tr>
-                  <th className="text-left px-5 py-2 font-semibold">Date</th>
-                  <th className="text-left px-3 py-2 font-semibold">Type</th>
-                  <th className="text-left px-3 py-2 font-semibold">Category</th>
-                  <th className="text-right px-3 py-2 font-semibold">Amount</th>
-                  <th className="text-left px-3 py-2 font-semibold">Note</th>
-                  <th className="px-3 py-2"></th>
+                  <th className="text-left px-6 py-3 font-black">Post Date</th>
+                  <th className="text-left px-4 py-3 font-black">Flow</th>
+                  <th className="text-left px-4 py-3 font-black">Business Category</th>
+                  <th className="text-right px-4 py-3 font-black">Amount (GBP)</th>
+                  <th className="text-left px-4 py-3 font-black">Note / Audit</th>
+                  <th className="px-6 py-3 w-16"></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-50 font-medium">
                 {entries.slice(0, 50).map(e => {
                   const flag = e.id ? anomalyMap.get(e.id) : undefined;
                   return (
                     <tr
                       key={e.id}
-                      className={`border-b border-white/[0.03] ${
-                        flag ? 'bg-amber-500/[0.04]' : ''
+                      className={`hover:bg-slate-50 transition-colors ${
+                        flag ? 'bg-orange-50/30' : ''
                       }`}
                     >
-                      <td className="px-5 py-2 text-slate-300 font-mono">{e.entry_date}</td>
-                      <td className="px-3 py-2">
+                      <td className="px-6 py-4 text-slate-500 font-bold tabular-nums font-mono text-xs">{e.entry_date}</td>
+                      <td className="px-4 py-4">
                         <span
-                          className={`text-[10px] font-bold uppercase tracking-wider ${
-                            e.type === 'revenue' ? 'text-emerald-400' : 'text-rose-400'
+                          className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border shadow-sm ${
+                            e.type === 'revenue' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'
                           }`}
                         >
                           {e.type}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-slate-300">
+                      <td className="px-4 py-4 text-slate-900 font-bold text-[13px]">
                         <div className="flex items-center gap-2">
                           {e.category}
                           {flag && (
-                            <span
-                              title={flag.reason}
-                              className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/20"
-                            >
-                              <AlertTriangle size={9} /> unusual
-                            </span>
+                            <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" title={flag.reason} />
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-right text-slate-200 font-mono">
+                      <td className={`px-4 py-4 text-right font-black font-mono text-[13px] ${e.type === 'revenue' ? 'text-blue-600' : 'text-slate-900'}`}>
                         {gbp(e.amount)}
                       </td>
-                      <td className="px-3 py-2 text-slate-500 truncate max-w-[200px]">{e.note || '—'}</td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-4 py-4 text-slate-500 text-xs truncate max-w-[220px]">{e.note || '—'}</td>
+                      <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => handleDelete(e.id)}
-                          className="text-slate-600 hover:text-rose-400 transition p-1"
-                          title="Delete"
+                          className="text-slate-300 hover:text-red-600 transition p-2 rounded-lg hover:bg-white hover:shadow-sm"
+                          title="Delete entry"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>
@@ -596,50 +622,51 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
           </div>
 
           {/* Mobile Card List */}
-          <div className="md:hidden space-y-3">
+          <div className="md:hidden space-y-4">
             {entries.slice(0, 50).map(e => {
               const flag = e.id ? anomalyMap.get(e.id) : undefined;
               return (
                 <div
                   key={e.id}
-                  className={`p-4 rounded-xl border border-white/5 space-y-3 ${
-                    flag ? 'bg-amber-500/5 border-amber-500/10' : 'bg-white/[0.02]'
+                  className={`p-5 rounded-2xl border transition-all shadow-sm ${
+                    flag ? 'bg-orange-50 border-orange-200' : 'bg-white border-slate-200'
                   }`}
                 >
                   <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] font-black font-mono text-slate-400 uppercase tracking-widest">
                         {e.entry_date}
                       </div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
-                            e.type === 'revenue' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                          className={`text-[9px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded shadow-sm border ${
+                            e.type === 'revenue' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'
                           }`}
                         >
                           {e.type}
                         </span>
-                        <span className="text-sm font-bold text-white">{e.category}</span>
+                        <span className="text-[13px] font-black text-slate-900">{e.category}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-white font-mono">{gbp(e.amount)}</div>
+                      <div className="text-lg font-black text-slate-900 font-mono tracking-tight">{gbp(e.amount)}</div>
                       <button
                         onClick={() => handleDelete(e.id)}
-                        className="text-slate-500 hover:text-rose-400 mt-2"
+                        className="p-2 text-slate-400 hover:text-red-600 mt-2 bg-slate-50 rounded-lg border border-slate-100 shadow-sm"
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
                   {e.note && (
-                    <div className="text-xs text-slate-400 italic border-t border-white/5 pt-2">
+                    <div className="text-[11px] text-slate-500 font-medium leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100 mt-3">
                       {e.note}
                     </div>
                   )}
                   {flag && (
-                    <div className="text-[10px] text-amber-300 bg-amber-500/10 px-2 py-1.5 rounded-lg border border-amber-500/10 flex items-center gap-2">
-                      <AlertTriangle size={12} /> {flag.reason}
+                    <div className="text-[10px] font-bold text-orange-700 bg-orange-100/50 px-3 py-2 rounded-xl border border-orange-200 flex items-start gap-2 mt-3 shadow-inner">
+                      <AlertTriangle size={14} className="text-orange-600 shrink-0 mt-0.5" /> 
+                      <span className="leading-tight">{flag.reason}</span>
                     </div>
                   )}
                 </div>
@@ -648,16 +675,17 @@ export const FinanceDashboard: React.FC<{ profile: any }> = ({ profile }) => {
           </div>
 
           {entries.length > 50 && (
-            <div className="text-center text-[11px] text-slate-500 pt-3">
-              Showing 50 most recent of {entries.length} entries.
+            <div className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pt-6 pb-2">
+              Viewing 50 of {entries.length} Ledger Records
             </div>
           )}
         </div>
       )}
 
       {loading && !hasData && (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="animate-spin text-indigo-400" size={24} />
+        <div className="flex flex-col items-center justify-center py-24 gap-4 bg-white border border-slate-200 rounded-[24px] shadow-sm">
+          <Loader2 className="animate-spin text-blue-600" size={32} />
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Syncing Ledger Activity…</p>
         </div>
       )}
 

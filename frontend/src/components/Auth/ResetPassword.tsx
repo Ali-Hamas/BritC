@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, ArrowRight, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Lock, ArrowRight, Loader2, CheckCircle2, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { resetPassword } from '../../lib/auth-client';
 
 export const ResetPassword: React.FC = () => {
@@ -56,96 +56,104 @@ export const ResetPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#05060d] text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-gradient-to-br from-indigo-600/30 via-violet-500/10 to-transparent rounded-full blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
-        <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-gradient-to-tr from-fuchsia-600/20 via-indigo-500/10 to-transparent rounded-full blur-3xl animate-[pulse_10s_ease-in-out_infinite]" />
+        <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-red-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2.5">
-            <div className="w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl border border-slate-100 flex items-center justify-center bg-white">
               <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-2xl font-black tracking-tight">
-              Britsync <span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">AI</span>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+              Britsync <span className="text-blue-600">AI</span>
             </h1>
           </div>
         </div>
 
-        <div className="relative">
-          <div className="absolute -inset-px rounded-[2rem] bg-gradient-to-br from-indigo-500/40 via-fuchsia-500/20 to-transparent opacity-60" />
-          <div className="relative rounded-[2rem] bg-[#0a0b14]/90 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_-20px_rgba(99,102,241,0.5)] p-7 sm:p-8">
+        <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-2xl p-8 sm:p-12 animate-in zoom-in-95 duration-300 relative overflow-hidden">
+           <button
+            type="button"
+            onClick={() => window.location.href = '/'}
+            className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all active:scale-95"
+          >
+            <ChevronLeft size={14} /> Back
+          </button>
+
             {done ? (
-              <div className="text-center space-y-5 py-4">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-                  <CheckCircle2 className="text-emerald-400" size={28} />
+              <div className="text-center space-y-6 py-6">
+                <div className="w-20 h-20 mx-auto rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+                  <CheckCircle2 className="text-emerald-500" size={40} />
                 </div>
-                <div className="space-y-1.5">
-                  <h2 className="text-xl font-bold tracking-tight">Password updated</h2>
-                  <p className="text-sm text-slate-400">Redirecting you to sign in…</p>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Access Restored</h2>
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed">System identity successfully updated. Re-deploying to session node...</p>
                 </div>
               </div>
             ) : !token && error ? (
-              <div className="text-center space-y-5 py-4">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center">
-                  <AlertTriangle className="text-rose-400" size={28} />
+              <div className="text-center space-y-6 py-6">
+                <div className="w-20 h-20 mx-auto rounded-3xl bg-red-50 border border-red-100 flex items-center justify-center shadow-sm">
+                  <AlertTriangle className="text-red-500" size={40} />
                 </div>
-                <div className="space-y-1.5">
-                  <h2 className="text-xl font-bold tracking-tight">Link invalid</h2>
-                  <p className="text-sm text-slate-400 leading-relaxed">{error}</p>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Protocol Invalid</h2>
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed">{error}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => (window.location.href = '/')}
-                  className="w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 shadow-lg shadow-indigo-500/30 transition-all"
+                  className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
-                  Back to sign in
+                  Request New Vector
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-1">
-                  <h2 className="text-xl font-bold tracking-tight">Set a new password</h2>
-                  <p className="text-sm text-slate-500">Choose a strong password you haven't used before.</p>
+              <form onSubmit={handleSubmit} className="space-y-8 mt-4">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">New Secret Key</h2>
+                  <p className="text-sm text-slate-500 font-medium">Establish a high-entropy credential for your workspace.</p>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">New password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      autoFocus
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="At least 8 characters"
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 font-mono text-sm"
-                    />
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Key</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                      <input
+                        type="password"
+                        required
+                        minLength={8}
+                        autoFocus
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="8+ Characters"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-200 font-mono text-sm shadow-inner"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Confirm password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      value={confirm}
-                      onChange={(e) => setConfirm(e.target.value)}
-                      placeholder="Repeat the password"
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-100 outline-none focus:border-indigo-500/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-600 font-mono text-sm"
-                    />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm Identity</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                      <input
+                        type="password"
+                        required
+                        minLength={8}
+                        value={confirm}
+                        onChange={(e) => setConfirm(e.target.value)}
+                        placeholder="Repeat Key"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-200 font-mono text-sm shadow-inner"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
+                  <div className="px-5 py-4 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-black uppercase tracking-tight shadow-sm">
                     {error}
                   </div>
                 )}
@@ -153,30 +161,19 @@ export const ResetPassword: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 shadow-lg shadow-indigo-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                  className="w-full inline-flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
                 >
                   {loading ? (
-                    <Loader2 className="animate-spin" size={18} />
+                    <Loader2 className="animate-spin" size={20} />
                   ) : (
                     <>
-                      Update password
-                      <ArrowRight size={16} />
+                      Commit New Credential
+                      <ArrowRight size={18} />
                     </>
                   )}
                 </button>
-
-                <div className="text-center text-xs text-slate-500 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => (window.location.href = '/')}
-                    className="text-indigo-400 hover:text-indigo-300 font-semibold"
-                  >
-                    Back to sign in
-                  </button>
-                </div>
               </form>
             )}
-          </div>
         </div>
       </div>
     </div>

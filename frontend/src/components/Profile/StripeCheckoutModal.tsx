@@ -7,7 +7,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import {
-  X, Loader2, Zap, Shield, Lock, CheckCircle2, CreditCard,
+  X, Loader2, Zap, Shield, Lock, CheckCircle2, CreditCard, AlertTriangle,
 } from 'lucide-react';
 import { createSubscriptionIntent } from '../../lib/subscription';
 
@@ -17,12 +17,12 @@ const stripePromise: Promise<Stripe | null> = PUB_KEY
   : Promise.resolve(null);
 
 const FEATURES = [
-  'Finance intelligence engine',
-  'Lead Hunter automated prospecting',
-  'Browser automation tools',
-  'Unlimited team chats',
-  '64 GB enterprise storage',
-  'Priority support',
+  'Finance Intelligence Engine',
+  'Lead Alpha Hunter Protocols',
+  'Autonomous Browser Automation',
+  'Unlimited Team Workspace Clusters',
+  '64 GB Encrypted Strategic Storage',
+  'Priority 24/7 Command Support',
 ];
 
 interface Props {
@@ -58,40 +58,43 @@ export const StripeCheckoutModal: React.FC<Props> = ({ open, onClose, onSuccess 
 
   const appearance = useMemo(
     () => ({
-      theme: 'night' as const,
+      theme: 'stripe' as const,
       variables: {
-        colorPrimary: '#818cf8',
-        colorBackground: '#0b0d1f',
-        colorText: '#e2e8f0',
-        colorDanger: '#fb7185',
+        colorPrimary: '#2563eb',
+        colorBackground: '#ffffff',
+        colorText: '#0f172a',
+        colorDanger: '#dc2626',
         fontFamily: 'Inter, system-ui, sans-serif',
-        borderRadius: '12px',
-        spacingUnit: '4px',
+        borderRadius: '16px',
+        spacingUnit: '5px',
       },
       rules: {
         '.Input': {
-          backgroundColor: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          padding: '12px',
+          backgroundColor: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          padding: '16px',
+          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)',
         },
         '.Input:focus': {
-          border: '1px solid rgba(129,140,248,0.6)',
-          boxShadow: '0 0 0 3px rgba(129,140,248,0.15)',
+          border: '1px solid #2563eb',
+          boxShadow: '0 0 0 4px rgba(37,99,235,0.1)',
         },
         '.Label': {
-          color: '#94a3b8',
-          fontSize: '11px',
-          fontWeight: '700',
-          letterSpacing: '0.08em',
+          color: '#64748b',
+          fontSize: '10px',
+          fontWeight: '800',
+          letterSpacing: '0.15em',
           textTransform: 'uppercase',
+          marginBottom: '8px',
         },
         '.Tab': {
-          backgroundColor: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          padding: '12px',
         },
         '.Tab--selected': {
-          backgroundColor: 'rgba(129,140,248,0.15)',
-          border: '1px solid rgba(129,140,248,0.5)',
+          backgroundColor: '#eff6ff',
+          border: '2px solid #2563eb',
         },
       },
     }),
@@ -102,120 +105,117 @@ export const StripeCheckoutModal: React.FC<Props> = ({ open, onClose, onSuccess 
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-2 sm:p-4 md:p-6 bg-black/70 backdrop-blur-md overflow-y-auto"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl bg-[#0b0d1f] border border-white/10 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-2xl my-2 sm:my-4 max-h-[96vh] overflow-y-auto"
+        className="relative w-full max-w-5xl bg-white border border-slate-200 rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-transparent to-fuchsia-600/10 pointer-events-none" />
-        <div className="absolute -top-32 -right-32 w-72 sm:w-96 h-72 sm:h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -left-32 w-72 sm:w-96 h-72 sm:h-96 bg-fuchsia-500/15 rounded-full blur-3xl pointer-events-none" />
-
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+          className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-all active:scale-95"
         >
-          <X size={16} />
+          <X size={20} />
         </button>
 
-        <div className="relative grid grid-cols-1 md:grid-cols-5 gap-0">
-          {/* Left — plan summary */}
-          <div className="md:col-span-2 p-4 sm:p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10 space-y-4 sm:space-y-5">
-            <div className="flex items-center gap-2.5 pr-12">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0 overflow-hidden p-1.5">
-                <img
-                  src="/favicon.png"
-                  alt="Britsync"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">
-                  Britsync
-                </p>
-                <h3 className="text-base sm:text-lg font-bold text-white -mt-0.5">Enterprise</h3>
-              </div>
+        {/* Left — plan summary */}
+        <div className="md:w-[40%] p-8 sm:p-12 bg-slate-50 border-r border-slate-100 flex flex-col">
+          <div className="flex items-center gap-4 mb-10">
+            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-xl shadow-blue-500/5 shrink-0 overflow-hidden p-2">
+              <img src="/favicon.png" alt="Britsync" className="w-full h-full object-contain" />
             </div>
-
-            <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="text-3xl sm:text-4xl md:text-5xl font-black text-white">£449</span>
-              <span className="text-xs sm:text-sm text-slate-400 font-medium">/ month</span>
-            </div>
-            <p className="text-[11px] sm:text-xs text-slate-500 -mt-2">Cancel anytime · billed monthly</p>
-
-            <div className="space-y-2 sm:space-y-2.5 pt-3 border-t border-white/5">
-              {FEATURES.map((f) => (
-                <div key={f} className="flex items-center gap-2 sm:gap-2.5">
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                    <CheckCircle2 size={10} className="text-emerald-400" />
-                  </div>
-                  <span className="text-[11px] sm:text-xs md:text-sm text-slate-300">{f}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-3 border-t border-white/5 space-y-2">
-              <div className="flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-500">
-                <Lock size={11} className="shrink-0" />
-                <span>Encrypted by Stripe · PCI-DSS compliant</span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-500">
-                <Shield size={11} className="shrink-0" />
-                <span>Cancel anytime from your profile</span>
-              </div>
+            <div>
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">
+                Protocol Deployment
+              </p>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Enterprise Command</h3>
             </div>
           </div>
 
-          {/* Right — payment form */}
-          <div className="md:col-span-3 p-4 sm:p-6 md:p-8">
-            <div className="flex items-center gap-2.5 mb-4 sm:mb-6">
-              <div className="w-9 h-9 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-300 shrink-0">
-                <CreditCard size={16} />
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-5xl font-black text-slate-900 tracking-tight">£449</span>
+            <span className="text-sm font-black text-slate-400 uppercase tracking-widest">/ monthly</span>
+          </div>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-tight mb-10">Full high-tier clearance active instantly</p>
+
+          <div className="space-y-4 mb-10 flex-1">
+            {FEATURES.map((f) => (
+              <div key={f} className="flex items-start gap-3 group">
+                <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                  <CheckCircle2 size={14} className="text-emerald-600 stroke-[3px]" />
+                </div>
+                <span className="text-sm text-slate-600 font-bold uppercase tracking-tight leading-snug">{f}</span>
               </div>
-              <div className="min-w-0">
-                <h4 className="font-bold text-white text-sm sm:text-base md:text-lg">Payment Details</h4>
-                <p className="text-[10px] sm:text-[11px] text-slate-500">Secure & instant activation</p>
+            ))}
+          </div>
+
+          <div className="pt-8 border-t border-slate-200 space-y-3">
+            <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <Lock size={14} className="text-blue-600" />
+              <span>Stripe 256-bit AES Encryption</span>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <Shield size={14} className="text-emerald-600" />
+              <span>Detach Protocol anytime via Console</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right — payment form */}
+        <div className="flex-1 p-8 sm:p-12 bg-white flex flex-col">
+          <div className="flex items-center gap-3 mb-10">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+              <CreditCard size={20} />
+            </div>
+            <div>
+              <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">Payment Interface</h4>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Instant strategic authorization</p>
+            </div>
+          </div>
+
+          {!PUB_KEY && (
+            <div className="p-6 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-black uppercase tracking-tight flex items-center gap-3">
+              <AlertTriangle size={20} />
+              <div>
+                <p className="font-black mb-1">STRIPE CONFIGURATION FAULT</p>
+                <p className="font-bold opacity-80 uppercase">Missing public vector: VITE_STRIPE_PUBLISHABLE_KEY</p>
               </div>
             </div>
+          )}
 
-            {!PUB_KEY && (
-              <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-                <p className="font-bold mb-1">Stripe is not configured.</p>
-                <p>Add VITE_STRIPE_PUBLISHABLE_KEY to your frontend .env.</p>
+          {PUB_KEY && loading && (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 py-20">
+              <Loader2 size={40} className="animate-spin text-blue-600" />
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Negotiating Handshake...</p>
+            </div>
+          )}
+
+          {PUB_KEY && error && (
+            <div className="p-6 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-black uppercase tracking-tight space-y-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle size={20} />
+                <span>{error}</span>
               </div>
-            )}
+              <button
+                onClick={() => {
+                  setError(null);
+                  setClientSecret(null);
+                }}
+                className="w-full py-3 bg-white border border-red-200 rounded-xl hover:bg-red-50 transition-all"
+              >
+                RE-INITIALIZE
+              </button>
+            </div>
+          )}
 
-            {PUB_KEY && loading && (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 size={28} className="animate-spin text-indigo-400" />
-                <p className="text-xs text-slate-400">Preparing secure checkout...</p>
-              </div>
-            )}
-
-            {PUB_KEY && error && (
-              <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-                {error}
-                <button
-                  onClick={() => {
-                    setError(null);
-                    setClientSecret(null);
-                  }}
-                  className="ml-2 underline font-bold"
-                >
-                  Try again
-                </button>
-              </div>
-            )}
-
-            {PUB_KEY && clientSecret && !error && (
+          {PUB_KEY && clientSecret && !error && (
+            <div className="animate-in fade-in duration-500">
               <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
                 <PaymentForm onSuccess={onSuccess} />
               </Elements>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -243,7 +243,7 @@ const PaymentForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
     });
 
     if (error) {
-      setErr(error.message || 'Payment failed. Please try a different card.');
+      setErr(error.message || 'Transmission fault. Verify credentials.');
       setSubmitting(false);
     } else {
       onSuccess();
@@ -251,11 +251,11 @@ const PaymentForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-8">
       <PaymentElement options={{ layout: 'tabs' }} />
 
       {err && (
-        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+        <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-[10px] font-black uppercase tracking-tight shadow-sm">
           {err}
         </div>
       )}
@@ -263,25 +263,29 @@ const PaymentForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
       <button
         type="submit"
         disabled={!stripe || submitting}
-        className="w-full flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-3.5 bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-400 hover:to-fuchsia-400 text-white rounded-xl font-bold text-sm sm:text-base shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        className="w-full flex items-center justify-center gap-3 py-5 rounded-[20px] font-black text-sm uppercase tracking-[0.25em] text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none"
       >
         {submitting ? (
           <>
-            <Loader2 size={18} className="animate-spin" />
-            Processing...
+            <Loader2 size={20} className="animate-spin" />
+            Syncing...
           </>
         ) : (
           <>
-            <Zap size={18} />
-            Confirm Payment · £449/mo
+            <Zap size={20} className="fill-white" />
+            Confirm Command · £449/mo
           </>
         )}
       </button>
 
-      <p className="text-[10px] text-slate-500 text-center leading-relaxed">
-        By confirming, you authorize Britsync to charge your card £449.00 monthly until canceled.
-        Powered by Stripe.
-      </p>
+      <div className="text-center space-y-2">
+        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.1em] px-4">
+          By confirming, you authorize Britsync to establish a recurring monthly debit of £449.00 until termination.
+        </p>
+        <div className="flex items-center justify-center gap-4 grayscale opacity-40">
+           <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="h-5" />
+        </div>
+      </div>
     </form>
   );
 };

@@ -329,34 +329,34 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
 
   // ─── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="h-full overflow-y-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-32 scrollbar-thin">
+    <div className="h-full overflow-y-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-32 bg-slate-50 font-sans text-slate-900 scrollbar-thin">
       <div className="max-w-7xl mx-auto space-y-5 sm:space-y-7">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
-              <Shield className="text-amber-400 flex-shrink-0" size={26} />
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 flex items-center gap-2 sm:gap-3 tracking-tight">
+              <Shield className="text-blue-600 flex-shrink-0" size={26} />
               Admin Dashboard
             </h1>
-            <p className="text-slate-400 text-xs sm:text-sm mt-1">
+            <p className="text-slate-500 font-medium text-xs sm:text-sm mt-1">
               Platform-wide control · {users.length} users · {teams.length} teams · {adminUsers.length} admins
             </p>
           </div>
           <button
             onClick={load}
-            className="self-start sm:self-auto flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs sm:text-sm font-medium text-slate-300"
+            className="self-start sm:self-auto flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition-all"
           >
-            <RefreshCw size={14} /> Refresh
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>
         </div>
 
         {/* Toast */}
         {toast && (
-          <div className={`flex items-center gap-2 p-3 rounded-xl text-sm border ${
+          <div className={`flex items-center gap-2 p-3 rounded-xl text-sm border shadow-sm ${
             toast.kind === 'ok'
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-              : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-red-50 border-red-200 text-red-700'
           }`}>
             {toast.kind === 'ok' ? <ShieldCheck size={16} /> : <AlertTriangle size={16} />}
             <span className="flex-1">{toast.msg}</span>
@@ -373,7 +373,7 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-[#0d1126] border border-white/5 rounded-xl overflow-x-auto scrollbar-none">
+        <div className="flex gap-1 p-1 bg-white border border-slate-200 rounded-xl overflow-x-auto scrollbar-none shadow-sm">
           {([
             { id: 'overview', label: 'Overview', icon: BarChart3 },
             { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
@@ -386,43 +386,38 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-black uppercase tracking-tight whitespace-nowrap transition-all ${
                 tab === id
-                  ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-500/30'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-blue-600 text-white shadow-md active:scale-95'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <Icon size={14} />
               <span>{label}</span>
               {id === 'pending' && pendingUsers.length > 0 && (
-                <span className="text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded px-1.5 py-0.5">
+                <span className="text-[10px] font-black bg-orange-100 text-orange-600 border border-orange-200 rounded px-1.5 py-0.5 ml-1 shadow-sm">
                   {pendingUsers.length}
                 </span>
               )}
-              {id === 'users' && <span className="text-[10px] opacity-60">{users.length}</span>}
-              {id === 'teams' && <span className="text-[10px] opacity-60">{teams.length}</span>}
-              {id === 'admins' && <span className="text-[10px] opacity-60">{adminUsers.length}</span>}
-              {id === 'referrals' && <span className="text-[10px] opacity-60">{referralTokens.length}</span>}
-              {id === 'subscriptions' && <span className="text-[10px] opacity-60">{subscriptionRows.length}</span>}
             </button>
           ))}
         </div>
 
         {/* Search bar (hidden on overview) */}
         {tab !== 'overview' && tab !== 'admins' && tab !== 'pending' && (
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <div className="relative group">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={tab === 'users' ? 'Search users by email, name or id…' : 'Search teams by title, owner or PIN…'}
-              className="w-full pl-9 pr-9 py-2.5 bg-[#0d1126] border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+              className="w-full pl-9 pr-9 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 font-bold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X size={14} />
               </button>
@@ -433,43 +428,36 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
         {/* ── Overview ───────────────────────────────────────────────── */}
         {tab === 'overview' && (
           <div className="space-y-5 sm:space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              <StatCard icon={Users} label="Users" value={users.length} accent="indigo" />
-              <StatCard icon={Briefcase} label="Teams" value={teams.length} accent="emerald" />
-              <StatCard icon={Crown} label="Admins" value={adminUsers.length} accent="amber" />
-              <StatCard
-                icon={BarChart3}
-                label="Avg Members / Team"
-                value={teams.length ? Math.round(teams.reduce((a, t) => a + t.member_count, 0) / teams.length) : 0}
-                accent="purple"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <StatCard icon={Users} label="Accounts" value={users.length} accent="indigo" />
+              <StatCard icon={Briefcase} label="Active Teams" value={teams.length} accent="emerald" />
+              <StatCard icon={Shield} label="Privileged" value={adminRows.length} accent="amber" />
+              <StatCard icon={Clock} label="Pending" value={pendingUsers.length} accent="purple" />
             </div>
 
-            <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6">
-              <h2 className="text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">
-                Latest Signups
+            <section className="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm">
+              <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">
+                Recent Signups
               </h2>
-              <div className="divide-y divide-white/5">
-                {users.slice(0, 5).map(u => (
-                  <div key={u.id} className="py-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-300 font-bold text-sm flex-shrink-0">
+              <div className="divide-y divide-slate-100">
+                {users.slice(0, 10).map(u => (
+                  <div key={u.id} className="py-4 flex items-center gap-4 group">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-black text-sm flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
                       {(u.email || '?')[0].toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-white truncate">{u.email}</p>
-                      <p className="text-[11px] text-slate-500">
-                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                      <p className="text-sm text-slate-900 font-black truncate">{u.email}</p>
+                      <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight mt-0.5">
+                        {u.createdAt ? `Joined ${new Date(u.createdAt).toLocaleDateString()}` : '—'}
                       </p>
                     </div>
                     {(adminIdSet.has(u.id) || TeamService.isSuperAdmin(u.email)) && (
-                      <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-md px-2 py-0.5">
-                        ADMIN
-                      </span>
+                      <Badge label="ADMIN" tone="amber" />
                     )}
                   </div>
                 ))}
                 {users.length === 0 && (
-                  <p className="text-slate-500 text-sm italic py-4 text-center">No users yet.</p>
+                  <p className="text-slate-500 text-sm italic py-8 text-center px-4">No signal detected.</p>
                 )}
               </div>
             </section>
@@ -478,21 +466,21 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
 
         {/* ── Subscriptions ──────────────────────────────────────────── */}
         {tab === 'subscriptions' && (
-          <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-white/5">
+          <section className="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-slate-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                    <CreditCard size={16} className="text-emerald-400" />
+                  <h2 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2 uppercase tracking-widest">
+                    <CreditCard size={16} className="text-blue-600" />
                     Subscriptions
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5 font-bold uppercase tracking-tight">
                     {subscriptionRows.filter(s => s.plan === 'enterprise').length} Enterprise · {subscriptionRows.filter(s => s.plan === 'free').length} Free
                   </p>
                 </div>
                 <button
                   onClick={load}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-semibold text-slate-300 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 transition-colors shadow-sm"
                 >
                   <RefreshCw size={12} /> Refresh
                 </button>
@@ -500,31 +488,31 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
             </div>
 
             {subscriptionRows.length === 0 ? (
-              <p className="text-slate-500 text-sm italic py-8 text-center">No subscription records found.</p>
+              <p className="text-slate-500 text-sm italic py-12 text-center">No subscription records found.</p>
             ) : (
               <>
                 {/* Mobile cards */}
-                <div className="lg:hidden divide-y divide-white/5">
+                <div className="lg:hidden divide-y divide-slate-100">
                   {subscriptionRows.map(s => (
-                    <div key={s.user_id} className="p-4 space-y-2">
+                    <div key={s.user_id} className="p-5 space-y-3 hover:bg-slate-50 transition-colors">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium text-white text-sm truncate">{s.email}</p>
+                        <p className="font-black text-slate-900 text-sm truncate">{s.email}</p>
                         <Badge label={s.plan} tone={s.plan === 'enterprise' ? 'emerald' : 'amber'} />
                       </div>
                       <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                        <span className={`px-2 py-0.5 rounded-md border ${
-                          s.subscription_status === 'active' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
-                          s.subscription_status === 'past_due' ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' :
-                          'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                        <span className={`px-2 py-0.5 rounded-md border font-black uppercase tracking-widest shadow-sm ${
+                          s.subscription_status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          s.subscription_status === 'past_due' ? 'bg-red-50 text-red-700 border-red-200' :
+                          'bg-slate-100 text-slate-600 border-slate-200'
                         }`}>
                           {s.subscription_status}
                         </span>
-                        <span className="text-slate-400">{formatBytes(s.storage_used || 0)} used</span>
+                        <span className="text-slate-500 font-bold uppercase tracking-tight">{formatBytes(s.storage_used || 0)} used</span>
                       </div>
-                      <p className="text-[10px] text-slate-600">
+                      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
                         Source: {s.source} · Joined {s.created_at ? new Date(s.created_at).toLocaleDateString() : '—'}
                       </p>
-                      <div className="flex gap-2 pt-1">
+                      <div className="flex gap-2 pt-2">
                         {s.plan !== 'enterprise' && (
                           <ActionBtn tone="emerald" icon={Crown} label="Grant Enterprise" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'enterprise')} />
                         )}
@@ -537,63 +525,63 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                 </div>
 
                 {/* Desktop table */}
-                <div className="hidden lg:block">
+                <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-[#0d1126] text-slate-400 text-[11px] uppercase tracking-widest">
+                    <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-y border-slate-100">
                       <tr>
-                        <th className="text-left px-6 py-3 font-bold">User</th>
-                        <th className="text-left px-6 py-3 font-bold">Plan</th>
-                        <th className="text-left px-6 py-3 font-bold">Status</th>
-                        <th className="text-left px-6 py-3 font-bold">Storage Used</th>
-                        <th className="text-left px-6 py-3 font-bold">Source</th>
-                        <th className="text-left px-6 py-3 font-bold">Joined</th>
-                        <th className="text-right px-6 py-3 font-bold">Actions</th>
+                        <th className="text-left px-6 py-4">User Identity</th>
+                        <th className="text-left px-6 py-4">Current Plan</th>
+                        <th className="text-left px-6 py-4">Status</th>
+                        <th className="text-left px-6 py-4">Storage</th>
+                        <th className="text-left px-6 py-4">Source</th>
+                        <th className="text-left px-6 py-4">Joined</th>
+                        <th className="text-right px-6 py-4">Management</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-slate-100 font-medium">
                       {subscriptionRows.map(s => (
-                        <tr key={s.user_id} className="hover:bg-white/[0.02]">
-                          <td className="px-6 py-3">
+                        <tr key={s.user_id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-300 font-bold flex-shrink-0">
+                              <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-black shadow-sm">
                                 {(s.email || '?')[0].toUpperCase()}
                               </div>
-                              <span className="text-white font-medium truncate max-w-[220px]">{s.email}</span>
+                              <span className="text-slate-900 font-black truncate max-w-[220px]">{s.email}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-3">
-                            <span className={`text-xs font-bold px-2 py-1 rounded-md border ${
+                          <td className="px-6 py-4">
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded border shadow-sm ${
                               s.plan === 'enterprise'
-                                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                                : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-slate-50 text-slate-500 border-slate-200'
                             }`}>
                               {s.plan.toUpperCase()}
                             </span>
                           </td>
-                          <td className="px-6 py-3">
-                            <span className={`text-xs px-2 py-1 rounded-md border ${
-                              s.subscription_status === 'active' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
-                              s.subscription_status === 'past_due' ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' :
-                              s.subscription_status === 'canceled' ? 'bg-slate-500/10 text-slate-400 border-slate-500/20' :
-                              'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                          <td className="px-6 py-4">
+                            <span className={`text-[10px] px-2 py-0.5 rounded border font-black uppercase tracking-widest shadow-sm ${
+                              s.subscription_status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                              s.subscription_status === 'past_due' ? 'bg-red-50 text-red-700 border-red-200' :
+                              s.subscription_status === 'canceled' ? 'bg-slate-50 text-slate-500 border-slate-200' :
+                              'bg-orange-50 text-orange-600 border-orange-200'
                             }`}>
                               {s.subscription_status}
                             </span>
                           </td>
-                          <td className="px-6 py-3 text-xs text-slate-300 font-mono">
+                          <td className="px-6 py-4 text-xs text-slate-600 font-bold tabular-nums">
                             {formatBytes(s.storage_used || 0)}
                           </td>
-                          <td className="px-6 py-3 text-xs text-slate-400">{s.source}</td>
-                          <td className="px-6 py-3 text-xs text-slate-400">
+                          <td className="px-6 py-4 text-[11px] text-slate-500 font-bold uppercase tracking-tight">{s.source}</td>
+                          <td className="px-6 py-4 text-xs text-slate-400 font-bold">
                             {s.created_at ? new Date(s.created_at).toLocaleDateString() : '—'}
                           </td>
-                          <td className="px-6 py-3">
+                          <td className="px-6 py-4">
                             <div className="flex items-center gap-2 justify-end">
                               {s.plan !== 'enterprise' && (
-                                <ActionBtn tone="emerald" icon={Crown} label="Grant Enterprise" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'enterprise')} />
+                                <ActionBtn tone="emerald" icon={Crown} label="Upgrade" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'enterprise')} />
                               )}
                               {s.plan !== 'free' && (
-                                <ActionBtn tone="slate" icon={ShieldOff} label="Set Free" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'free')} />
+                                <ActionBtn tone="slate" icon={ShieldOff} label="Downgrade" busy={busyId === s.user_id} onClick={() => handleSetPlan(s.user_id, s.email, 'free')} />
                               )}
                             </div>
                           </td>
@@ -609,63 +597,66 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
 
         {/* ── Pending Approvals ──────────────────────────────────────── */}
         {tab === 'pending' && (
-          <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+          <section className="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 sm:p-8">
+            <div className="flex items-center justify-between mb-8 gap-2 flex-wrap">
               <div>
-                <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                  <Clock size={16} className="text-amber-400" />
-                  Awaiting Approval
+                <h2 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2 uppercase tracking-[0.2em]">
+                  <Clock size={16} className="text-orange-500" />
+                  Awaiting Oversight
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">New signups can't access the app until approved.</p>
+                <p className="text-xs text-slate-500 mt-1 font-bold">Pending signups must be vetted before workspace access.</p>
               </div>
               <button
                 onClick={load}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-semibold text-slate-300 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-black text-slate-700 transition-colors shadow-sm"
               >
-                <RefreshCw size={12} /> Refresh
+                <RefreshCw size={14} /> Refresh
               </button>
             </div>
 
             {pendingUsers.length === 0 ? (
-              <p className="text-slate-500 text-sm italic py-8 text-center">No pending signups.</p>
+              <div className="py-20 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                <CheckCircle size={32} className="text-emerald-500 mx-auto mb-4 opacity-30" />
+                <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">Zero Pending Items</p>
+              </div>
             ) : (
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-slate-100">
                 {pendingUsers.map(u => (
-                  <div key={u.user_id} className="py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                    <div className="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center text-amber-300 font-bold flex-shrink-0">
+                  <div key={u.user_id} className="py-5 flex items-center gap-4 flex-wrap sm:flex-nowrap group">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 font-black text-lg shadow-sm group-hover:scale-110 transition-transform">
                       {(u.email || '?')[0].toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-white truncate font-medium">{u.email}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-[11px] text-slate-500 truncate">
-                          {u.name ? `${u.name} · ` : ''}Signed up {new Date(u.created_at).toLocaleDateString()}
+                      <p className="text-sm text-slate-900 font-black truncate">{u.email}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-tight">
+                          {u.name ? `${u.name} · ` : ''}Joined {new Date(u.created_at).toLocaleDateString()}
                         </p>
-                        <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+                        <span className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded border shadow-sm ${
                           u.requested_plan === 'enterprise' 
-                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' 
-                            : 'bg-white/5 text-slate-500 border-white/10'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                            : 'bg-slate-50 text-slate-500 border-slate-200'
                         }`}>
                           {u.requested_plan || 'free'}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-auto">
+                    <div className="flex items-center gap-3 ml-auto">
                       <button
                         onClick={() => handleDecidePending(u, 'rejected')}
                         disabled={busyId === u.user_id}
-                        className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg text-xs font-semibold text-rose-300 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                        className="px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-xs font-black text-red-600 transition-all disabled:opacity-50 flex items-center gap-2 shadow-sm active:scale-95"
                       >
-                        {busyId === u.user_id ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />}
-                        Reject
+                        {busyId === u.user_id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                        REJECT
                       </button>
                       <button
                         onClick={() => handleDecidePending(u, 'approved')}
                         disabled={busyId === u.user_id}
-                        className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg text-xs font-semibold text-emerald-300 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95"
                       >
-                        {busyId === u.user_id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
-                        Approve
+                        {busyId === u.user_id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                        APPROVE
                       </button>
                     </div>
                   </div>
@@ -677,80 +668,51 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
 
         {/* ── Users ──────────────────────────────────────────────────── */}
         {tab === 'users' && (
-          <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl overflow-hidden">
+          <section className="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
             {/* Mobile cards */}
-            <div className="lg:hidden divide-y divide-white/5">
+            <div className="lg:hidden divide-y divide-slate-100">
               {filteredUsers.length === 0 ? (
-                <p className="text-slate-500 text-sm italic py-8 text-center px-4">No users match.</p>
+                <p className="text-slate-500 text-sm italic py-12 text-center px-4">Zero signal detected.</p>
               ) : (
                 filteredUsers.map(u => {
                   const isAdmin = adminIdSet.has(u.id);
                   const isSuper = TeamService.isSuperAdmin(u.email);
                   const plan = planByUserId[u.id] || 'free';
                   return (
-                    <div key={u.id} className="p-4 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-300 font-bold flex-shrink-0">
+                    <div key={u.id} className="p-5 space-y-4 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-black text-lg shadow-sm">
                           {(u.email || '?')[0].toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium text-white text-sm truncate">{u.email}</p>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <p className="font-black text-slate-900 text-sm truncate">{u.email}</p>
                             {isSuper && <Badge label="SUPER" tone="amber" />}
                             {isAdmin && !isSuper && <Badge label="ADMIN" tone="amber" />}
-                            <Badge label={plan === 'enterprise' ? 'ENTERPRISE' : 'FREE'} tone={plan === 'enterprise' ? 'emerald' : 'rose'} />
                           </div>
-                          <p className="text-[10px] text-slate-500 font-mono truncate">{u.id}</p>
-                          <p className="text-[10px] text-slate-600 mt-0.5">
-                            {u.name ? `${u.name} · ` : ''}
-                            {u.createdAt ? `Joined ${new Date(u.createdAt).toLocaleDateString()}` : ''}
-                          </p>
+                          <p className="text-[10px] text-slate-400 font-mono truncate">{u.id}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                             <Badge label={plan === 'enterprise' ? 'ENTERPRISE' : 'FREE'} tone={plan === 'enterprise' ? 'emerald' : 'rose'} />
+                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              Joined {new Date(u.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-2 flex-wrap pt-1">
                         {plan !== 'enterprise' && (
-                          <ActionBtn
-                            tone="emerald"
-                            icon={Crown}
-                            label="Grant Enterprise"
-                            busy={busyId === u.id}
-                            onClick={() => handleSetPlan(u.id, u.email, 'enterprise')}
-                          />
+                          <ActionBtn tone="emerald" icon={Crown} label="Enterprise" busy={busyId === u.id} onClick={() => handleSetPlan(u.id, u.email, 'enterprise')} />
                         )}
                         {plan === 'enterprise' && (
-                          <ActionBtn
-                            tone="slate"
-                            icon={ShieldOff}
-                            label="Set Free"
-                            busy={busyId === u.id}
-                            onClick={() => handleSetPlan(u.id, u.email, 'free')}
-                          />
+                          <ActionBtn tone="slate" icon={ShieldOff} label="Downgrade" busy={busyId === u.id} onClick={() => handleSetPlan(u.id, u.email, 'free')} />
                         )}
                         {!isSuper && (isAdmin ? (
-                          <ActionBtn
-                            tone="slate"
-                            icon={ShieldOff}
-                            label="Revoke"
-                            busy={busyId === u.id}
-                            onClick={() => handleDemote(u)}
-                          />
+                          <ActionBtn tone="slate" icon={ShieldOff} label="Revoke" busy={busyId === u.id} onClick={() => handleDemote(u)} />
                         ) : (
-                          <ActionBtn
-                            tone="amber"
-                            icon={ShieldPlus}
-                            label="Make Admin"
-                            busy={busyId === u.id}
-                            onClick={() => handlePromote(u)}
-                          />
+                          <ActionBtn tone="amber" icon={ShieldPlus} label="Promote" busy={busyId === u.id} onClick={() => handlePromote(u)} />
                         ))}
                         {!isSuper && (
-                          <ActionBtn
-                            tone="rose"
-                            icon={Trash2}
-                            label="Delete"
-                            busy={busyId === u.id}
-                            onClick={() => handleDeleteUser(u)}
-                          />
+                          <ActionBtn tone="rose" icon={Trash2} label="Delete" busy={busyId === u.id} onClick={() => handleDeleteUser(u)} />
                         )}
                       </div>
                     </div>
@@ -760,110 +722,67 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
             </div>
 
             {/* Desktop table */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[#0d1126] text-slate-400 text-[11px] uppercase tracking-widest">
+                <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-y border-slate-100">
                   <tr>
-                    <th className="text-left px-6 py-3 font-bold">User</th>
-                    <th className="text-left px-6 py-3 font-bold">Plan</th>
-                    <th className="text-left px-6 py-3 font-bold">User ID</th>
-                    <th className="text-left px-6 py-3 font-bold">Joined</th>
-                    <th className="text-right px-6 py-3 font-bold">Actions</th>
+                    <th className="text-left px-6 py-4">Operator</th>
+                    <th className="text-left px-6 py-4">Status / Plan</th>
+                    <th className="text-left px-6 py-4">Internal ID</th>
+                    <th className="text-left px-6 py-4">Joined</th>
+                    <th className="text-right px-6 py-4">Management</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-slate-100 font-medium">
                   {filteredUsers.map(u => {
                     const isAdmin = adminIdSet.has(u.id);
                     const isSuper = TeamService.isSuperAdmin(u.email);
                     const plan = planByUserId[u.id] || 'free';
                     return (
-                      <tr key={u.id} className="hover:bg-white/[0.02]">
-                        <td className="px-6 py-3">
+                      <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-300 font-bold flex-shrink-0">
+                            <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-black shadow-sm">
                               {(u.email || '?')[0].toUpperCase()}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-white font-medium">{u.email}</span>
+                                <span className="text-slate-900 font-black">{u.email}</span>
                                 {isSuper && <Badge label="SUPER" tone="amber" />}
                                 {isAdmin && !isSuper && <Badge label="ADMIN" tone="amber" />}
                               </div>
-                              <span className="text-xs text-slate-500">{u.name || '—'}</span>
+                              <span className="text-[11px] text-slate-500 font-bold uppercase tracking-tight">{u.name || 'Anonymous User'}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-3">
-                          <span className={`text-xs font-bold px-2 py-1 rounded-md border ${
-                            plan === 'enterprise'
-                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                              : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                          }`}>
-                            {plan.toUpperCase()}
-                          </span>
+                        <td className="px-6 py-4">
+                          <Badge label={plan.toUpperCase()} tone={plan === 'enterprise' ? 'emerald' : 'rose'} />
                         </td>
-                        <td className="px-6 py-3 text-[11px] text-slate-500 font-mono truncate max-w-[160px]">{u.id}</td>
-                        <td className="px-6 py-3 text-xs text-slate-400">
+                        <td className="px-6 py-4 text-[10px] text-slate-400 font-mono truncate max-w-[140px]">{u.id}</td>
+                        <td className="px-6 py-4 text-xs text-slate-500 font-bold">
                           {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                         </td>
-                        <td className="px-6 py-3">
-                          <div className="flex items-center gap-2 justify-end flex-wrap">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2 justify-end">
                             {plan !== 'enterprise' && (
-                              <ActionBtn
-                                tone="emerald"
-                                icon={Crown}
-                                label="Grant Enterprise"
-                                busy={busyId === u.id}
-                                onClick={() => handleSetPlan(u.id, u.email, 'enterprise')}
-                              />
+                              <ActionBtn tone="emerald" icon={Crown} label="Enterprise" busy={busyId === u.id} onClick={() => handleSetPlan(u.id, u.email, 'enterprise')} />
                             )}
                             {plan === 'enterprise' && (
-                              <ActionBtn
-                                tone="slate"
-                                icon={ShieldOff}
-                                label="Set Free"
-                                busy={busyId === u.id}
-                                onClick={() => handleSetPlan(u.id, u.email, 'free')}
-                              />
+                              <ActionBtn tone="slate" icon={ShieldOff} label="Set Free" busy={busyId === u.id} onClick={() => handleSetPlan(u.id, u.email, 'free')} />
                             )}
                             {!isSuper && (isAdmin ? (
-                              <ActionBtn
-                                tone="slate"
-                                icon={ShieldOff}
-                                label="Revoke"
-                                busy={busyId === u.id}
-                                onClick={() => handleDemote(u)}
-                              />
+                              <ActionBtn tone="slate" icon={ShieldOff} label="Revoke" busy={busyId === u.id} onClick={() => handleDemote(u)} />
                             ) : (
-                              <ActionBtn
-                                tone="amber"
-                                icon={ShieldPlus}
-                                label="Promote"
-                                busy={busyId === u.id}
-                                onClick={() => handlePromote(u)}
-                              />
+                              <ActionBtn tone="amber" icon={ShieldPlus} label="Promote" busy={busyId === u.id} onClick={() => handlePromote(u)} />
                             ))}
                             {!isSuper && (
-                              <ActionBtn
-                                tone="rose"
-                                icon={Trash2}
-                                label="Delete"
-                                busy={busyId === u.id}
-                                onClick={() => handleDeleteUser(u)}
-                              />
+                              <ActionBtn tone="rose" icon={Trash2} label="Delete" busy={busyId === u.id} onClick={() => handleDeleteUser(u)} />
                             )}
                           </div>
                         </td>
                       </tr>
                     );
                   })}
-                  {filteredUsers.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-slate-500 text-sm italic">
-                        No users match.
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -872,86 +791,67 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
 
         {/* ── Teams ──────────────────────────────────────────────────── */}
         {tab === 'teams' && (
-          <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl overflow-hidden">
-            <div className="lg:hidden divide-y divide-white/5">
+          <section className="bg-white border border-slate-200 rounded-[24px] shadow-sm overflow-hidden">
+            <div className="lg:hidden divide-y divide-slate-100">
               {filteredTeams.length === 0 ? (
-                <p className="text-slate-500 text-sm italic py-8 text-center px-4">No teams match.</p>
+                <p className="text-slate-500 text-sm italic py-12 text-center px-4">Zero signal detected.</p>
               ) : (
                 filteredTeams.map(t => (
-                  <div key={t.id} className="p-4 space-y-2">
-                    <p className="font-medium text-white text-sm truncate">{t.title || 'Untitled Team'}</p>
-                    <p className="text-[11px] text-slate-500 truncate">
-                      Owner: <span className="font-mono text-slate-300">{t.owner_email || t.owner_id}</span>
+                  <div key={t.id} className="p-5 space-y-3 hover:bg-slate-50 transition-colors">
+                    <p className="font-black text-slate-900 text-sm truncate">{t.title || 'Untitled Workspace'}</p>
+                    <p className="text-[11px] text-slate-500 font-bold truncate">
+                      Owner: <span className="font-mono text-blue-600">{t.owner_email || t.owner_id}</span>
                     </p>
-                    <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                      <span className="bg-white/5 text-slate-300 rounded-md px-2 py-0.5">
+                    <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                      <span className="bg-blue-50 text-blue-700 border border-blue-100 rounded-md px-2 py-0.5 font-black uppercase tracking-widest shadow-sm">
                         {t.member_count} member{t.member_count === 1 ? '' : 's'}
                       </span>
-                      <span className="bg-indigo-500/10 text-indigo-300 rounded-md px-2 py-0.5 font-mono">
+                      <span className="bg-orange-50 text-orange-700 border border-orange-100 rounded-md px-2 py-0.5 font-mono font-black uppercase shadow-sm">
                         PIN {t.pin}
                       </span>
-                      <span className="text-slate-500">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider ml-auto">
                         {t.created_at ? new Date(t.created_at).toLocaleDateString() : ''}
                       </span>
                     </div>
-                    <div className="pt-2">
-                      <ActionBtn
-                        tone="rose"
-                        icon={Trash2}
-                        label="Delete Team"
-                        busy={busyId === t.id}
-                        onClick={() => handleDeleteTeam(t)}
-                      />
+                    <div className="pt-3">
+                      <ActionBtn tone="rose" icon={Trash2} label="Terminate Workspace" busy={busyId === t.id} onClick={() => handleDeleteTeam(t)} />
                     </div>
                   </div>
                 ))
               )}
             </div>
 
-            <div className="hidden lg:block">
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[#0d1126] text-slate-400 text-[11px] uppercase tracking-widest">
+                <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-y border-slate-100">
                   <tr>
-                    <th className="text-left px-6 py-3 font-bold">Team</th>
-                    <th className="text-left px-6 py-3 font-bold">Owner</th>
-                    <th className="text-left px-6 py-3 font-bold">Members</th>
-                    <th className="text-left px-6 py-3 font-bold">PIN</th>
-                    <th className="text-left px-6 py-3 font-bold">Created</th>
-                    <th className="text-right px-6 py-3 font-bold">Actions</th>
+                    <th className="text-left px-6 py-4">Workspace Title</th>
+                    <th className="text-left px-6 py-4">Strategy Owner</th>
+                    <th className="text-left px-6 py-4">Units</th>
+                    <th className="text-left px-6 py-4">Auth PIN</th>
+                    <th className="text-left px-6 py-4">Deployed</th>
+                    <th className="text-right px-6 py-4">Management</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-slate-100 font-medium">
                   {filteredTeams.map(t => (
-                    <tr key={t.id} className="hover:bg-white/[0.02]">
-                      <td className="px-6 py-3">
-                        <p className="text-white font-medium truncate max-w-[220px]">{t.title || 'Untitled'}</p>
+                    <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="text-slate-900 font-black truncate max-w-[220px]">{t.title || 'Untitled'}</p>
                       </td>
-                      <td className="px-6 py-3 text-xs text-slate-300 font-mono truncate max-w-[200px]">
+                      <td className="px-6 py-4 text-[11px] text-blue-600 font-mono font-black truncate max-w-[200px]">
                         {t.owner_email || t.owner_id}
                       </td>
-                      <td className="px-6 py-3 text-xs text-slate-300">{t.member_count}</td>
-                      <td className="px-6 py-3 text-xs text-indigo-300 font-mono">{t.pin}</td>
-                      <td className="px-6 py-3 text-xs text-slate-400">
+                      <td className="px-6 py-4 text-xs text-slate-700 font-black tabular-nums">{t.member_count}</td>
+                      <td className="px-6 py-4 text-xs text-orange-600 font-mono font-black uppercase tracking-widest">{t.pin}</td>
+                      <td className="px-6 py-4 text-xs text-slate-400 font-bold">
                         {t.created_at ? new Date(t.created_at).toLocaleDateString() : '—'}
                       </td>
-                      <td className="px-6 py-3 text-right">
-                        <ActionBtn
-                          tone="rose"
-                          icon={Trash2}
-                          label="Delete"
-                          busy={busyId === t.id}
-                          onClick={() => handleDeleteTeam(t)}
-                        />
+                      <td className="px-6 py-4 text-right">
+                        <ActionBtn tone="rose" icon={Trash2} label="Terminate" busy={busyId === t.id} onClick={() => handleDeleteTeam(t)} />
                       </td>
                     </tr>
                   ))}
-                  {filteredTeams.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-slate-500 text-sm italic">
-                        No teams match.
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -960,99 +860,89 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
 
         {/* ── Admins ─────────────────────────────────────────────────── */}
         {tab === 'admins' && (
-          <section className="bg-[#151520] border border-white/5 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4">
-            <div className="flex items-start gap-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl text-xs text-amber-200">
-              <Crown size={14} className="mt-0.5 flex-shrink-0" />
-              <p>
-                Superadmins are hardcoded and cannot be revoked. Promoted admins can be revoked at any time
-                from the <span className="font-bold">Users</span> tab.
+          <section className="bg-white border border-slate-200 rounded-[24px] shadow-sm p-6 sm:p-8 space-y-6">
+            <div className="flex items-start gap-4 p-4 bg-orange-50 border border-orange-100 rounded-2xl text-xs text-orange-800 shadow-inner">
+              <Crown size={18} className="mt-0.5 flex-shrink-0 text-orange-600" />
+              <p className="font-bold leading-relaxed">
+                Superadmins are hardcoded into the kernel and cannot be revoked. Promoted admins can be revoked at any time
+                from the <span className="font-black underline">Users</span> tab.
               </p>
             </div>
 
-            <div className="divide-y divide-white/5">
-              {adminUsers.length === 0 ? (
-                <p className="text-slate-500 text-sm italic py-6 text-center">No admins yet.</p>
-              ) : (
-                adminUsers.map(u => {
-                  const isSuper = TeamService.isSuperAdmin(u.email);
-                  const grant = adminRows.find(r => r.user_id === u.id);
-                  return (
-                    <div key={u.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <div className="min-w-0 flex-1 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center text-amber-300 flex-shrink-0">
-                          {isSuper ? <Crown size={14} /> : <ShieldCheck size={14} />}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm text-white truncate">{u.email}</p>
-                          <p className="text-[10px] text-slate-500 truncate">
-                            {isSuper ? 'Hardcoded superadmin' : (
-                              grant
-                                ? `Promoted ${new Date(grant.granted_at).toLocaleDateString()}`
-                                : 'Active admin'
-                            )}
-                          </p>
-                        </div>
+            <div className="divide-y divide-slate-100">
+              {adminUsers.map(u => {
+                const isSuper = TeamService.isSuperAdmin(u.email);
+                const grant = adminRows.find(r => r.user_id === u.id);
+                return (
+                  <div key={u.id} className="py-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 group">
+                    <div className="min-w-0 flex-1 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-600 shadow-sm group-hover:scale-110 transition-transform">
+                        {isSuper ? <Crown size={20} /> : <ShieldCheck size={20} />}
                       </div>
-                      {!isSuper && (
-                        <ActionBtn
-                          tone="slate"
-                          icon={ShieldOff}
-                          label="Revoke"
-                          busy={busyId === u.id}
-                          onClick={() => handleDemote(u)}
-                        />
-                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-black text-slate-900 truncate">{u.email}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                          {isSuper ? 'Kernel Superadmin' : (
+                            grant
+                              ? `Elevated ${new Date(grant.granted_at).toLocaleDateString()}`
+                              : 'Privileged Account'
+                          )}
+                        </p>
+                      </div>
                     </div>
-                  );
-                })
-              )}
+                    {!isSuper && (
+                      <ActionBtn tone="slate" icon={ShieldOff} label="Revoke Privileges" busy={busyId === u.id} onClick={() => handleDemote(u)} />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}
 
         {/* ── Referrals ──────────────────────────────────────────────── */}
         {tab === 'referrals' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest">
-                Referral Tokens
+              <h2 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">
+                Referral Network
               </h2>
               <button
                 onClick={() => setShowCreateReferral(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 text-indigo-300 rounded-xl text-xs font-bold transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-blue-500/20 active:scale-95"
               >
                 <Plus size={14} />
-                Create Token
+                Generate Token
               </button>
             </div>
 
             {referralTokens.length === 0 ? (
-              <div className="text-center py-16 bg-[#151520] border border-white/5 rounded-2xl">
-                <LinkIcon size={32} className="text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">No referral tokens yet. Create one to invite users with auto-approval.</p>
+              <div className="text-center py-20 bg-white border border-slate-200 rounded-[24px] shadow-sm">
+                <LinkIcon size={32} className="text-slate-200 mx-auto mb-4" />
+                <p className="text-slate-500 text-xs font-black uppercase tracking-widest">No Referral Vectors Active</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {referralTokens.map((t) => {
                   const isUnused = !t.used_at && !t.revoked_at;
                   const isUsed = !!t.used_at;
                   const isRevoked = !!t.revoked_at;
                   return (
-                    <div key={t.token} className="bg-[#151520] border border-white/5 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div key={t.token} className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-md transition-all group">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <code className="text-xs text-slate-400 font-mono bg-black/30 px-2 py-0.5 rounded">
+                        <div className="flex items-center gap-3 mb-2">
+                          <code className="text-xs text-blue-600 font-mono font-black bg-blue-50 px-2 py-0.5 rounded border border-blue-100 shadow-inner">
                             {t.token.slice(0, 8)}...{t.token.slice(-4)}
                           </code>
                           <Badge
-                            label={isRevoked ? 'Revoked' : isUsed ? 'Used' : 'Active'}
+                            label={isRevoked ? 'Revoked' : isUsed ? 'Deployed' : 'Active'}
                             tone={isRevoked ? 'rose' : isUsed ? 'emerald' : 'amber'}
                           />
                         </div>
-                        <p className="text-[11px] text-slate-500">
-                          Created {new Date(t.created_at).toLocaleDateString()}
-                          {t.used_email && ` · Used by ${t.used_email || t.used_email}`}
-                          {t.note && ` · ${t.note}`}
+                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight">
+                          Origin: {new Date(t.created_at).toLocaleDateString()}
+                          {t.used_email && ` · Target: ${t.used_email}`}
+                          {t.note && ` · Audit: ${t.note}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -1062,12 +952,12 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                               onClick={() => {
                                 const url = `${window.location.origin}/?ref=${t.token}`;
                                 navigator.clipboard.writeText(url);
-                                showToast('ok', 'Referral URL copied!');
+                                showToast('ok', 'Strategic URL copied!');
                               }}
-                              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-lg text-xs font-bold transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm"
                             >
-                              <Copy size={12} />
-                              Copy URL
+                              <Copy size={14} />
+                              Copy
                             </button>
                             <button
                               onClick={async () => {
@@ -1085,9 +975,9 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                                 }
                               }}
                               disabled={busyId === t.token}
-                              className="flex items-center gap-1.5 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 rounded-lg text-xs font-bold disabled:opacity-50 transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 shadow-sm"
                             >
-                              <Ban size={12} />
+                              <Ban size={14} />
                               Revoke
                             </button>
                           </>
@@ -1103,25 +993,28 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
 
         {/* Create Referral Modal */}
         {showCreateReferral && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreateReferral(false)}>
-            <div className="bg-[#0f1025] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-white">Create Referral Token</h3>
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Note (optional)</label>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCreateReferral(false)}>
+            <div className="bg-white border border-slate-200 rounded-[32px] p-8 max-w-sm w-full space-y-6 shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">Generate Referral Vector</h3>
+                <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-tight">Create a secure entry link for partners.</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Internal Reference</label>
                 <input
                   type="text"
                   value={referralNote}
                   onChange={e => setReferralNote(e.target.value)}
-                  placeholder="e.g. Q2 campaign, John Doe invite"
-                  className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/60 placeholder:text-slate-600"
+                  placeholder="e.g. Agency Partner X"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-sm text-slate-900 font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 shadow-inner"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setShowCreateReferral(false)}
-                  className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 rounded-xl text-sm font-bold transition-colors"
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
                 >
-                  Cancel
+                  Abort
                 </button>
                 <button
                   onClick={async () => {
@@ -1140,9 +1033,9 @@ export const AdminPanel = ({ userEmail }: { userEmail?: string }) => {
                     }
                   }}
                   disabled={busyId === 'create-referral'}
-                  className="flex-1 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-sm font-bold disabled:opacity-50 transition-colors"
+                  className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest disabled:opacity-50 transition-all shadow-lg shadow-blue-500/30"
                 >
-                  {busyId === 'create-referral' ? 'Creating...' : 'Create'}
+                  {busyId === 'create-referral' ? 'Syncing...' : 'Deploy'}
                 </button>
               </div>
             </div>
@@ -1165,29 +1058,29 @@ const StatCard = ({
   accent: 'indigo' | 'emerald' | 'amber' | 'purple';
 }) => {
   const tones: Record<string, string> = {
-    indigo:  'text-indigo-300 bg-indigo-500/10 border-indigo-500/20',
-    emerald: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20',
-    amber:   'text-amber-300 bg-amber-500/10 border-amber-500/20',
-    purple:  'text-purple-300 bg-purple-500/10 border-purple-500/20',
+    indigo:  'text-blue-700 bg-blue-50 border-blue-200',
+    emerald: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    amber:   'text-orange-700 bg-orange-50 border-orange-200',
+    purple:  'text-blue-800 bg-blue-100 border-blue-200',
   };
   return (
-    <div className="p-4 sm:p-5 bg-[#151520] border border-white/5 rounded-2xl">
-      <div className={`inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 px-2 py-0.5 rounded-md border ${tones[accent]}`}>
+    <div className="p-6 bg-white border border-slate-200 rounded-[24px] shadow-sm group hover:shadow-md hover:border-blue-200 transition-all">
+      <div className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] mb-4 px-2 py-1 rounded-md border shadow-sm ${tones[accent]}`}>
         <Icon size={12} /> {label}
       </div>
-      <div className="text-2xl sm:text-3xl font-black text-white">{value}</div>
+      <div className="text-3xl font-black text-slate-900 tabular-nums tracking-tighter">{value.toLocaleString()}</div>
     </div>
   );
 };
 
 const Badge = ({ label, tone }: { label: string; tone: 'amber' | 'emerald' | 'rose' }) => {
   const tones: Record<string, string> = {
-    amber:   'text-amber-300 bg-amber-500/10 border-amber-500/30',
-    emerald: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-    rose:    'text-rose-300 bg-rose-500/10 border-rose-500/30',
+    amber:   'text-orange-700 bg-orange-50 border-orange-200',
+    emerald: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    rose:    'text-red-700 bg-red-50 border-red-200',
   };
   return (
-    <span className={`text-[9px] font-bold uppercase tracking-widest border rounded-md px-1.5 py-0.5 ${tones[tone]}`}>
+    <span className={`text-[9px] font-black uppercase tracking-[0.2em] border rounded px-2 py-0.5 shadow-sm ${tones[tone]}`}>
       {label}
     </span>
   );
@@ -1203,16 +1096,16 @@ const ActionBtn = ({
   onClick: () => void;
 }) => {
   const tones: Record<string, string> = {
-    rose:  'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/30 text-rose-300',
-    amber: 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300',
-    slate: 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300',
-    emerald: 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-300',
+    rose:  'bg-red-50 hover:bg-red-100 border-red-200 text-red-600 shadow-sm',
+    amber: 'bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-600 shadow-sm',
+    slate: 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600 shadow-sm',
+    emerald: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 shadow-sm',
   };
   return (
     <button
       onClick={onClick}
       disabled={busy}
-      className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border disabled:opacity-50 transition-colors ${tones[tone]}`}
+      className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border disabled:opacity-50 transition-all active:scale-95 ${tones[tone]}`}
     >
       {busy ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}
       <span>{label}</span>

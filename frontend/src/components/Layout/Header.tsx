@@ -152,12 +152,12 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
 
   return (
     <>
-      <header className="h-14 sm:h-16 md:h-20 border-b border-white/5 bg-[#020617]/70 backdrop-blur-xl px-2 sm:px-3 md:px-8 flex items-center justify-between gap-2 sticky top-0 z-40">
+      <header className="h-14 sm:h-16 md:h-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl px-2 sm:px-3 md:px-8 flex items-center justify-between gap-2 sticky top-0 z-40 shadow-sm">
         {/* Mobile menu */}
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
-          className="md:hidden shrink-0 p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
+          className="md:hidden shrink-0 p-2 rounded-lg hover:bg-slate-100 text-slate-900 transition-colors"
         >
           {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -170,7 +170,7 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
               setSearchOpen(true);
               setTimeout(() => searchInputRef.current?.focus(), 30);
             }}
-            className="md:hidden p-2 rounded-lg hover:bg-white/10 text-slate-300 transition-colors"
+            className="md:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
             aria-label="Open search"
           >
             <Search size={20} />
@@ -182,11 +182,11 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
               setSearchOpen(true);
               setTimeout(() => searchInputRef.current?.focus(), 30);
             }}
-            className="hidden md:flex items-center gap-3 bg-slate-900/50 px-4 py-2 rounded-xl border border-white/5 hover:border-white/15 hover:bg-slate-900/70 transition-colors w-full max-w-md text-left"
+            className="hidden md:flex items-center gap-3 bg-slate-100 px-4 py-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-white transition-all w-full max-w-md text-left shadow-sm group"
           >
-            <Search size={18} className="text-slate-500 shrink-0" />
-            <span className="flex-1 text-sm text-slate-500 truncate">Search Britsync…</span>
-            <span className="flex items-center gap-1 text-[10px] text-slate-500 font-bold bg-white/5 px-1.5 py-0.5 rounded border border-white/10 shrink-0">
+            <Search size={18} className="text-slate-400 group-hover:text-blue-500 shrink-0" />
+            <span className="flex-1 text-sm text-slate-600 group-hover:text-slate-900 truncate font-medium">Search Britsync…</span>
+            <span className="flex items-center gap-1 text-[10px] text-slate-400 font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
               <span>⌘</span>
               <span>K</span>
             </span>
@@ -202,11 +202,11 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
               onClick={() => setBellOpen(v => !v)}
               aria-label="Notifications"
               aria-expanded={bellOpen}
-              className="relative text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
+              className="relative text-slate-600 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50"
             >
               <Bell size={20} />
               {unread > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-lg shadow-rose-500/40">
+                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-600 text-white text-[9px] font-black flex items-center justify-center shadow-lg shadow-red-500/40">
                   {unread > 9 ? '9+' : unread}
                 </span>
               )}
@@ -216,14 +216,14 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
               <>
                 {/* Mobile backdrop */}
                 <div
-                  className="sm:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                  className="sm:hidden fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40"
                   onClick={() => setBellOpen(false)}
                 />
-                <div className="fixed sm:absolute top-14 sm:top-auto sm:right-0 left-2 right-2 sm:left-auto sm:mt-2 sm:w-96 sm:max-w-md rounded-2xl bg-[#0a0b14] border border-white/10 shadow-2xl shadow-black/50 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col max-h-[calc(100vh-5rem)] sm:max-h-none">
-                  <div className="px-3 sm:px-4 py-3 border-b border-white/5 flex items-center justify-between gap-2 shrink-0">
+                <div className="fixed sm:absolute top-14 sm:top-auto sm:right-0 left-2 right-2 sm:left-auto sm:mt-2 sm:w-96 sm:max-w-md rounded-2xl bg-white border border-slate-200 shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col max-h-[calc(100vh-5rem)] sm:max-h-none">
+                  <div className="px-3 sm:px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-2 shrink-0">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-bold text-white">Notifications</h3>
-                      <p className="text-[10px] text-slate-500 mt-0.5">
+                      <h3 className="text-sm font-black text-slate-900">Notifications</h3>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
                         {unread > 0 ? `${unread} unread` : 'All caught up'}
                       </p>
                     </div>
@@ -232,7 +232,7 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
                         <button
                           type="button"
                           onClick={onMarkAllRead}
-                          className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md text-slate-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
+                          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md text-blue-600 hover:bg-blue-50 transition-colors whitespace-nowrap"
                           title="Mark all read"
                         >
                           <Check size={12} /> <span className="hidden xs:inline sm:inline">Mark all</span>
@@ -241,7 +241,7 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
                       <button
                         type="button"
                         onClick={() => setBellOpen(false)}
-                        className="text-slate-500 hover:text-white p-1.5 rounded"
+                        className="text-slate-400 hover:text-slate-900 p-1.5 rounded transition-colors"
                         aria-label="Close"
                       >
                         <X size={16} />
@@ -249,24 +249,24 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
                     </div>
                   </div>
 
-                <div className="flex-1 overflow-y-auto sm:max-h-[60vh]">
+                <div className="flex-1 overflow-y-auto sm:max-h-[60vh] bg-white">
                   {notifLoading && notifs.length === 0 ? (
                     <div className="px-6 py-10 text-center">
-                      <Loader2 className="mx-auto mb-3 animate-spin text-slate-500" size={20} />
-                      <p className="text-xs text-slate-500">Loading…</p>
+                      <Loader2 className="mx-auto mb-3 animate-spin text-blue-500" size={20} />
+                      <p className="text-xs text-slate-500 font-medium">Loading notifications…</p>
                     </div>
                   ) : notifs.length === 0 ? (
                     <div className="px-6 py-10 text-center">
-                      <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center mx-auto mb-3">
-                        <Bell size={20} className="text-slate-500" />
+                      <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-3">
+                        <Bell size={20} className="text-slate-300" />
                       </div>
-                      <p className="text-sm font-bold text-slate-300">You're all caught up</p>
+                      <p className="text-sm font-bold text-slate-900">You're all caught up</p>
                       <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                         Headlines, finance alerts, and team activity will appear here.
                       </p>
                     </div>
                   ) : (
-                    <ul className="py-1">
+                    <ul className="divide-y divide-slate-50">
                       {notifs.map(n => {
                         const Icon = NOTIF_ICON[n.kind];
                         const read = isRead(n.id);
@@ -275,34 +275,34 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
                             <button
                               type="button"
                               onClick={() => onSelectNotif(n)}
-                              className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-b border-white/[0.03] last:border-0 ${
-                                read ? 'hover:bg-white/[0.02]' : 'bg-indigo-500/[0.04] hover:bg-indigo-500/[0.08]'
+                              className={`w-full flex items-start gap-3 px-4 py-4 text-left transition-all ${
+                                read ? 'hover:bg-slate-50' : 'bg-blue-50/40 hover:bg-blue-50'
                               }`}
                             >
-                              <div className={`shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center mt-0.5 ${
-                                n.kind === 'news' ? 'bg-sky-500/10 border-sky-500/20 text-sky-300' :
-                                n.kind === 'finance' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' :
-                                'bg-indigo-500/10 border-indigo-500/20 text-indigo-300'
+                              <div className={`shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center mt-0.5 shadow-sm ${
+                                n.kind === 'news' ? 'bg-blue-100 border-blue-200 text-blue-600' :
+                                n.kind === 'finance' ? 'bg-orange-100 border-orange-200 text-orange-600' :
+                                'bg-red-100 border-red-200 text-red-600'
                               }`}>
-                                <Icon size={16} />
+                                <Icon size={18} />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  {!read && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />}
-                                  <p className={`text-xs font-bold truncate ${read ? 'text-slate-400' : 'text-white'}`}>
+                                  {!read && <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0 shadow-sm" />}
+                                  <p className={`text-[13px] font-bold truncate ${read ? 'text-slate-600' : 'text-slate-900'}`}>
                                     {n.title}
                                   </p>
                                 </div>
-                                <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
+                                <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed font-medium">
                                   {n.body}
                                 </p>
-                                <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-600">
+                                <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
                                   {n.meta && (
-                                    <span className="font-bold uppercase tracking-wider">{n.meta}</span>
+                                    <span className="text-slate-500">{n.meta}</span>
                                   )}
                                   {n.meta && <span>·</span>}
                                   <span>{relativeTime(n.time)}</span>
-                                  {n.href && <ExternalLink size={10} className="ml-auto" />}
+                                  {n.href && <ExternalLink size={10} className="ml-auto opacity-50" />}
                                 </div>
                               </div>
                             </button>
@@ -317,26 +317,26 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
             )}
           </div>
 
-          <div className="hidden sm:block h-6 md:h-8 w-px bg-white/5" />
+          <div className="hidden sm:block h-8 w-px bg-slate-200" />
 
           {/* Profile */}
           <button
             type="button"
             onClick={() => onTabChange?.('profile')}
-            className="flex items-center gap-2 sm:gap-3 pl-1 sm:pl-2 rounded-xl hover:bg-white/5 transition-colors py-1 pr-1 sm:pr-2"
+            className="flex items-center gap-2 sm:gap-3 pl-1 sm:pl-2 rounded-xl hover:bg-slate-100 transition-all py-1.5 pr-1.5 sm:pr-2.5 group"
             aria-label="Profile"
           >
             <div className="text-right hidden md:block max-w-[160px]">
-              <p className="text-sm font-semibold text-white tracking-tight truncate">
-                {profile?.businessName || 'Guest'}
+              <p className="text-sm font-black text-slate-900 tracking-tight truncate group-hover:text-blue-600 transition-colors">
+                {profile?.businessName || 'Guest User'}
               </p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate">
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest truncate mt-0.5">
                 {profile?.industry || 'Setup Required'}
               </p>
             </div>
-            <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center p-[1px] shadow-lg shadow-indigo-500/20 shrink-0">
-              <div className="h-full w-full rounded-[10px] bg-[#020617] flex items-center justify-center">
-                <User size={16} className="text-white" />
+            <div className="h-9 w-9 md:h-11 md:w-11 rounded-xl bg-gradient-to-br from-blue-600 via-red-500 to-orange-500 flex items-center justify-center p-[1.5px] shadow-lg shadow-blue-500/10 group-hover:scale-105 transition-transform shrink-0">
+              <div className="h-full w-full rounded-[9px] bg-white flex items-center justify-center">
+                <User size={18} className="text-slate-900" />
               </div>
             </div>
           </button>
@@ -346,65 +346,72 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
       {/* Search overlay */}
       {searchOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-start justify-center pt-12 sm:pt-24 px-3 sm:px-6"
+          className="fixed inset-0 z-[60] bg-slate-900/20 backdrop-blur-md flex items-start justify-center pt-12 sm:pt-24 px-3 sm:px-6"
           onClick={() => setSearchOpen(false)}
         >
           <div
-            className="w-full max-w-xl rounded-2xl bg-[#0a0b14] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            className="w-full max-w-xl rounded-3xl bg-white border border-slate-200 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 shrink-0">
-              <Search size={18} className="text-slate-500 shrink-0" />
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 shrink-0 bg-slate-50/50">
+              <Search size={20} className="text-blue-500 shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search chats, news, and pages…"
-                className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-500 min-w-0"
+                className="flex-1 bg-transparent border-none outline-none text-base text-slate-900 placeholder:text-slate-400 font-medium min-w-0"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery('')}
-                  className="text-slate-500 hover:text-white p-1 rounded shrink-0"
+                  className="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg hover:bg-white transition-all shrink-0"
                   aria-label="Clear"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={16} />
                 </button>
               )}
+              <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
               <button
                 type="button"
                 onClick={() => setSearchOpen(false)}
-                className="text-slate-500 hover:text-white p-1 rounded shrink-0"
+                className="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg hover:bg-white transition-all shrink-0"
                 aria-label="Close search"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto bg-white">
               {!query.trim() ? (
-                <div className="px-4 py-8 text-center">
-                  <Search size={28} className="mx-auto mb-3 text-slate-600" />
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Type to search across your chats, news headlines, and Britsync pages.
+                <div className="px-6 py-12 text-center">
+                  <div className="w-16 h-16 rounded-3xl bg-blue-50 flex items-center justify-center mx-auto mb-4 border border-blue-100/50">
+                    <Search size={32} className="text-blue-500" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-900">Global Neural Search</p>
+                  <p className="text-xs text-slate-500 mt-2 leading-relaxed max-w-[280px] mx-auto font-medium">
+                    Instant access to your chats, industry headlines, and Britsync operational pages.
                   </p>
                 </div>
               ) : searching ? (
-                <div className="px-4 py-8 text-center">
-                  <Loader2 size={20} className="mx-auto mb-3 animate-spin text-slate-500" />
-                  <p className="text-xs text-slate-500">Searching…</p>
+                <div className="px-6 py-12 text-center">
+                  <Loader2 className="mx-auto mb-4 animate-spin text-blue-500" size={24} />
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Searching Knowledge Base…</p>
                 </div>
               ) : results.length === 0 ? (
-                <div className="px-4 py-8 text-center">
-                  <p className="text-sm font-bold text-slate-300">No matches</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Try different keywords. Search covers chat history, news, and pages.
+                <div className="px-6 py-12 text-center">
+                  <div className="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                    <X size={32} className="text-slate-300" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-900">No results found</p>
+                  <p className="text-xs text-slate-500 mt-2 font-medium">
+                    Try different keywords or check your spelling.
                   </p>
                 </div>
               ) : (
-                <ul className="py-1">
+                <ul className="divide-y divide-slate-50">
                   {results.map(hit => {
                     const Icon = KIND_ICON[hit.kind];
                     return (
@@ -412,27 +419,27 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
                         <button
                           type="button"
                           onClick={() => onSelectHit(hit)}
-                          className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-white/[0.04] transition-colors border-b border-white/[0.03] last:border-0"
+                          className="w-full flex items-start gap-4 px-6 py-4 text-left hover:bg-slate-50 transition-all group"
                         >
-                          <div className={`shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center mt-0.5 ${
-                            hit.kind === 'news' ? 'bg-sky-500/10 border-sky-500/20 text-sky-300' :
-                            hit.kind === 'chat' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300' :
-                            'bg-slate-500/10 border-slate-500/20 text-slate-300'
+                          <div className={`shrink-0 w-11 h-11 rounded-2xl border flex items-center justify-center mt-0.5 shadow-sm group-hover:scale-105 transition-transform ${
+                            hit.kind === 'news' ? 'bg-orange-50 border-orange-100 text-orange-600' :
+                            hit.kind === 'chat' ? 'bg-blue-50 border-blue-100 text-blue-600' :
+                            'bg-red-50 border-red-100 text-red-600'
                           }`}>
-                            <Icon size={16} />
+                            <Icon size={20} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-white truncate">{hit.title}</p>
+                            <p className="text-[15px] font-black text-slate-900 truncate group-hover:text-blue-600 transition-colors">{hit.title}</p>
                             {hit.snippet && (
-                              <p className="text-xs text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
+                              <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed font-medium">
                                 {hit.snippet}
                               </p>
                             )}
-                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-600">
+                            <div className="flex items-center gap-3 mt-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
                               {hit.meta && (
-                                <span className="font-bold uppercase tracking-wider">{hit.meta}</span>
+                                <span className="text-slate-500">{hit.meta}</span>
                               )}
-                              {hit.href && <ExternalLink size={10} className="ml-auto" />}
+                              {hit.href && <ExternalLink size={10} className="ml-auto opacity-40 group-hover:opacity-100 group-hover:text-blue-500" />}
                             </div>
                           </div>
                         </button>
@@ -443,9 +450,9 @@ const Header: React.FC<HeaderProps> = ({ profile, onMenuClick, isMenuOpen, onTab
               )}
             </div>
 
-            <div className="px-4 py-2 border-t border-white/5 text-[10px] text-slate-600 font-bold uppercase tracking-widest flex items-center justify-between shrink-0">
-              <span>{results.length > 0 ? `${results.length} results` : 'Live search'}</span>
-              <span className="hidden sm:inline">Esc to close</span>
+            <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50 text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] flex items-center justify-between shrink-0">
+              <span>{results.length > 0 ? `${results.length} matches found` : 'Deep Search Active'}</span>
+              <span className="hidden sm:inline bg-white px-2 py-0.5 rounded border border-slate-200">Esc to close</span>
             </div>
           </div>
         </div>

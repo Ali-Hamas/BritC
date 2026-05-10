@@ -3,47 +3,47 @@ import { signOut } from '../../lib/auth-client';
 
 export const ReferralRequiredScreen = ({ email, onSignOut }: { email: string; onSignOut: () => void }) => {
   return (
-    <div className="min-h-screen bg-[#05060d] text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-gradient-to-br from-amber-600/20 via-orange-500/10 to-transparent rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-gradient-to-tr from-fuchsia-600/10 via-indigo-500/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute -top-32 -left-32 w-[45rem] h-[45rem] bg-orange-500/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] bg-blue-500/5 rounded-full blur-3xl" />
       </div>
       <div className="relative z-10 w-full max-w-md">
-        <div className="rounded-[2rem] bg-[#0a0b14]/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_60px_-20px_rgba(245,158,11,0.3)] p-8 sm:p-10 text-center space-y-5">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-            <Shield size={32} />
+        <div className="rounded-[2.5rem] bg-white border border-slate-200 shadow-2xl p-8 sm:p-12 text-center space-y-6">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shadow-sm">
+            <Shield size={40} />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">Activation Required</h2>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Your account needs a referral link to activate. Sign up using an invitation link from your admin to get started.
+            <h2 className="text-2xl font-black tracking-tight text-slate-900 uppercase">Activation Locked</h2>
+            <p className="text-sm text-slate-500 font-medium leading-relaxed">
+              Your operator profile requires a secure referral vector for activation. Use a valid invitation link to establish your workspace.
             </p>
           </div>
-          <div className="flex items-center justify-center gap-2 px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl">
-            <Link size={14} className="text-slate-500" />
-            <span className="text-sm text-white/80 font-mono">{email}</span>
+          <div className="flex items-center justify-center gap-3 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl shadow-inner">
+            <Link size={16} className="text-slate-400" />
+            <span className="text-sm text-slate-900 font-black font-mono">{email}</span>
           </div>
-          <p className="text-sm text-slate-400 leading-relaxed -mt-2">
-            You will receive notification into the above email with a link to start.
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+            Transmission pending. Check your inbox for directives.
           </p>
-          <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-left">
-            <AlertTriangle size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-amber-200/70 leading-relaxed space-y-1">
-              <p>Referral links grant instant access to the Enterprise plan with:</p>
-              <ul className="list-disc list-inside space-y-0.5 ml-1">
-                <li>Unlimited team chats</li>
-                <li>64 GB file storage</li>
-                <li>All AI skills unlocked</li>
+          <div className="flex items-start gap-4 p-5 bg-blue-50 border border-blue-100 rounded-2xl text-left shadow-sm">
+            <AlertTriangle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-blue-900 font-bold leading-relaxed space-y-1.5 uppercase tracking-tight">
+              <p className="font-black text-blue-700">Enterprise Protocols Include:</p>
+              <ul className="space-y-1 ml-1">
+                <li className="flex items-center gap-2"><div className="w-1 h-1 bg-blue-400 rounded-full" /> Unlimited Team Clusters</li>
+                <li className="flex items-center gap-2"><div className="w-1 h-1 bg-blue-400 rounded-full" /> 64 GB Encrypted Storage</li>
+                <li className="flex items-center gap-2"><div className="w-1 h-1 bg-blue-400 rounded-full" /> Full Autonomous Agent Suite</li>
               </ul>
             </div>
           </div>
           <button
             type="button"
             onClick={() => signOut().then(() => onSignOut())}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
           >
-            <LogOut size={14} />
-            Sign out
+            <LogOut size={16} />
+            Detach Session
           </button>
         </div>
       </div>
