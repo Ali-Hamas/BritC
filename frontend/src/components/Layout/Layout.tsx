@@ -88,6 +88,7 @@ export const Layout: React.FC<LayoutProps> = ({
           onTabChange(tab);
           setIsSidebarOpen(false);
         }}
+        subscription={subscription}
       />
     </div>
   );

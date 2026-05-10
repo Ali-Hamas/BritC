@@ -10,6 +10,7 @@ import {
   X,
   Zap,
   Newspaper,
+  Lock,
 } from 'lucide-react';
 import { ActivityService } from '../../lib/activity';
 import { BusinessProfile } from '../../lib/profiles';
@@ -30,12 +31,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
   const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
   const isModerator = TeamService.isGlobalModerator();
   const isFree = !subscription || subscription.plan === 'free';
-  const menuItems = [
-    { id: 'assistant',   label: 'Chat',         icon: Bot },
-    { id: 'finance',     label: 'Finance',      icon: PoundSterling },
-    { id: 'news',        label: 'News',         icon: Newspaper },
-    { id: 'team',        label: 'Team Chat',    icon: Users },
-    { id: 'profile',     label: 'Profile',      icon: Settings },
+  const menuItems: { id: string; label: string; icon: typeof Bot; locked?: boolean }[] = [
+    { id: 'assistant', label: 'Chat',      icon: Bot },
+    { id: 'finance',   label: 'Finance',   icon: PoundSterling, locked: isFree },
+    { id: 'news',      label: 'News',      icon: Newspaper,     locked: isFree },
+    { id: 'team',      label: 'Team Chat', icon: Users,         locked: isFree },
+    { id: 'profile',   label: 'Profile',   icon: Settings },
     ...(isModerator ? [{ id: 'admin', label: 'Admin', icon: Shield }] : []),
   ];
 
@@ -71,22 +72,41 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          
+          const isLocked = !!item.locked;
+
           return (
             <button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
+              onClick={() => {
+                if (isLocked) {
+                  setShowUpgradeModal(true);
+                } else {
+                  onTabChange(item.id);
+                }
+              }}
               className={`w-full flex items-center justify-between px-3 md:px-4 py-2.5 rounded-xl transition-all duration-200 group ${
                 isActive
                   ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  : isLocked
+                    ? 'text-slate-400 hover:bg-amber-50 hover:text-amber-700'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon size={18} className={isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-blue-600'} />
+                <Icon size={18} className={
+                  isActive
+                    ? 'text-blue-600'
+                    : isLocked
+                      ? 'text-slate-400 group-hover:text-amber-600'
+                      : 'text-slate-500 group-hover:text-blue-600'
+                } />
                 <span className="font-medium text-sm">{item.label}</span>
               </div>
-              {isActive && <ChevronRight size={14} className="animate-pulse text-blue-500" />}
+              {isActive
+                ? <ChevronRight size={14} className="animate-pulse text-blue-500" />
+                : isLocked
+                  ? <Lock size={12} className="text-slate-400 group-hover:text-amber-600" />
+                  : null}
             </button>
           );
         })}

@@ -134,7 +134,10 @@ function App() {
 
   const renderView = () => {
     const p = { profile, subscription, onSignOut: handleSignOut };
-    switch (activeTab) {
+    const isFree = !subscription || subscription.plan === 'free';
+    const enterpriseOnly = ['finance', 'intelligence', 'team', 'news'];
+    const safeTab = isFree && enterpriseOnly.includes(activeTab) ? 'assistant' : activeTab;
+    switch (safeTab) {
       case 'assistant': return <Chatbot profile={profile} onSignOut={handleSignOut} />;
       case 'finance': return <FinanceDashboard profile={profile} />;
       case 'intelligence': return <IntelligenceView profile={profile} />;
