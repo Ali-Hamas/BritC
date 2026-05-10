@@ -158,6 +158,7 @@ async function getSession(req) {
 // ─── Account Approval Gate ────────────────────────────────────────────────
 const GLOBAL_MODERATOR_EMAILS = [
   'britsyncuk@gmail.com',
+  [EMAIL_ADDRESS]',
   'kamranalivyond@gmail.com',
 ];
 

@@ -182,17 +182,14 @@ const auth = betterAuth({
                         _pendingIntents.delete(email);
 
                         // Referred users skip approval AND get enterprise plan.
-                        // Social signups (Google/GitHub) are auto-approved on the
-                        // free plan since the OAuth provider already verified them.
-                        // Direct email signups require a referral link — they land
-                        // on referral_required status and free plan until they
-                        // register with a valid referral link.
-                        const isSocial = !!(user.image || user.emailVerified);
-                        const approvalStatus = claimed ? 'approved' : (isSocial ? 'approved' : 'referral_required');
-                        const decidedAt = (claimed || isSocial) ? 'NOW()' : 'NULL';
+                        // Everyone else — including social signups (Google/GitHub) —
+                        // lands in the pending queue so an admin must approve them
+                        // before they can access the workspace.
+                        const approvalStatus = claimed ? 'approved' : 'pending';
+                        const decidedAt = claimed ? 'NOW()' : 'NULL';
                         const plan = claimed ? 'enterprise' : 'free';
-                        const planSource = claimed ? 'referral' : (isSocial ? 'social' : 'signup');
-                        const decidedBy = claimed ? 'referral' : (isSocial ? 'social' : null);
+                        const planSource = claimed ? 'referral' : 'signup';
+                        const decidedBy = claimed ? 'referral' : null;
 
                         await client.query(
                             `INSERT INTO account_approvals (user_id, status, decided_at, decided_by, requested_plan)
