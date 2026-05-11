@@ -435,8 +435,8 @@ async function processAppointmentStep(sessionId, userInput) {
                     bookingFlows.delete(sessionId);
                     return {
                         state: 'failed',
-                        aiPrompt: 'Something went wrong with the booking. Apologise warmly and ask them to email support@britsee.co.',
-                        fallback: `So sorry — something went wrong! Please email support@britsee.co and we'll sort your booking right away. 😔`
+                        aiPrompt: 'Something went wrong with the booking. Apologise warmly and ask them to email info@britsyncai.com.',
+                        fallback: `So sorry — something went wrong! Please email info@britsyncai.com and we'll sort your booking right away. 😔`
                     };
                 }
             } else if (lower.includes('cancel') || lower === 'no') {
