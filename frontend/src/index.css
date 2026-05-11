@@ -1,67 +1,119 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────────
+   COASTAL MIDNIGHT — Full dark theme
+   #447794 → Primary       (slate-blue, interactive accent)
+   #2D5B75 → Secondary     (hover/active states)
+   #123249 → Tertiary      (deep ink — card backgrounds)
+   #061222 → Abyss         (page background)
+   White text on dark surfaces.
+───────────────────────────────────────────────────────────────── */
+
 @theme {
-  --color-background: #ffffff;
-  --color-foreground: #000000;
-  --color-primary: #2563eb; /* Blue */
-  --color-secondary: #dc2626; /* Red */
-  --color-accent: #f97316; /* Orange */
-  
-  --color-slate-900: #000000;
-  --color-slate-800: #1a1a1a;
-  --color-slate-700: #262626;
-  
-  --background-image-glass-gradient: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(220, 38, 38, 0.02));
+  --color-background: #061222;
+  --color-foreground: #ffffff;
+
+  --color-primary:   #447794;
+  --color-secondary: #2D5B75;
+  --color-accent:    #123249;
+  --color-abyss:     #061222;
+
+  --color-slate-900: #061222;
+  --color-slate-800: #0a1a2e;
+  --color-slate-700: #123249;
+
+  --background-image-glass-gradient: linear-gradient(135deg, rgba(68, 119, 148, 0.18), rgba(18, 50, 73, 0.10));
 }
 
 @utility glass {
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(37, 99, 235, 0.15);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  background: rgba(18, 50, 73, 0.55);
+  border: 1px solid rgba(68, 119, 148, 0.30);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
 @utility glass-card {
   @apply glass rounded-[24px] p-6 transition-all duration-500 overflow-hidden relative;
-  border-color: rgba(37, 99, 235, 0.1);
+  border-color: rgba(68, 119, 148, 0.28);
 }
 
 @utility grad-text {
   background-clip: text;
   color: transparent;
-  background-image: linear-gradient(135deg, #2563eb 0%, #dc2626 50%, #f97316 100%);
+  background-image: linear-gradient(135deg, #6a9cba 0%, #447794 50%, #2D5B75 100%);
   font-weight: 800;
   letter-spacing: -0.025em;
 }
 
-@utility grad-bg {
-  background-image: linear-gradient(135deg, #2563eb 0%, #dc2626 100%);
-}
-
-@utility grad-bg-warm {
-  background-image: linear-gradient(135deg, #dc2626 0%, #f97316 100%);
-}
-
-@utility grad-bg-cool {
-  background-image: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-}
+@utility grad-bg      { background-image: linear-gradient(135deg, #447794 0%, #2D5B75 100%); }
+@utility grad-bg-warm { background-image: linear-gradient(135deg, #2D5B75 0%, #123249 100%); }
+@utility grad-bg-cool { background-image: linear-gradient(135deg, #447794 0%, #2D5B75 100%); }
+@utility grad-bg-deep { background-image: linear-gradient(135deg, #123249 0%, #061222 100%); }
 
 html, body, #root {
   height: 100%;
   width: 100%;
-  background-color: #ffffff;
+  background-color: #061222;
 }
 
 body {
-  background-color: #ffffff;
-  color: #000000;
+  background: radial-gradient(ellipse at top, #123249 0%, #061222 60%, #061222 100%);
+  color: #ffffff;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── Aggressive Theme Overrides ─── */
+/* ─── Force every "white" / "light slate" surface to dark coastal ─── */
+.bg-white,
+.bg-white\/80,
+.bg-white\/90,
+.bg-white\/95,
+.bg-slate-50,
+.bg-slate-100,
+.bg-gray-50,
+.bg-gray-100,
+.bg-zinc-50,
+.bg-zinc-100,
+.bg-neutral-50,
+.bg-neutral-100 {
+  background-color: #0a1a2e !important;
+  color: #ffffff !important;
+}
 
-/* Force all dark backgrounds to White */
+.bg-white\/\[0\.02\], .bg-white\/5, .bg-white\/10, .bg-white\/8 {
+  background-color: rgba(68, 119, 148, 0.10) !important;
+  border-color: rgba(68, 119, 148, 0.20) !important;
+}
+
+/* Arbitrary near-white hex backgrounds → coastal dark */
+[class*="bg-[#f8fafc]"],
+[class*="bg-[#f1f5f9]"],
+[class*="bg-[#fafafa]"],
+[class*="bg-[#f9fafb]"],
+[class*="bg-[#ffffff]"],
+[class*="bg-[#fff]"] {
+  background-color: #061222 !important;
+  color: #ffffff !important;
+}
+
+/* Arbitrary near-white gradient stops → coastal dark */
+[class*="from-[#f8fafc]"], [class*="from-[#f1f5f9]"],
+[class*="from-[#fafafa]"], [class*="from-[#f9fafb]"],
+[class*="from-[#ffffff]"], [class*="from-[#fff]"] {
+  --tw-gradient-from: #061222 !important;
+}
+[class*="via-[#f8fafc]"], [class*="via-[#f1f5f9]"],
+[class*="via-[#fafafa]"], [class*="via-[#f9fafb]"],
+[class*="via-[#ffffff]"], [class*="via-[#fff]"] {
+  --tw-gradient-via: #061222 !important;
+}
+[class*="to-[#f8fafc]"], [class*="to-[#f1f5f9]"],
+[class*="to-[#fafafa]"], [class*="to-[#f9fafb]"],
+[class*="to-[#ffffff]"], [class*="to-[#fff]"] {
+  --tw-gradient-to: #061222 !important;
+}
+
+/* Page-level dark backgrounds stay dark */
 [class*="bg-[#030712]"],
 [class*="bg-[#05060d]"],
 [class*="bg-[#0a0b14]"],
@@ -70,92 +122,150 @@ body {
 [class*="bg-[#0b1020]"],
 [class*="bg-[#0d1126]"],
 [class*="bg-[#151520]"],
-.bg-slate-900,
-.bg-slate-950,
-.bg-gray-900,
-.bg-gray-950,
-.bg-zinc-900,
-.bg-zinc-950,
-.bg-black,
-.bg-black\/20,
-.bg-black\/40,
-.bg-black\/10 {
-  background-color: #ffffff !important;
+.bg-slate-900, .bg-slate-950,
+.bg-gray-900, .bg-gray-950,
+.bg-zinc-900, .bg-zinc-950,
+.bg-black {
+  background-color: #061222 !important;
 }
 
-/* Sidebar and Header backgrounds */
-aside, nav, header, .bg-white\/\[0\.02\], .bg-white\/5, .bg-white\/10 {
-  background-color: #ffffff !important;
+aside, nav, header {
+  background-color: #0a1a2e !important;
 }
 
-/* Force all text to Black or very dark slate */
-.text-white, 
-.text-slate-100, 
-.text-slate-200, 
-.text-slate-300,
-.text-white\/90,
-.text-white\/80,
-.text-white\/70,
-.text-white\/60 {
-  color: #000000 !important;
-}
-
-.text-slate-400, .text-slate-500, .text-slate-600 {
-  color: #1a1a1a !important;
-}
-
-/* Borders */
-[class*="border-white"],
-.border-slate-800,
-.border-slate-700 {
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Exceptions: Keep buttons and accents colored */
-.bg-indigo-500, .bg-indigo-600, .bg-blue-600, .bg-blue-500 {
-  background-color: #2563eb !important;
-  color: #ffffff !important;
-}
-.bg-indigo-500 .text-white, .bg-blue-600 .text-white {
+/* ─── Text: dark→light ─── */
+.text-slate-900, .text-slate-800, .text-slate-700,
+.text-gray-900, .text-gray-800, .text-gray-700,
+.text-black {
   color: #ffffff !important;
 }
 
-.bg-fuchsia-500, .bg-fuchsia-600, .bg-red-600, .bg-rose-500 {
-  background-color: #dc2626 !important;
+.text-slate-600, .text-slate-500, .text-slate-400,
+.text-gray-600, .text-gray-500, .text-gray-400 {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.text-slate-300, .text-slate-200, .text-slate-100,
+.text-white\/90, .text-white\/80, .text-white\/70, .text-white\/60 {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ─── Borders: dark grays → coastal blue tint ─── */
+.border-slate-100, .border-slate-200,
+.border-gray-100, .border-gray-200,
+.border-white, [class*="border-white"] {
+  border-color: rgba(68, 119, 148, 0.20) !important;
+}
+.border-slate-300, .border-slate-400 {
+  border-color: rgba(68, 119, 148, 0.35) !important;
+}
+.border-slate-700, .border-slate-800, .border-slate-900 {
+  border-color: rgba(68, 119, 148, 0.25) !important;
+}
+
+/* ─── Accents: blue/indigo → #447794 ─── */
+.bg-indigo-500, .bg-indigo-600,
+.bg-blue-500, .bg-blue-600, .bg-blue-700 {
+  background-color: #447794 !important;
   color: #ffffff !important;
 }
+.bg-blue-50, .bg-indigo-50 { background-color: rgba(68, 119, 148, 0.12) !important; }
+.bg-blue-100, .bg-indigo-100 { background-color: rgba(68, 119, 148, 0.18) !important; }
 
-.bg-orange-500, .bg-amber-500 {
-  background-color: #f97316 !important;
+.hover\:bg-blue-700:hover, .hover\:bg-blue-600:hover,
+.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover { background-color: #2D5B75 !important; }
+
+.text-blue-500, .text-blue-600, .text-blue-700,
+.text-indigo-500, .text-indigo-600 { color: #6a9cba !important; }
+.text-blue-800, .text-blue-900 { color: #447794 !important; }
+
+.border-blue-100, .border-indigo-100 { border-color: rgba(68, 119, 148, 0.25) !important; }
+.border-blue-200, .border-indigo-200 { border-color: rgba(68, 119, 148, 0.40) !important; }
+.border-blue-300, .border-indigo-300 { border-color: rgba(68, 119, 148, 0.60) !important; }
+.border-blue-600, .border-indigo-600 { border-color: #447794 !important; }
+
+/* Red/rose → #2D5B75 (depth) */
+.bg-fuchsia-500, .bg-fuchsia-600, .bg-red-600, .bg-red-500, .bg-rose-500 {
+  background-color: #2D5B75 !important;
   color: #ffffff !important;
 }
+.bg-red-50 { background-color: rgba(45, 91, 117, 0.15) !important; }
+.bg-red-100 { background-color: rgba(45, 91, 117, 0.22) !important; }
+.text-red-500, .text-red-600, .text-red-700 { color: #6a9cba !important; }
+.border-red-100 { border-color: rgba(45, 91, 117, 0.30) !important; }
+.border-red-200 { border-color: rgba(45, 91, 117, 0.45) !important; }
 
-/* Chat Bubbles */
-.bg-white\/8, .bg-white\/5 {
-  background-color: #f1f5f9 !important; /* Light gray for assistant bubbles */
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+/* Orange/amber → #123249 (ink) */
+.bg-orange-500, .bg-orange-600, .bg-amber-500 {
+  background-color: #123249 !important;
+  color: #ffffff !important;
+}
+.bg-orange-50 { background-color: rgba(18, 50, 73, 0.25) !important; }
+.bg-orange-100 { background-color: rgba(18, 50, 73, 0.35) !important; }
+.text-orange-500, .text-orange-600, .text-amber-500 { color: #6a9cba !important; }
+.border-orange-100 { border-color: rgba(18, 50, 73, 0.40) !important; }
+.border-orange-200 { border-color: rgba(18, 50, 73, 0.55) !important; }
+
+/* ─── Gradients ─── */
+.from-blue-500, .from-blue-600, .from-indigo-500, .from-indigo-600 {
+  --tw-gradient-from: #447794 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(68,119,148,0)) !important;
+}
+.via-red-600, .via-red-500, .via-rose-500 {
+  --tw-gradient-via: #2D5B75 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to, rgba(45,91,117,0)) !important;
+}
+.to-orange-500, .to-orange-600, .to-amber-500 { --tw-gradient-to: #123249 !important; }
+.to-blue-600, .to-blue-700 { --tw-gradient-to: #2D5B75 !important; }
+.to-red-600 { --tw-gradient-to: #2D5B75 !important; }
+.from-orange-500, .from-orange-600 { --tw-gradient-from: #123249 !important; }
+.from-red-500, .from-red-600 { --tw-gradient-from: #2D5B75 !important; }
+
+/* Shadows */
+.shadow-blue-500\/30, .shadow-blue-600\/30, .shadow-blue-600\/20, .shadow-blue-500\/20 {
+  --tw-shadow-color: rgba(68, 119, 148, 0.45) !important;
 }
 
-.bg-indigo-500 {
-  background-color: #2563eb !important; /* Blue for user bubbles */
+/* ─── Inputs ─── */
+input, textarea, select {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  color: #ffffff !important;
+  border-color: rgba(68, 119, 148, 0.30) !important;
+}
+input::placeholder, textarea::placeholder {
+  color: rgba(255, 255, 255, 0.40) !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: #447794 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(68, 119, 148, 0.20) !important;
 }
 
-/* Code blocks - make them stand out but not black */
+/* ─── Code blocks ─── */
 pre, code {
-  background-color: #f8fafc !important;
-  color: #000000 !important;
-  border: 1px solid #e2e8f0 !important;
+  background-color: rgba(6, 18, 34, 0.65) !important;
+  color: #cfe3f0 !important;
+  border: 1px solid rgba(68, 119, 148, 0.25) !important;
 }
-.text-emerald-300 {
-  color: #059669 !important; /* Darker emerald for code contrast */
-}
+.text-emerald-300 { color: #6a9cba !important; }
 
-/* Scrollbar */
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #061222; }
 ::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
+  background-color: rgba(68, 119, 148, 0.45);
+  border-radius: 6px;
+  border: 2px solid #061222;
 }
+::-webkit-scrollbar-thumb:hover { background-color: rgba(68, 119, 148, 0.75); }
 
-/* Fix for icons that might be white */
-.lucide, svg {
-  /* color: currentColor; */
+/* Selection */
+::selection { background: rgba(68, 119, 148, 0.50); color: #ffffff; }
+
+/* ─── Chat: user message bubble — distinct accent ─── */
+.bg-blue-600.text-white.rounded-tr-sm {
+  background-color: #5b3a8a !important;
+  background-image: linear-gradient(135deg, #6d47a8 0%, #4a2d75 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(157, 122, 207, 0.35) !important;
 }

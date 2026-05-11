@@ -314,6 +314,34 @@ export const Auth: React.FC<AuthProps> = ({
               </div>
 
               <div className="p-6 sm:p-10 space-y-8">
+                {/* Social buttons — top */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleSocial('google')}
+                    disabled={isLoading}
+                    className="inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .55 4.1 1.62l3.05-3.05C17.2 1.7 14.78.75 12 .75 7.36.75 3.35 3.42 1.4 7.3l3.55 2.76C5.92 7.16 8.7 5 12 5z"/><path fill="#4285F4" d="M23.5 12.27c0-.78-.07-1.53-.2-2.27H12v4.51h6.47c-.28 1.5-1.13 2.78-2.4 3.62l3.7 2.87c2.16-2 3.4-4.94 3.4-8.73z"/><path fill="#FBBC05" d="M5 14.06c-.25-.75-.4-1.55-.4-2.31s.15-1.56.4-2.31L1.4 6.7C.5 8.5 0 10.4 0 12.5s.5 4 1.4 5.8l3.55-2.74z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.7-2.87c-1.04.7-2.4 1.1-4.23 1.1-3.3 0-6.08-2.16-7.07-5.06L1.4 17.05C3.36 20.6 7.36 24 12 24z"/></svg>
+                    Google
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSocial('github')}
+                    disabled={isLoading}
+                    className="inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.18-1.49 3.14-1.18 3.14-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+                    GitHub
+                  </button>
+                </div>
+
+                <div className="relative flex items-center gap-4">
+                  <div className="flex-1 h-px bg-slate-100" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Or Continue With</span>
+                  <div className="flex-1 h-px bg-slate-100" />
+                </div>
+
                 {/* Tabs */}
                 <div className="relative flex bg-slate-50 rounded-2xl p-1.5 border border-slate-100">
                   <button
@@ -446,32 +474,6 @@ export const Auth: React.FC<AuthProps> = ({
                     )}
                   </button>
 
-                  <div className="relative flex items-center gap-4 py-2">
-                    <div className="flex-1 h-px bg-slate-100" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Social Mesh</span>
-                    <div className="flex-1 h-px bg-slate-100" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleSocial('google')}
-                      disabled={isLoading}
-                      className="inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .55 4.1 1.62l3.05-3.05C17.2 1.7 14.78.75 12 .75 7.36.75 3.35 3.42 1.4 7.3l3.55 2.76C5.92 7.16 8.7 5 12 5z"/><path fill="#4285F4" d="M23.5 12.27c0-.78-.07-1.53-.2-2.27H12v4.51h6.47c-.28 1.5-1.13 2.78-2.4 3.62l3.7 2.87c2.16-2 3.4-4.94 3.4-8.73z"/><path fill="#FBBC05" d="M5 14.06c-.25-.75-.4-1.55-.4-2.31s.15-1.56.4-2.31L1.4 6.7C.5 8.5 0 10.4 0 12.5s.5 4 1.4 5.8l3.55-2.74z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.7-2.87c-1.04.7-2.4 1.1-4.23 1.1-3.3 0-6.08-2.16-7.07-5.06L1.4 17.05C3.36 20.6 7.36 24 12 24z"/></svg>
-                      Google
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSocial('github')}
-                      disabled={isLoading}
-                      className="inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.18-1.49 3.14-1.18 3.14-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
-                      GitHub
-                    </button>
-                  </div>
                 </form>
 
                 <div className="text-center px-4 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-[2.5rem] -mx-10 -mb-10 flex items-center justify-center gap-3">
