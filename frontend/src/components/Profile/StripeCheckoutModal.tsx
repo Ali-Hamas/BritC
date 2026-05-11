@@ -123,7 +123,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({ open, onClose, onSuccess 
         <div className="md:w-[40%] p-8 sm:p-12 bg-slate-50 border-r border-slate-100 flex flex-col">
           <div className="flex items-center gap-4 mb-10">
             <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-xl shadow-blue-500/5 shrink-0 overflow-hidden p-2">
-              <img src="/favicon.png" alt="Britsync" className="w-full h-full object-contain" />
+              <img src="/britsee-logo.jpg" alt="Britsync" className="w-full h-full object-contain" />
             </div>
             <div>
               <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">

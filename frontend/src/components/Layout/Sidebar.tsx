@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onSign
       <div className="p-4 md:p-5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 group cursor-pointer">
           <div className="h-10 w-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
-            <img src="/favicon.png" alt="Britsync AI" className="h-full w-full object-cover" />
+            <img src="/britsee-logo.jpg" alt="Britsync AI" className="h-full w-full object-cover" />
           </div>
           <span className="text-xl font-bold grad-text tracking-tight">Britsync AI</span>
         </div>

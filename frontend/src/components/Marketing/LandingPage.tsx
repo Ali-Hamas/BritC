@@ -41,7 +41,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-24 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl overflow-hidden shadow-xl shadow-blue-500/10 border border-slate-100 shrink-0">
-              <img src="/favicon.png" alt="Britsync Logo" className="w-full h-full object-cover" />
+              <img src="/britsee-logo.jpg" alt="Britsync Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-lg sm:text-2xl font-black tracking-tighter uppercase">BRITSYNC</span>
           </div>
@@ -295,7 +295,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
             <div className="md:col-span-2 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-slate-100">
-                  <img src="/favicon.png" alt="Britsync Logo" className="w-full h-full object-cover" />
+                  <img src="/britsee-logo.jpg" alt="Britsync Logo" className="w-full h-full object-cover" />
                 </div>
                 <span className="text-xl font-black tracking-tight uppercase">BRITSYNC AI</span>
               </div>

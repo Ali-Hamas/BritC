@@ -66,7 +66,7 @@ export const ResetPassword: React.FC = () => {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-xl border border-slate-100 flex items-center justify-center bg-white">
-              <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
+              <img src="/britsee-logo.jpg" alt="Britsync AI" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
               Britsync <span className="text-blue-600">AI</span>

@@ -223,7 +223,7 @@ export const Auth: React.FC<AuthProps> = ({
         <div className="hidden lg:flex flex-col gap-12 pr-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-[20px] overflow-hidden flex items-center justify-center shadow-xl shadow-blue-500/10 border border-slate-100">
-              <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
+              <img src="/britsee-logo.jpg" alt="Britsync AI" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="text-4xl font-black tracking-tight text-slate-900">
@@ -307,7 +307,7 @@ export const Auth: React.FC<AuthProps> = ({
               <div className="lg:hidden pt-8 pb-4 text-center">
                 <div className="inline-flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg border border-slate-100 flex items-center justify-center">
-                    <img src="/favicon.png" alt="Britsync AI" className="w-full h-full object-cover" />
+                    <img src="/britsee-logo.jpg" alt="Britsync AI" className="w-full h-full object-cover" />
                   </div>
                   <h2 className="text-2xl font-black tracking-tight text-slate-900">Britsync AI</h2>
                 </div>
