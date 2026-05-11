@@ -114,8 +114,11 @@ export const TeamPanel = ({
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
+  const ownedTeams = allTeams.filter(t => t.role === 'owner');
+
   const handleCreateTeam = async (customName?: string) => {
-    if (isFreePlan) {
+    // Free plan can only own ONE team.
+    if (isFreePlan && ownedTeams.length >= 1) {
       setShowUpgradeModal(true);
       return;
     }
@@ -140,7 +143,7 @@ export const TeamPanel = ({
     setActionLoading(true);
     try {
       const newPin = await TeamService.rotatePin(ctx.team.id);
-      setCtx({ ...ctx, team: { ...ctx.team, pin: newPin } });
+      setCtx(prev => prev ? { ...prev, team: prev.team ? { ...prev.team, pin: newPin } : null } : null);
       alert(`PIN rotated successfully. New PIN: ${newPin}`);
     } catch (err: any) {
       alert(err.message || 'Failed to rotate PIN');
@@ -149,11 +152,11 @@ export const TeamPanel = ({
     }
   };
 
-  const handleRemoveMember = async (userId: string) => {
+  const handleRemoveMember = async (targetId: string) => {
     if (!ctx?.team || !window.confirm('Remove this member?')) return;
     try {
-      await TeamService.removeMember(ctx.team.id, userId);
-      setMembers(members.filter(m => m.user_id !== userId));
+      await TeamService.removeMember(ctx.team.id, targetId);
+      setMembers(members.filter(m => m.user_id !== targetId));
     } catch (err: any) {
       alert(err.message);
     }
@@ -307,33 +310,23 @@ export const TeamPanel = ({
           <p className="text-slate-500 font-medium text-sm max-w-md mx-auto leading-relaxed">
             Create a team to generate a secure PIN. You can share this PIN with your colleagues to link them to your workspace. Their chats will remain completely private, but the AI will be guided by your strategic memory.
           </p>
-          {isFreePlan ? (
-            <div className="space-y-4">
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 max-w-sm mx-auto shadow-sm">
-                <p className="text-xs font-bold text-orange-700 mb-3">
-                  Free plan includes <span className="font-black">1 team chat</span>. Upgrade to Enterprise (£449/mo) to create additional teams.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowUpgradeModal(true)}
-                className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center mx-auto gap-2 active:scale-95"
-              >
-                <Zap size={20} />
-                Upgrade to Enterprise
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowNewTeamModal(true)}
-              disabled={actionLoading}
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center mx-auto gap-2 active:scale-95"
-            >
-              {actionLoading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
-              Initialize Team Workspace
-            </button>
+          
+          <button
+            onClick={() => setShowNewTeamModal(true)}
+            disabled={actionLoading}
+            className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center mx-auto gap-2 active:scale-95"
+          >
+            {actionLoading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
+            Initialize Team Workspace
+          </button>
+
+          {isFreePlan && (
+             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4">
+                Free plan includes <span className="text-blue-600 font-black">1 team chat</span>.
+             </p>
           )}
         </div>
-        {!isFreePlan && renderNewTeamModal()}
+        {renderNewTeamModal()}
       </div>
     );
   }
@@ -364,9 +357,9 @@ export const TeamPanel = ({
           </button>
 
           <div className="pt-6 border-t border-slate-100">
-            {isFreePlan ? (
+            {isFreePlan && ownedTeams.length >= 1 ? (
               <div className="space-y-3">
-                <p className="text-xs font-bold text-slate-500">Want your own workspace?</p>
+                <p className="text-xs font-bold text-slate-500">Want additional workspaces?</p>
                 <button
                   onClick={() => setShowUpgradeModal(true)}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs uppercase tracking-wider font-black text-emerald-600 transition-colors shadow-sm active:scale-95"
@@ -395,8 +388,7 @@ export const TeamPanel = ({
   }
 
   // ─── Owner View ───
-  const categories: MemoryType[] = ['strategic', 'operational', 'instructional', 'constraint', 'interpretation', 'financial'];
-  const ownedTeams = allTeams.filter(t => t.role === 'owner');
+  const memoryTypes: MemoryType[] = ['strategic', 'operational', 'instructional', 'constraint', 'interpretation', 'financial'];
 
   return (
     <div className="h-full overflow-y-auto px-3 sm:px-6 py-4 sm:py-8 pb-32 scrollbar-thin bg-slate-50 font-sans text-slate-900 min-h-screen">
@@ -437,7 +429,7 @@ export const TeamPanel = ({
                 </div>
               )}
             </div>
-            {!isFreePlan && (
+            {(!isFreePlan || ownedTeams.length < 1) && (
               <button
                 onClick={() => setShowNewTeamModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-sm font-bold text-blue-700 transition-colors shadow-sm"
@@ -490,51 +482,36 @@ export const TeamPanel = ({
             </p>
           </div>
 
-          {isFreePlan && ctx.role === 'owner' ? (
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 w-full md:w-auto md:min-w-[260px] relative overflow-hidden shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <Key size={14} className="text-orange-500" />
-                <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">
-                  Free plan · solo workspace
-                </span>
-              </div>
-               <p className="text-xs text-slate-600 font-medium leading-relaxed mb-3">
-                Inviting team members and creating additional team chats is an Enterprise feature (£449/mo). Upgrade to unlock.
-              </p>
-              <a
-                href="mailto:info@britsyncai.com?subject=Britsee Enterprise Upgrade"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95"
+          <div className="bg-white border border-slate-200 rounded-[24px] p-5 w-full md:w-auto md:min-w-[260px] shadow-sm relative overflow-hidden group hover:border-blue-200 transition-all">
+            <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center justify-between mb-4 relative z-10">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                <Key size={14} className="text-blue-500" /> Team Join PIN
+              </span>
+              <button
+                onClick={handleRotatePin}
+                disabled={actionLoading}
+                className="text-[10px] font-bold bg-slate-50 hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 px-2 py-1 rounded-lg transition-colors shadow-sm"
               >
-                Upgrade
-              </a>
+                Rotate PIN
+              </button>
             </div>
-          ) : (
-            <div className="bg-white border border-slate-200 rounded-[24px] p-5 w-full md:w-auto md:min-w-[260px] shadow-sm relative overflow-hidden group hover:border-blue-200 transition-all">
-              <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center justify-between mb-4 relative z-10">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                  <Key size={14} className="text-blue-500" /> Team Join PIN
-                </span>
-                <button
-                  onClick={handleRotatePin}
-                  disabled={actionLoading}
-                  className="text-[10px] font-bold bg-slate-50 hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 px-2 py-1 rounded-lg transition-colors shadow-sm"
-                >
-                  Rotate PIN
-                </button>
-              </div>
-              <div className="flex items-center justify-between relative z-10 gap-2">
-                <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-[0.15em] font-mono truncate bg-slate-50 px-3 py-1 rounded-xl border border-slate-100">{ctx.team.pin}</span>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(ctx.team!.pin); setCopiedPin(true); setTimeout(() => setCopiedPin(false), 2000); }}
-                  className="p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl transition-colors shadow-sm active:scale-95"
-                  title="Copy PIN"
-                >
-                  {copiedPin ? <CheckCircle size={20} /> : <Copy size={20} />}
-                </button>
-              </div>
+            <div className="flex items-center justify-between relative z-10 gap-2">
+              <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-[0.15em] font-mono truncate bg-slate-50 px-3 py-1 rounded-xl border border-slate-100">{ctx.team.pin}</span>
+              <button
+                onClick={() => { navigator.clipboard.writeText(ctx.team!.pin); setCopiedPin(true); setTimeout(() => setCopiedPin(false), 2000); }}
+                className="p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl transition-colors shadow-sm active:scale-95"
+                title="Copy PIN"
+              >
+                {copiedPin ? <CheckCircle size={20} /> : <Copy size={20} />}
+              </button>
             </div>
-          )}
+            {isFreePlan && (
+               <div className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center relative z-10">
+                  Free Unit Clearance: 1 Team Active
+               </div>
+            )}
+          </div>
         </div>
 
         {/* Owner-only Finance Intelligence */}
@@ -643,7 +620,7 @@ export const TeamPanel = ({
           </div>
         </div>
 
-        {/* Strategic Memory (Adapted from MemoryCenter) */}
+        {/* Strategic Memory */}
         <div className="pt-6 sm:pt-8 border-t border-slate-200">
           <div className="bg-white border border-slate-200 shadow-sm rounded-[24px] p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 sm:mb-8 hover:shadow-md hover:border-blue-200 transition-all">
             <div className="flex items-center gap-4 min-w-0">
@@ -656,7 +633,7 @@ export const TeamPanel = ({
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {categories.slice(0, 4).map(cat => (
+              {memoryTypes.slice(0, 4).map(cat => (
                 <button
                   key={cat}
                   onClick={() => handleCreateMemory(cat)}
@@ -666,7 +643,6 @@ export const TeamPanel = ({
                   {cat}
                 </button>
               ))}
-              {/* Financial Shortcut */}
               <button
                 onClick={() => handleCreateMemory('financial')}
                 className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs font-black text-emerald-700 transition-all flex items-center gap-1.5 capitalize shadow-sm active:scale-95"
@@ -678,7 +654,7 @@ export const TeamPanel = ({
           </div>
 
           <div className="grid grid-cols-1 gap-8">
-            {categories.map(type => {
+            {memoryTypes.map(type => {
               const typeBlocks = memoryBlocks.filter(b => b.type === type);
               if (typeBlocks.length === 0 && type !== 'strategic') return null;
 
@@ -716,7 +692,7 @@ export const TeamPanel = ({
                                   onClick={() => memoryFileInputRef.current?.click()}
                                   disabled={isAttachingFile}
                                   className="px-3 py-2.5 bg-slate-50 text-slate-600 border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-black uppercase tracking-wider shadow-sm"
-                                  title="Attach a file (text from .txt, .csv, .md, .json, etc. will be added to this directive)"
+                                  title="Attach a file"
                                 >
                                   {isAttachingFile ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
                                   <span className="hidden sm:inline">Attach file</span>
@@ -744,7 +720,7 @@ export const TeamPanel = ({
                           <div className="h-full flex flex-col">
                             <div className="flex justify-between items-start mb-4">
                               <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest shadow-sm border ${
-                                block.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-orange-50 text-orange-600 border-orange-200'
+                                block.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-600 border-orange-200'
                               }`}>
                                 {block.status}
                               </span>
@@ -754,7 +730,7 @@ export const TeamPanel = ({
                             </p>
                             <button 
                               onClick={() => handleEditMemory(block)}
-                              className="w-full py-3 bg-white border-2 border-slate-100 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100 shadow-sm active:scale-95"
+                              className="w-full py-3 bg-white border-2 border-slate-100 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100 shadow-sm active:scale-90"
                             >
                               Modify Logic
                             </button>
@@ -766,7 +742,7 @@ export const TeamPanel = ({
                     {typeBlocks.length === 0 && (
                       <button 
                         onClick={() => handleCreateMemory(type)}
-                        className="border-2 border-dashed border-slate-200 bg-slate-50 rounded-[24px] p-4 sm:p-8 flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-blue-500 hover:border-blue-300 hover:bg-blue-50 transition-all shadow-sm"
+                        className="border-2 border-dashed border-slate-200 bg-slate-50 rounded-[24px] p-4 sm:p-8 flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-blue-500 hover:border-blue-300 hover:bg-blue-50 transition-all shadow-sm active:scale-95"
                       >
                         <Plus size={28} />
                         <span className="text-xs font-black uppercase tracking-widest">Add {type}</span>
