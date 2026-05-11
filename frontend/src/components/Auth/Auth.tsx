@@ -277,8 +277,19 @@ export const Auth: React.FC<AuthProps> = ({
 
           <div className="flex items-center gap-4 pt-4">
              <div className="flex -space-x-3">
-              {[1,2,3,4].map((i) => (
-                <div key={i} className={`w-10 h-10 rounded-full border-2 border-white bg-slate-200 shadow-sm`} />
+              {[
+                { initials: 'JM', from: '#447794', to: '#2D5B75' },
+                { initials: 'SK', from: '#6a9cba', to: '#447794' },
+                { initials: 'AR', from: '#2D5B75', to: '#123249' },
+                { initials: 'LC', from: '#5b8ba8', to: '#2D5B75' },
+              ].map((a, i) => (
+                <div
+                  key={i}
+                  className="w-10 h-10 rounded-full border-2 border-[#061222] shadow-sm flex items-center justify-center text-[10px] font-black text-white tracking-wider"
+                  style={{ backgroundImage: `linear-gradient(135deg, ${a.from}, ${a.to})` }}
+                >
+                  {a.initials}
+                </div>
               ))}
             </div>
             <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">
